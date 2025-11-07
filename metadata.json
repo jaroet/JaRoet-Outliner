@@ -1,0 +1,5 @@
+{
+  "name": "JaRoet Outliner",
+  "description": "A desktop-style web application that mimics the core functionalities of Workflowy. It allows for creating hierarchical lists, zooming into items, folding/unfolding branches, searching, and importing/exporting data as JSON. All data is saved locally in your browser.",
+  "requestFramePermissions": []
+}

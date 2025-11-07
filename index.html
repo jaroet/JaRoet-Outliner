@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>myOutliner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add Babel for in-browser JSX/TS transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Configure Babel -->
+    <script>
+      Babel.config({
+        presets: [
+          // preset-env configuration:
+          // target modern browsers and DO NOT transform ES6 modules (import/export).
+          // The browser will handle modules via the importmap.
+          ["env", { "modules": false }],
+          // preset-react for JSX support
+          "react",
+          // preset-typescript for TypeScript support
+          "typescript"
+        ]
+      });
+    </script>
+    <style>
+      :root {
+        --main-color: #60a5fa;
+        --note-color: #2dd4bf;
+        --font-family: sans-serif;
+        --font-size: 16px;
+      }
+      body {
+        font-family: var(--font-family);
+        font-size: var(--font-size);
+      }
+      /* Simple scrollbar styling for a more modern look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1a202c; /* dark gray */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4a5568; /* medium gray */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #718096; /* light gray */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-900 text-gray-200 antialiased">
+    <div id="root"></div>
+    <script type="text/babel" data-type="module">
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+// All application code is bundled here to run from file://
+
+// From components/Icons.tsx
+const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+  </svg>
+);
+
+const ChevronDownIcon = ({ className = 'w-4 h-4' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
+const CircleIcon = ({ className = 'w-2 h-2', color = 'var(--main-color)' }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="50" fill={color} />
+  </svg>
+);
+
+const SearchIcon = ({ className = 'w-5 h-5' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+  </svg>
+);
+
+const UploadIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+    </svg>
+);
+
+const DownloadIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+);
+
+const HomeIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
+      <path d="M12 5.432L4.432 13v6.75a2.25 2.25 0 002.25 2.25h10.636a2.25 2.25 0 002.25-2.25v-6.75L12 5.432z" />
+    </svg>
+);
+
+const NoteIcon = ({ className = 'w-4 h-4' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+    </svg>
+);
+
+const AppointmentIcon = ({ className = 'w-4 h-4' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18" />
+    </svg>
+);
+
+const SettingsIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434-.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+
+// From App.tsx (constants and helpers)
+const JOURNAL_ROOT_TEXT = 'Daily Log';
+
+const initialData = [
+  {
+    id: 'journal-root',
+    text: JOURNAL_ROOT_TEXT,
+    note: "Use Ctrl+J to jump to today's log.",
+    children: [],
+    isCollapsed: false,
+  },
+  {
+    id: '1',
+    text: 'Welcome to your Workflowy Clone!',
+    note: 'This is a note. Use Shift+Enter to add notes to your bullets.',
+    children: [
+      {
+        id: '2',
+        text: 'Features',
+        note: '',
+        children: [
+          { id: '3', text: 'Infinite nested lists', note: '', children: [], isCollapsed: true },
+          { id: '4', text: 'Zooming (click the bullet point or use Ctrl+Down)', note: '', children: [], isCollapsed: true },
+          { id: '5', text: 'Ctrl+Right to unfold, Ctrl+Left to navigate to parent or fold', note: '', children: [], isCollapsed: true },
+          { id: '6', text: 'Search', note: '', children: [], isCollapsed: true },
+          { id: '7', text: 'Import/Export JSON data', note: '', children: [], isCollapsed: true },
+        ],
+        isCollapsed: true,
+      },
+      {
+        id: '8',
+        text: 'Hotkeys',
+        note: '',
+        children: [
+            { id: '9', text: 'Enter: Create new item', note: '', children: [], isCollapsed: true },
+            { id: '10', text: 'Tab: Indent item', note: '', children: [], isCollapsed: true },
+            { id: '11', text: 'Shift+Tab: Outdent item', note: '', children: [], isCollapsed: true },
+            { id: '12', text: 'Backspace on empty item: Delete', note: '', children: [], isCollapsed: true },
+            { id: '13', text: 'Arrow Up/Down: Navigate items', note: '', children: [], isCollapsed: true },
+            { id: '14', text: 'Ctrl+Up: Zoom out', note: '', children: [], isCollapsed: true },
+            { id: '15', text: 'Arrow Left (at start): Move to parent', note: '', children: [], isCollapsed: true },
+            { id: '16', text: 'Arrow Right (at end): Move to next item', note: '', children: [], isCollapsed: true },
+            { id: '17', text: '[[ to link to another item', note: '', children: [], isCollapsed: true },
+            { id: '18', text: 'Ctrl+Shift+K: Quick Find', note: '', children: [], isCollapsed: true },
+            { id: '19', text: "Ctrl+J: Go to today's daily log", note: '', children: [], isCollapsed: true },
+            { id: '20', text: "Alt+Up/Down: Move item up/down", note: '', children: [], isCollapsed: true },
+            { id: '21', text: "Ctrl+L: Insert link", note: '', children: [], isCollapsed: true },
+        ],
+        isCollapsed: true,
+      }
+    ],
+    isCollapsed: false,
+  },
+];
+
+const createNewBullet = (text = '') => ({
+    id: Date.now().toString() + Math.random().toString(),
+    text,
+    note: '',
+    children: [],
+    isCollapsed: false,
+});
+
+
+// From components/LinkPopup.tsx
+const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+  const { useEffect, useRef } = React;
+  const selectedItemRef = useRef(null);
+  
+  useEffect(() => {
+    if (selectedItemRef.current) {
+        selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex]);
+
+  if (suggestions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      className="absolute z-20 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-full max-w-2xl"
+      style={{ top: position.top, left: position.left }}
+    >
+      <ul ref={containerRef}>
+        {suggestions.map((bullet, index) => (
+          <li key={bullet.id} ref={index === selectedIndex ? selectedItemRef : null}>
+            <button
+              onClick={() => onSelect(bullet)}
+              className={`w-full text-left px-3 py-2 text-sm ${
+                index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-700'
+              }`}
+               title={bullet.text}
+            >
+              <span className="truncate block">{bullet.text || <em>Untitled</em>}</span>
+              {bullet.path.length > 0 && (
+                  <span className={`text-xs truncate block ${
+                    index === selectedIndex ? 'text-white/80' : 'text-gray-500'
+                  }`}>{bullet.path.join(' / ')}</span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+
+// From components/SearchModal.tsx
+const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
+  const { useState, useEffect, useMemo, useRef } = React;
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+  const selectedItemRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+      setQuery('');
+      setSelectedIndex(0);
+    }
+  }, [isOpen]);
+
+  const filteredBullets = useMemo(() => {
+    if (!query) {
+      return bullets;
+    }
+    const lowerCaseQuery = query.toLowerCase();
+    return bullets.filter(b => b.text.toLowerCase().includes(lowerCaseQuery));
+  }, [query, bullets]);
+
+  useEffect(() => {
+    if (selectedItemRef.current) {
+      selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % filteredBullets.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + filteredBullets.length) % filteredBullets.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredBullets[selectedIndex]) {
+        onNavigate(filteredBullets[selectedIndex].id);
+      }
+    } else if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-30 flex justify-center items-start pt-20"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="p-4 border-b border-gray-700 relative text-[var(--main-color)]">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-7">
+            <SearchIcon />
+          </span>
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Quick find..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className="w-full bg-gray-900 text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
+          />
+        </div>
+        <div className="overflow-y-auto">
+          {filteredBullets.length > 0 ? (
+            <ul ref={listRef}>
+              {filteredBullets.map((bullet, index) => (
+                <li
+                  key={bullet.id}
+                  ref={index === selectedIndex ? selectedItemRef : null}
+                  className={`cursor-pointer ${index === selectedIndex ? 'bg-[var(--main-color)]' : 'hover:bg-gray-700'}`}
+                  onClick={() => onNavigate(bullet.id)}
+                >
+                  <div className="px-4 py-2 border-b border-gray-700/50">
+                    <p className="text-gray-200 truncate">{bullet.text || <em>Untitled</em>}</p>
+                    {bullet.path.length > 0 && (
+                        <p className={`text-xs truncate ${
+                            index === selectedIndex ? 'text-white/80' : 'text-gray-500'
+                        }`}>{bullet.path.join(' / ')}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 p-4 text-center">No results found.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// From components/Toolbar.tsx
+const Toolbar = ({
+  searchQuery,
+  onSearchChange,
+  onImport,
+  onExport,
+  breadcrumbs,
+  onBreadcrumbClick,
+  fileName,
+  onOpenSettings,
+}) => {
+  const { useRef } = React;
+  const fileInputRef = useRef(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result;
+          const data = JSON.parse(content);
+          // Basic validation
+          if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
+            onImport(data);
+          } else {
+            alert('Invalid JSON file format.');
+          }
+        } catch (error) {
+          alert('Error parsing JSON file.');
+          console.error(error);
+        }
+      };
+      reader.readAsText(file);
+    }
+     // Reset file input to allow re-uploading the same file
+    if(event.target) {
+        event.target.value = '';
+    }
+  };
+
+  return (
+    <div className="sticky top-0 z-10 bg-gray-800/80 backdrop-blur-sm p-2 flex flex-col sm:flex-row items-center gap-4 border-b border-gray-700 text-[var(--main-color)]">
+      <div className="flex-grow w-full sm:w-auto">
+        <div className="flex items-center gap-2">
+            <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+                <HomeIcon />
+            </button>
+            {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={crumb.id}>
+                <span className="text-gray-500">/</span>
+                <button
+                    onClick={() => onBreadcrumbClick(crumb.id)}
+                    className="px-2 py-1 text-sm text-gray-200 rounded-md hover:bg-gray-700 transition-colors truncate max-w-xs"
+                    title={crumb.text}
+                >
+                    {crumb.text || <em>Untitled</em>}
+                </button>
+                </React.Fragment>
+            ))}
+            {breadcrumbs.length === 0 && (
+                <span className="text-gray-200 font-semibold ml-2 truncate" title={fileName}>{fileName}</span>
+            )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="relative flex-grow">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <SearchIcon />
+          </span>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full bg-gray-700 text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] transition-shadow"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".json"
+                onChange={handleFileChange}
+            />
+            <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+                <UploadIcon />
+            </button>
+            <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+                <DownloadIcon />
+            </button>
+            <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+                <SettingsIcon />
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// From components/BulletItem.tsx
+const BulletItem = ({
+  bullet,
+  level,
+  onUpdate,
+  onAddSibling,
+  onDelete,
+  onIndent,
+  onOutdent,
+  onFocusChange,
+  onZoom,
+  onFocusMove,
+  onFocusParent,
+  onFocusChild,
+  onFoldAll,
+  onMoveBullet,
+  currentFocusId,
+  focusPosition,
+  searchQuery,
+  onLinkClick,
+  onTriggerLinkPopup,
+  onCloseLinkPopup,
+  onLinkNavigate,
+  onLinkSelect,
+  isLinkPopupOpen,
+  linkPopupTargetId,
+  isJournalRoot,
+}) => {
+  const { useState, useRef, useEffect, useCallback } = React;
+  const [isEditing, setIsEditing] = useState(false);
+  const [isNoteVisible, setIsNoteVisible] = useState(false);
+  const textInputRef = useRef(null);
+  const noteInputRef = useRef(null);
+
+  const isFocused = currentFocusId === bullet.id;
+  
+  useEffect(() => {
+    if (isFocused) {
+      setIsEditing(true);
+    } else {
+      setIsEditing(false);
+      setIsNoteVisible(false);
+      onCloseLinkPopup();
+    }
+  }, [isFocused, onCloseLinkPopup]);
+
+  useEffect(() => {
+    if (isEditing && textInputRef.current) {
+        textInputRef.current.focus();
+        if (focusPosition === 'start') {
+            textInputRef.current.setSelectionRange(0, 0);
+        } else { // 'end'
+            const len = textInputRef.current.value.length;
+            textInputRef.current.setSelectionRange(len, len);
+        }
+    }
+  }, [isEditing, focusPosition]);
+    
+  useEffect(() => {
+    if (isEditing && textInputRef.current) {
+      textInputRef.current.style.height = 'auto';
+      textInputRef.current.style.height = `${textInputRef.current.scrollHeight}px`;
+    }
+  }, [isEditing, bullet.text]);
+
+  const hasChildren = bullet.children.length > 0;
+
+  const handleLinkSelection = useCallback((selectedBullet) => {
+    const input = textInputRef.current;
+    if (!input) return;
+
+    const text = input.value;
+    const cursor = input.selectionStart ?? text.length;
+    
+    const textBeforeCursor = text.substring(0, cursor);
+    const lastOpen = textBeforeCursor.lastIndexOf('[[');
+
+    if (lastOpen !== -1) {
+        const newText = text.substring(0, lastOpen) + `[[${selectedBullet.text}]]` + text.substring(cursor);
+        onUpdate(bullet.id, { text: newText });
+        onCloseLinkPopup();
+
+        setTimeout(() => {
+            const newCursorPos = (text.substring(0, lastOpen) + `[[${selectedBullet.text}]]`).length;
+            input.focus();
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    }
+  }, [bullet.id, onUpdate, onCloseLinkPopup]);
+
+  const handleTextChange = (e) => {
+    const text = e.target.value;
+    const cursor = e.target.selectionStart;
+    onUpdate(bullet.id, { text });
+
+    const textBeforeCursor = text.substring(0, cursor ?? 0);
+    const lastOpen = textBeforeCursor.lastIndexOf('[[');
+    if (lastOpen !== -1) {
+      const lastClose = textBeforeCursor.lastIndexOf(']]');
+      if (lastClose < lastOpen) {
+        const query = textBeforeCursor.substring(lastOpen + 2);
+        onTriggerLinkPopup(bullet.id, query, textInputRef, handleLinkSelection);
+        return;
+      }
+    }
+    onCloseLinkPopup();
+  };
+
+  const handleTextKeyDown = (e) => {
+    const input = e.target;
+    const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
+
+    if (isPopupActive) {
+        let handled = true;
+        switch (e.key) {
+            case 'ArrowUp': onLinkNavigate('up'); break;
+            case 'ArrowDown': onLinkNavigate('down'); break;
+            case 'Enter': onLinkSelect(handleLinkSelection); break;
+            case 'Tab': onLinkSelect(handleLinkSelection); break;
+            case 'Escape': {
+                onCloseLinkPopup();
+                const text = input.value;
+                const cursor = input.selectionStart ?? text.length;
+                const textBeforeCursor = text.substring(0, cursor);
+                const lastOpen = textBeforeCursor.lastIndexOf('[[');
+                if (lastOpen !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpen) {
+                    const newText = text.substring(0, lastOpen) + text.substring(cursor);
+                    onUpdate(bullet.id, { text: newText });
+                    setTimeout(() => {
+                        if(textInputRef.current) {
+                            textInputRef.current.focus();
+                            textInputRef.current.setSelectionRange(lastOpen, lastOpen);
+                        }
+                    }, 0);
+                }
+                break;
+            }
+            default: handled = false;
+        }
+        if (handled) { e.preventDefault(); return; }
+    }
+
+    if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        const selectedText = text.substring(start, end);
+
+        let newText;
+        let newCursorPosStart;
+        let newCursorPosEnd;
+
+        if (selectedText) {
+            newText = `${text.substring(0, start)}[${selectedText}]()${text.substring(end)}`;
+            newCursorPosStart = newCursorPosEnd = start + selectedText.length + 3;
+        } else {
+            newText = `${text.substring(0, start)}[link text]()${text.substring(end)}`;
+            newCursorPosStart = start + 1;
+            newCursorPosEnd = start + 1 + 'link text'.length;
+        }
+
+        onUpdate(bullet.id, { text: newText });
+
+        setTimeout(() => {
+            if (textInputRef.current) {
+                textInputRef.current.focus();
+                textInputRef.current.setSelectionRange(newCursorPosStart, newCursorPosEnd);
+            }
+        }, 0);
+        return;
+    }
+
+
+    if (e.altKey) {
+        if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
+    }
+
+    if (e.ctrlKey && e.shiftKey) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); onFoldAll(bullet.id, true); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); onFoldAll(bullet.id, false); return; }
+    }
+
+    if (e.ctrlKey) {
+        let handled = true;
+        switch (e.key) {
+            case 'ArrowLeft':
+                if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
+                else if (level > 0) onFocusParent(bullet.id);
+                break;
+            case 'ArrowRight':
+                if (hasChildren) onUpdate(bullet.id, { isCollapsed: false });
+                break;
+            case 'ArrowDown': onZoom(bullet.id); break;
+            default: handled = false;
+        }
+        if (handled) { e.preventDefault(); return; }
+    }
+
+    switch (e.key) {
+      case 'Enter':
+        e.preventDefault();
+        if (e.shiftKey) {
+            setIsNoteVisible(true);
+            setTimeout(() => noteInputRef.current?.focus(), 0);
+        } else {
+            onAddSibling(bullet.id);
+        }
+        break;
+      case 'Tab':
+        e.preventDefault();
+        if (e.shiftKey) onOutdent(bullet.id);
+        else onIndent(bullet.id);
+        break;
+      case 'Backspace':
+        if (bullet.text === '') {
+          e.preventDefault();
+          onDelete(bullet.id);
+        }
+        break;
+      case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
+      case 'ArrowDown': e.preventDefault(); onFocusMove('down'); break;
+      case 'ArrowLeft':
+        if (input.selectionStart === 0) { e.preventDefault(); onFocusParent(bullet.id); }
+        break;
+      case 'ArrowRight':
+        if (input.selectionStart === input.value.length) { e.preventDefault(); onFocusMove('down', 'start'); }
+        break;
+    }
+  };
+
+  const handleNoteBlur = () => {
+    if (bullet.note.trim() === '') {
+      if (bullet.note !== '') onUpdate(bullet.id, { note: '' });
+      setIsNoteVisible(false);
+    }
+  };
+
+  const handleNoteKeyDown = (e) => {
+      const textarea = e.target;
+      if (e.key === 'ArrowUp' && textarea.selectionStart === 0) {
+          e.preventDefault();
+          setIsNoteVisible(false);
+          textInputRef.current?.focus();
+      }
+      if (e.key === 'ArrowDown' && textarea.selectionStart === textarea.value.length) {
+        e.preventDefault();
+        onFocusMove('down');
+      }
+  }
+
+  const toggleCollapse = () => {
+    if (hasChildren) {
+      onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
+    }
+  };
+
+  const matchesSearch = (b, q) => {
+      if (!q) return true;
+      const query = q.toLowerCase();
+      const textMatch = b.text.toLowerCase().includes(query);
+      const noteMatch = b.note?.toLowerCase().includes(query);
+      const childrenMatch = b.children.some(child => matchesSearch(child, q));
+      return textMatch || noteMatch || childrenMatch;
+  };
+
+  const highlightText = (text, highlight) => {
+    if (!highlight) return text;
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    return (
+      <React.Fragment>
+        {parts.map((part, i) =>
+          part.toLowerCase() === highlight.toLowerCase() ? (
+            <span key={i} className="bg-yellow-500/50 text-white rounded-sm">
+              {part}
+            </span>
+          ) : ( part )
+        )}
+      </React.Fragment>
+    );
+  };
+
+  const renderTextWithRichContent = (text, highlight, options = { internalLinks: true }) => {
+    const combinedRegex = /(\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+    const parts = text.split(combinedRegex);
+
+    return (
+      <React.Fragment>
+        {parts.map((part, index) => {
+            if (!part) return null;
+
+            if (options.internalLinks && part.startsWith('[[') && part.endsWith(']]')) {
+                const linkText = part.slice(2, -2);
+                return (
+                    <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
+                        {highlightText(linkText, highlight)}
+                    </button>
+                );
+            }
+            
+            const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (mdLinkMatch) {
+                const [, text, url] = mdLinkMatch;
+                let href = url.trim();
+                if (!/^(https?|ftp|mailto):/i.test(href)) {
+                   href = `https://${href}`;
+                }
+                return (
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                       {highlightText(text, highlight)}
+                    </a>
+                );
+            }
+
+            if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
+                const href = part.startsWith('www.') ? `https://${part}` : part;
+                return (
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                        {highlightText(part, highlight)}
+                    </a>
+                );
+            }
+
+            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
+                return (
+                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                        {highlightText(part, highlight)}
+                    </a>
+                );
+            }
+
+            return highlightText(part, highlight);
+        })}
+      </React.Fragment>
+    );
+  };
+  
+  if (searchQuery && !matchesSearch(bullet, searchQuery)) {
+      return null;
+  }
+
+  const circleColor = bullet.note ? 'var(--note-color)' : 'var(--main-color)';
+
+  return (
+    <div className="flex flex-col group">
+        <div className={`flex items-start py-1 relative ${isFocused ? 'bg-gray-800/[.6] rounded' : ''}`}>
+            <div
+                style={{ marginLeft: `${level * 1.5}rem` }}
+                className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]"
+            >
+                <button
+                    onClick={toggleCollapse}
+                    className={`transition-opacity duration-150 text-gray-500 hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
+                >
+                    {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
+                </button>
+                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors">
+                    {isJournalRoot ? <AppointmentIcon className="w-4 h-4" /> : <CircleIcon className="w-2 h-2" color={circleColor} />}
+                </button>
+            </div>
+            <div className="flex-grow ml-2">
+                <div className="flex items-center">
+                    <div className="flex-grow">
+                        {isEditing ? (
+                            <textarea
+                                ref={textInputRef}
+                                value={bullet.text}
+                                onChange={handleTextChange}
+                                onKeyDown={handleTextKeyDown}
+                                className="w-full bg-transparent outline-none text-gray-200 resize-none overflow-hidden leading-6"
+                                rows={1}
+                            />
+                        ) : (
+                            <div onClick={() => onFocusChange(bullet.id)} className="w-full cursor-text min-h-[1.5rem] leading-6 whitespace-pre-wrap break-words">
+                            {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-500">...</span>}
+                            </div>
+                        )}
+                    </div>
+                </div>
+                {isEditing && isNoteVisible && (
+                    <textarea
+                        ref={noteInputRef}
+                        value={bullet.note}
+                        onChange={(e) => onUpdate(bullet.id, { note: e.target.value })}
+                        onKeyDown={handleNoteKeyDown}
+                        onBlur={handleNoteBlur}
+                        className="w-full text-sm bg-gray-800 text-gray-400 outline-none p-1 rounded-sm mt-1 resize-y"
+                        placeholder="Add a note..."
+                        rows={3}
+                    />
+                )}
+            </div>
+        </div>
+      {!bullet.isCollapsed && hasChildren && (
+        <div className="border-l border-gray-700/50">
+          {bullet.children.map((child) => (
+            <BulletItem
+                key={child.id}
+                bullet={child}
+                level={level + 1}
+                onUpdate={onUpdate}
+                onAddSibling={onAddSibling}
+                onDelete={onDelete}
+                onIndent={onIndent}
+                onOutdent={onOutdent}
+                onFocusChange={onFocusChange}
+                onZoom={onZoom}
+                onFocusMove={onFocusMove}
+                onFocusParent={onFocusParent}
+                onFocusChild={onFocusChild}
+                onFoldAll={onFoldAll}
+                onMoveBullet={onMoveBullet}
+                currentFocusId={currentFocusId}
+                focusPosition={focusPosition}
+                searchQuery={searchQuery}
+                onLinkClick={onLinkClick}
+                onTriggerLinkPopup={onTriggerLinkPopup}
+                onCloseLinkPopup={onCloseLinkPopup}
+                onLinkNavigate={onLinkNavigate}
+                onLinkSelect={onLinkSelect}
+                isLinkPopupOpen={isLinkPopupOpen}
+                linkPopupTargetId={linkPopupTargetId}
+                isJournalRoot={false}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// From App.tsx
+
+function hexToHsl(hex) {
+    let r = 0, g = 0, b = 0;
+    if (hex.length == 4) {
+        r = "0x" + hex[1] + hex[1];
+        g = "0x" + hex[2] + hex[2];
+        b = "0x" + hex[3] + hex[3];
+    } else if (hex.length == 7) {
+        r = "0x" + hex[1] + hex[2];
+        g = "0x" + hex[3] + hex[4];
+        b = "0x" + hex[5] + hex[6];
+    }
+    r /= 255; g /= 255; b /= 255;
+    let cmin = Math.min(r,g,b), cmax = Math.max(r,g,b), delta = cmax - cmin, h = 0, s = 0, l = 0;
+    if (delta == 0) h = 0;
+    else if (cmax == r) h = ((g - b) / delta) % 6;
+    else if (cmax == g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+    l = (cmax + cmin) / 2;
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    s = +(s * 100).toFixed(1);
+    l = +(l * 100).toFixed(1);
+    return [h, s, l];
+}
+
+function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s,
+        x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+        m = l - c/2,
+        r = 0, g = 0, b = 0;
+    if (0 <= h && h < 60) { [r,g,b] = [c,x,0] } 
+    else if (60 <= h && h < 120) { [r,g,b] = [x,c,0] }
+    else if (120 <= h && h < 180) { [r,g,b] = [0,c,x] }
+    else if (180 <= h && h < 240) { [r,g,b] = [0,x,c] }
+    else if (240 <= h && h < 300) { [r,g,b] = [x,0,c] }
+    else if (300 <= h && h < 360) { [r,g,b] = [c,0,x] }
+    r = Math.round((r + m) * 255).toString(16).padStart(2,'0');
+    g = Math.round((g + m) * 255).toString(16).padStart(2,'0');
+    b = Math.round((b + m) * 255).toString(16).padStart(2,'0');
+    return `#${r}${g}${b}`;
+}
+
+function deriveNoteColor(hex) {
+    const [h, s, l] = hexToHsl(hex);
+    const newHue = (h + 150) % 360;
+    return hslToHex(newHue, s, Math.min(l + 10, 80));
+}
+
+const FONT_LIST = [
+  'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 
+  'Times New Roman', 'Georgia', 'Garamond', 
+  'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'
+];
+
+const SettingsModal = ({ isOpen, onClose, onSave, currentSettings }) => {
+    const { useState, useEffect } = React;
+    const [settings, setSettings] = useState(currentSettings);
+
+    useEffect(() => {
+        setSettings(currentSettings);
+    }, [isOpen, currentSettings]);
+
+    const handleSave = () => {
+        onSave(settings);
+        onClose();
+    };
+    
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setSettings(prev => ({...prev, [name]: value }));
+    };
+
+    const handleFontSizeChange = (e) => {
+        setSettings(prev => ({...prev, fontSize: parseInt(e.target.value, 10) }));
+    }
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-30 flex justify-center items-center" onClick={onClose}>
+            <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <h2 className="p-4 text-lg font-semibold border-b border-gray-700">Settings</h2>
+                <div className="p-4 space-y-4">
+                    <div>
+                        <label htmlFor="fileName" className="block text-sm font-medium text-gray-400 mb-1">File Name</label>
+                        <input type="text" id="fileName" name="fileName" value={settings.fileName} onChange={handleInputChange} className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"/>
+                    </div>
+                    <div>
+                        <label htmlFor="mainColor" className="block text-sm font-medium text-gray-400 mb-1">Main Color</label>
+                        <input type="color" id="mainColor" name="mainColor" value={settings.mainColor} onChange={handleInputChange} className="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"/>
+                    </div>
+                    <div>
+                        <label htmlFor="fontFamily" className="block text-sm font-medium text-gray-400 mb-1">Font</label>
+                        <select id="fontFamily" name="fontFamily" value={settings.fontFamily} onChange={handleInputChange} className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]">
+                            {FONT_LIST.map(font => <option key={font} value={font}>{font}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="fontSize" className="block text-sm font-medium text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
+                        <input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/>
+                    </div>
+                </div>
+                <div className="p-4 flex justify-end gap-2 border-t border-gray-700">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button>
+                    <button onClick={handleSave} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Save</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const App = () => {
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+    const [bullets, setBullets] = useState(initialData);
+    const [zoomedBulletId, setZoomedBulletId] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [focusOptions, setFocusOptions] = useState({ id: null, position: 'end' });
+    const isInitialFocusSet = useRef(false);
+    const linkPopupRef = useRef(null);
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [linkSelectionHandler, setLinkSelectionHandler] = useState({ handler: null });
+    const prevFocusId = useRef(null);
+    
+    const [settings, setSettings] = useState({
+        mainColor: '#60a5fa',
+        fileName: 'My Outline',
+        fontFamily: 'sans-serif',
+        fontSize: 16,
+    });
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+
+    const [linkPopupState, setLinkPopupState] = useState({
+        isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
+    });
+
+    const currentFocusId = focusOptions.id;
+    const focusPosition = focusOptions.position;
+
+    const handleFocusChange = useCallback((id, position = 'end') => {
+        setFocusOptions({ id, position });
+    }, []);
+
+    useEffect(() => {
+        try {
+            const savedSettings = localStorage.getItem('workflowy-clone-settings');
+            if (savedSettings) {
+                setSettings(JSON.parse(savedSettings));
+            }
+        } catch (error) {
+            console.error("Failed to load settings from localStorage", error);
+        }
+
+        try {
+            const savedData = localStorage.getItem('workflowy-clone-data');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                if (!parsedData.find((b) => b.text === JOURNAL_ROOT_TEXT)) {
+                    parsedData.unshift({
+                        id: 'journal-root',
+                        text: JOURNAL_ROOT_TEXT,
+                        note: "Use Ctrl+J to jump to today's log.",
+                        children: [],
+                        isCollapsed: false,
+                    });
+                }
+                setBullets(parsedData);
+            }
+        } catch (error) {
+            console.error("Failed to load data from localStorage", error);
+            setBullets(initialData);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('workflowy-clone-data', JSON.stringify(bullets));
+    }, [bullets]);
+    
+    useEffect(() => {
+        localStorage.setItem('workflowy-clone-settings', JSON.stringify(settings));
+        
+        document.title = `${settings.fileName || 'Untitled'} - myOutliner`;
+        
+        const root = document.documentElement;
+        root.style.setProperty('--main-color', settings.mainColor);
+        root.style.setProperty('--note-color', deriveNoteColor(settings.mainColor));
+        root.style.setProperty('--font-family', settings.fontFamily);
+        root.style.setProperty('--font-size', `${settings.fontSize}px`);
+
+    }, [settings]);
+
+    const findBulletAndParent = useCallback((
+        id,
+        nodes,
+        parent = null
+      ) => {
+        for (let i = 0; i < nodes.length; i++) {
+          const node = nodes[i];
+          if (node.id === id) {
+            return { node, parent, siblings: nodes, index: i };
+          }
+          const found = findBulletAndParent(id, node.children, node);
+          if (found) return found;
+        }
+        return null;
+    }, []);
+
+    useEffect(() => {
+        const currentId = focusOptions.id;
+        const prevId = prevFocusId.current;
+
+        if (prevId && prevId !== currentId) {
+            const found = findBulletAndParent(prevId, bullets);
+            if (found && found.node.text === '' && found.node.note === '' && found.node.children.length === 0) {
+                const newBullets = JSON.parse(JSON.stringify(bullets));
+                const foundAgain = findBulletAndParent(prevId, newBullets);
+                if (foundAgain) {
+                    foundAgain.siblings.splice(foundAgain.index, 1);
+                    setBullets(newBullets);
+                }
+            }
+        }
+
+        prevFocusId.current = currentId;
+    }, [focusOptions.id, bullets, findBulletAndParent]);
+
+
+    const breadcrumbs = useMemo(() => {
+        if (!zoomedBulletId) return [];
+        const path = [];
+        const findPath = (nodes, currentPath) => {
+            for (const node of nodes) {
+                const newPath = [...currentPath, node];
+                if (node.id === zoomedBulletId) {
+                    path.push(...newPath);
+                    return true;
+                }
+                if (findPath(node.children, newPath)) return true;
+            }
+            return false;
+        };
+        findPath(bullets, []);
+        return path;
+    }, [bullets, zoomedBulletId]);
+
+    const handleZoom = useCallback((id) => {
+        const oldZoomedBulletId = zoomedBulletId;
+        
+        // A zoom out is navigating to a parent/ancestor in the breadcrumb path, or to the root.
+        const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
+                             (id !== null && breadcrumbs.some(b => b.id === id));
+        
+        if (id === null) { // Zooming out to root
+            setZoomedBulletId(null);
+            if (oldZoomedBulletId) {
+                // Focus on the bullet we were just zoomed into.
+                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+            } else {
+                 // Fallback: if already at root, focus first visible item.
+                const getVisibleIds = (nodes) => {
+                    let ids = [];
+                    for (const node of nodes) {
+                        ids.push(node.id);
+                        if (!node.isCollapsed && node.children.length > 0) {
+                            ids = ids.concat(getVisibleIds(node.children));
+                        }
+                    }
+                    return ids;
+                };
+                const rootVisibleIds = getVisibleIds(bullets);
+                if (rootVisibleIds.length > 0) {
+                    handleFocusChange(rootVisibleIds[0]);
+                }
+            }
+            return;
+        }
+    
+        const bulletToZoom = findBulletAndParent(id, bullets)?.node;
+    
+        if (bulletToZoom && bulletToZoom.children.length === 0) {
+            // This is for zooming into a leaf node. We create a new bullet and focus it.
+            const newBullet = createNewBullet();
+            const newBullets = JSON.parse(JSON.stringify(bullets));
+            const found = findBulletAndParent(id, newBullets);
+            if (found) {
+                found.node.children.push(newBullet);
+                found.node.isCollapsed = false;
+                setBullets(newBullets);
+                setZoomedBulletId(id);
+                setTimeout(() => {
+                    handleFocusChange(newBullet.id);
+                }, 0);
+            } else {
+                setZoomedBulletId(id);
+            }
+        } else if (bulletToZoom && bulletToZoom.children.length > 0) {
+            setZoomedBulletId(id);
+            if (isZoomingOut && oldZoomedBulletId) {
+                // When zooming out, focus on the node we were just in.
+                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+            } else {
+                // When zooming in, focus on the first child.
+                const getVisibleIds = (nodes) => {
+                    let ids = [];
+                    for (const node of nodes) {
+                        ids.push(node.id);
+                        if (!node.isCollapsed && node.children.length > 0) {
+                            ids = ids.concat(getVisibleIds(node.children));
+                        }
+                    }
+                    return ids;
+                };
+                const visibleChildrenIds = getVisibleIds(bulletToZoom.children);
+                if (visibleChildrenIds.length > 0) {
+                    handleFocusChange(visibleChildrenIds[0]);
+                }
+            }
+        } else {
+            // Fallback for bullet not found
+            setZoomedBulletId(id);
+        }
+    }, [bullets, handleFocusChange, zoomedBulletId, breadcrumbs, findBulletAndParent]);
+
+    const displayedBullets = useMemo(() => {
+        if (!zoomedBulletId) return bullets;
+        const findZoomed = (nodes) => {
+            for (const node of nodes) {
+                if (node.id === zoomedBulletId) return node;
+                const found = findZoomed(node.children);
+                if (found) return found;
+            }
+            return null;
+        }
+        const zoomedNode = findZoomed(bullets);
+        return zoomedNode ? zoomedNode.children : [];
+    }, [bullets, zoomedBulletId]);
+
+    const visibleBulletIds = useMemo(() => {
+        const getVisibleIds = (nodes) => {
+            let ids = [];
+            for (const node of nodes) {
+                ids.push(node.id);
+                if (!node.isCollapsed && node.children.length > 0) {
+                    ids = ids.concat(getVisibleIds(node.children));
+                }
+            }
+            return ids;
+        };
+        return getVisibleIds(displayedBullets);
+    }, [displayedBullets]);
+    
+    useEffect(() => {
+        if (!isInitialFocusSet.current && visibleBulletIds.length > 0) {
+            handleFocusChange(visibleBulletIds[0], 'end');
+            isInitialFocusSet.current = true;
+        }
+    }, [visibleBulletIds, handleFocusChange]);
+
+    const handleGoToJournal = useCallback(() => {
+        const now = new Date();
+        const year = now.getFullYear().toString();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const dayText = `${year}-${month}-${day}`;
+
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        
+        let journalNode = newBullets.find((b) => b.text === JOURNAL_ROOT_TEXT);
+        if (!journalNode) {
+            journalNode = createNewBullet(JOURNAL_ROOT_TEXT);
+            newBullets.unshift(journalNode);
+        }
+
+        let yearNode = journalNode.children.find((b) => b.text === year);
+        if (!yearNode) {
+            yearNode = createNewBullet(year);
+            journalNode.children.push(yearNode);
+        }
+
+        let monthNode = yearNode.children.find((b) => b.text === month);
+        if (!monthNode) {
+            monthNode = createNewBullet(month);
+            yearNode.children.push(monthNode);
+        }
+        
+        let dayNode = monthNode.children.find((b) => b.text === dayText);
+        if (!dayNode) {
+            dayNode = createNewBullet(dayText);
+            monthNode.children.push(dayNode);
+        }
+        
+        setBullets(newBullets);
+        handleZoom(monthNode.id);
+        setTimeout(() => handleFocusChange(dayNode.id), 0);
+    }, [bullets, handleZoom, handleFocusChange]);
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setIsSearchModalOpen(prev => !prev);
+            }
+            else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                handleGoToJournal();
+            }
+            else if (e.ctrlKey && e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (zoomedBulletId) {
+                    const parentId = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].id : null;
+                    handleZoom(parentId);
+                }
+            } 
+            else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !currentFocusId && visibleBulletIds.length > 0) {
+                const target = e.target;
+                if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    handleFocusChange(visibleBulletIds[0]);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+        };
+    }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange]);
+
+    const mapBullets = (
+        nodes,
+        callback
+    ) => {
+        return nodes.map(node => {
+            const newNode = callback(node);
+            return {
+                ...newNode,
+                children: mapBullets(newNode.children, callback),
+            };
+        });
+    };
+    
+    const handleUpdate = useCallback((id, updates) => {
+        setBullets(prevBullets =>
+            mapBullets(prevBullets, bullet =>
+                bullet.id === id ? { ...bullet, ...updates } : bullet
+            )
+        );
+    }, []);
+
+    const addSibling = (targetId, newBullet) => {
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        let baseNodes = newBullets;
+        if(zoomedBulletId){
+            const zoomed = findBulletAndParent(zoomedBulletId, newBullets);
+            if(zoomed) baseNodes = zoomed.node.children;
+        }
+        const found = findBulletAndParent(targetId, baseNodes);
+        if (found) {
+            found.siblings.splice(found.index + 1, 0, newBullet);
+            setBullets(newBullets);
+            handleFocusChange(newBullet.id);
+        }
+    }
+
+    const handleAddSibling = useCallback((id) => {
+       addSibling(id, createNewBullet());
+    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
+
+    const handleDelete = useCallback((id) => {
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const found = findBulletAndParent(id, newBullets);
+        if (found) {
+            const prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id;
+            found.siblings.splice(found.index, 1);
+            setBullets(newBullets);
+            handleFocusChange(prevSiblingId || null);
+        }
+    }, [bullets, handleFocusChange, findBulletAndParent]);
+    
+    const handleIndent = useCallback((id) => {
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const found = findBulletAndParent(id, newBullets);
+        if (found && found.index > 0) {
+            const prevSibling = found.siblings[found.index - 1];
+            const [movedNode] = found.siblings.splice(found.index, 1);
+            prevSibling.children.push(movedNode);
+            prevSibling.isCollapsed = false;
+            setBullets(newBullets);
+            handleFocusChange(id);
+        }
+    }, [bullets, handleFocusChange, findBulletAndParent]);
+    
+    const handleOutdent = useCallback((id) => {
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const found = findBulletAndParent(id, newBullets);
+        if (found && found.parent) {
+            const parentInfo = findBulletAndParent(found.parent.id, newBullets);
+            if(parentInfo){
+                const [movedNode] = found.siblings.splice(found.index, 1);
+                const subsequentSiblings = found.siblings.splice(found.index);
+                movedNode.children.push(...subsequentSiblings);
+
+                parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode);
+                setBullets(newBullets);
+                handleFocusChange(id);
+            }
+        }
+    }, [bullets, handleFocusChange, findBulletAndParent]);
+
+    const handleFoldAll = useCallback((id, collapse) => {
+        const setCollapseRecursively = (nodes) => {
+            return nodes.map(node => {
+                const newNode = { ...node };
+                if (newNode.children.length > 0) {
+                    newNode.isCollapsed = collapse;
+                    newNode.children = setCollapseRecursively(newNode.children);
+                }
+                return newNode;
+            });
+        };
+    
+        const findAndFold = (nodes) => {
+            return nodes.map(node => {
+                if (node.id === id) {
+                    const updatedNode = { ...node };
+                    if(updatedNode.children.length > 0) {
+                        updatedNode.isCollapsed = collapse;
+                        updatedNode.children = setCollapseRecursively(updatedNode.children);
+                    }
+                    return updatedNode;
+                }
+                if (node.children.length > 0) {
+                    return { ...node, children: findAndFold(node.children) };
+                }
+                return node;
+            });
+        };
+    
+        setBullets(prevBullets => findAndFold(prevBullets));
+    }, []);
+
+    const handleMoveBullet = useCallback((id, direction) => {
+        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const found = findBulletAndParent(id, newBullets);
+    
+        if (!found) return;
+    
+        const { siblings, index } = found;
+    
+        if (direction === 'up') {
+            if (index > 0) {
+                [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]];
+                setBullets(newBullets);
+            }
+        } else { // 'down'
+            if (index < siblings.length - 1) {
+                [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
+                setBullets(newBullets);
+            }
+        }
+    }, [bullets, findBulletAndParent]);
+
+    const handleFocusParent = useCallback((id) => {
+        const currentTree = zoomedBulletId ? displayedBullets : bullets;
+        const findInCurrentView = (
+            bulletId,
+            nodes,
+            parent = null
+          ) => {
+            for (const node of nodes) {
+              if (node.id === bulletId) {
+                return { node, parent };
+              }
+              const found = findInCurrentView(bulletId, node.children, node);
+              if (found) return found;
+            }
+            return null;
+        };
+        const found = findInCurrentView(id, currentTree);
+        if (found?.parent) {
+            handleFocusChange(found.parent.id);
+        }
+    }, [zoomedBulletId, bullets, displayedBullets, handleFocusChange]);
+
+    const handleFocusChild = useCallback((id) => {
+        const found = findBulletAndParent(id, bullets);
+        if (found?.node && found.node.children.length > 0 && !found.node.isCollapsed) {
+            handleFocusChange(found.node.children[0].id, 'start');
+        }
+    }, [bullets, handleFocusChange, findBulletAndParent]);
+
+
+    const handleExport = () => {
+        const dataStr = JSON.stringify(bullets, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'workflowy_clone_data.json';
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    };
+
+    const handleImport = (data) => {
+        setBullets(data);
+        setZoomedBulletId(null);
+        setSearchQuery('');
+    };
+    
+    const handleAddItemToCurrentView = useCallback(() => {
+        const newBullet = createNewBullet();
+        if (zoomedBulletId) {
+            const newBullets = JSON.parse(JSON.stringify(bullets));
+            const found = findBulletAndParent(zoomedBulletId, newBullets);
+            if (found) {
+                found.node.children.push(newBullet);
+                found.node.isCollapsed = false;
+                setBullets(newBullets);
+                handleFocusChange(newBullet.id);
+            }
+        } else {
+            setBullets(prev => [...prev, newBullet]);
+            handleFocusChange(newBullet.id);
+        }
+    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
+
+    const handleFocusMove = useCallback((direction, position = 'end') => {
+        if (!currentFocusId) {
+            if (visibleBulletIds.length > 0) {
+                 handleFocusChange(visibleBulletIds[0], position);
+            }
+            return;
+        }
+        const currentIndex = visibleBulletIds.indexOf(currentFocusId);
+        if (currentIndex === -1) return;
+        let nextIndex;
+        if (direction === 'down') {
+            nextIndex = currentIndex + 1;
+            if (nextIndex < visibleBulletIds.length) {
+                handleFocusChange(visibleBulletIds[nextIndex], position);
+            }
+        } else { // 'up'
+            nextIndex = currentIndex - 1;
+            if (nextIndex >= 0) {
+                handleFocusChange(visibleBulletIds[nextIndex], position);
+            }
+        }
+    }, [currentFocusId, visibleBulletIds, handleFocusChange]);
+
+    const flatBullets = useMemo(() => {
+        const results = [];
+        const traverse = (nodes, currentPath) => {
+            for (const node of nodes) {
+                results.push({
+                    id: node.id,
+                    text: node.text,
+                    path: currentPath,
+                });
+                if (node.children && node.children.length > 0) {
+                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                }
+            }
+        };
+        traverse(bullets, []);
+        return results;
+    }, [bullets]);
+
+
+    // --- Link Popup Logic ---
+
+    const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
+        if (!inputRef.current) return;
+        const rect = inputRef.current.getBoundingClientRect();
+        setLinkSelectionHandler({ handler: selectionHandler });
+
+        const POPUP_MAX_WIDTH_PX = 768; // Corresponds to Tailwind's max-w-2xl
+        const VIEWPORT_PADDING_PX = 16;
+        
+        let left = rect.left + window.scrollX;
+        
+        // Ensure the popup doesn't overflow the right edge of the viewport
+        if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) {
+            left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX;
+        }
+
+        // Ensure the popup doesn't start off-screen on the left
+        left = Math.max(VIEWPORT_PADDING_PX, left);
+
+        const suggestions = !query 
+            ? flatBullets.slice(0, 50) // Show some initial items if query is empty
+            : flatBullets.map(bullet => {
+                const lowerText = bullet.text.toLowerCase();
+                const lowerQuery = query.toLowerCase();
+                let score = 0;
+                if (lowerText.startsWith(lowerQuery)) {
+                    score = 2;
+                } else if (lowerText.includes(lowerQuery)) {
+                    score = 1;
+                }
+                return { ...bullet, score };
+            })
+            .filter(bullet => bullet.score > 0 && bullet.id !== bulletId) // Don't link to self
+            .sort((a, b) => b.score - a.score);
+
+        setLinkPopupState({
+            isOpen: true,
+            targetId: bulletId,
+            query: query,
+            position: { top: rect.bottom + window.scrollY, left: left },
+            suggestions: suggestions.slice(0, 100), // Limit suggestions
+            selectedIndex: 0,
+        });
+
+    }, [flatBullets]);
+
+    const handleCloseLinkPopup = useCallback(() => {
+        setLinkPopupState(prev => {
+            if (prev.isOpen) {
+                return { ...prev, isOpen: false };
+            }
+            return prev;
+        });
+        setLinkSelectionHandler({ handler: null });
+    }, []);
+
+    const handleLinkNavigate = useCallback((direction) => {
+        if (!linkPopupState.isOpen) return;
+        setLinkPopupState(prev => {
+            const { suggestions, selectedIndex } = prev;
+            let nextIndex = selectedIndex;
+            if (direction === 'down') {
+                nextIndex = (selectedIndex + 1) % suggestions.length;
+            } else {
+                nextIndex = (selectedIndex - 1 + suggestions.length) % suggestions.length;
+            }
+            return { ...prev, selectedIndex: nextIndex };
+        });
+    }, [linkPopupState.isOpen]);
+    
+    const handleLinkSelect = useCallback((callback) => {
+        if (!linkPopupState.isOpen || linkPopupState.suggestions.length === 0) return;
+        const selectedBullet = linkPopupState.suggestions[linkPopupState.selectedIndex];
+        callback(selectedBullet);
+    }, [linkPopupState]);
+
+    const handleLinkClick = useCallback((linkText) => {
+        let targetBullet = null;
+        const find = (nodes) => {
+            for (const node of nodes) {
+                if (node.text === linkText) {
+                    targetBullet = node;
+                    return true;
+                }
+                if (find(node.children)) return true;
+            }
+            return false;
+        };
+        find(bullets);
+    
+        if (targetBullet) {
+            const path = [];
+            const findPath = (nodes, currentPath) => {
+                for (const node of nodes) {
+                    const newPath = [...currentPath, node];
+                    if (node.id === targetBullet.id) {
+                        path.push(...newPath);
+                        return true;
+                    }
+                    if (findPath(node.children, newPath)) return true;
+                }
+                return false;
+            };
+            findPath(bullets, []);
+            
+            const parent = path.length > 1 ? path[path.length - 2] : null;
+            handleZoom(parent ? parent.id : null);
+            setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0);
+        } else {
+            console.warn(`Link target not found: "${linkText}"`);
+        }
+    }, [bullets, handleZoom, handleFocusChange]);
+
+    const handleNavigate = (bulletId) => {
+        const path = [];
+        const findPath = (nodes, currentPath) => {
+            for (const node of nodes) {
+                const newPath = [...currentPath, node];
+                if (node.id === bulletId) {
+                    path.push(...newPath);
+                    return true;
+                }
+                if (findPath(node.children, newPath)) return true;
+            }
+            return false;
+        };
+        findPath(bullets, []);
+    
+        if (path.length > 0) {
+            const parent = path.length > 1 ? path[path.length - 2] : null;
+            handleZoom(parent ? parent.id : null);
+            setIsSearchModalOpen(false);
+            // Use timeout to ensure the view has re-rendered before focusing
+            setTimeout(() => {
+                handleFocusChange(bulletId, 'end');
+            }, 0);
+        }
+    };
+
+
+    return (
+        <div className="h-screen w-screen flex flex-col">
+            <Toolbar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onImport={handleImport}
+                onExport={handleExport}
+                breadcrumbs={breadcrumbs}
+                onBreadcrumbClick={handleZoom}
+                fileName={settings.fileName}
+                onOpenSettings={() => setIsSettingsModalOpen(true)}
+            />
+            <SearchModal
+                isOpen={isSearchModalOpen}
+                onClose={() => setIsSearchModalOpen(false)}
+                bullets={flatBullets}
+                onNavigate={handleNavigate}
+            />
+            <SettingsModal 
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
+                onSave={setSettings}
+                currentSettings={settings}
+            />
+            <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32">
+                {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
+                    <BulletItem
+                        key={bullet.id}
+                        bullet={bullet}
+                        level={0}
+                        onUpdate={handleUpdate}
+                        onAddSibling={handleAddSibling}
+                        onDelete={handleDelete}
+                        onIndent={handleIndent}
+                        onOutdent={handleOutdent}
+                        onFocusChange={handleFocusChange}
+                        onZoom={handleZoom}
+                        onFocusMove={handleFocusMove}
+                        onFocusParent={handleFocusParent}
+                        onFocusChild={handleFocusChild}
+                        onFoldAll={handleFoldAll}
+                        onMoveBullet={handleMoveBullet}
+                        currentFocusId={currentFocusId}
+                        focusPosition={focusPosition}
+                        searchQuery={searchQuery}
+                        onLinkClick={handleLinkClick}
+                        onTriggerLinkPopup={handleTriggerLinkPopup}
+                        onCloseLinkPopup={handleCloseLinkPopup}
+                        onLinkNavigate={handleLinkNavigate}
+                        onLinkSelect={handleLinkSelect}
+                        isLinkPopupOpen={linkPopupState.isOpen}
+                        linkPopupTargetId={linkPopupState.targetId}
+                        isJournalRoot={bullet.text === JOURNAL_ROOT_TEXT && zoomedBulletId === null}
+                    />
+                )) : (
+                    <div className="flex justify-center items-center h-full text-gray-500">
+                        <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-600 px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                           {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
+                        </button>
+                    </div>
+                )}
+                 {linkPopupState.isOpen && (
+                    <LinkPopup
+                        suggestions={linkPopupState.suggestions}
+                        selectedIndex={linkPopupState.selectedIndex}
+                        onSelect={(bullet) => {
+                            if (linkSelectionHandler.handler) {
+                                linkSelectionHandler.handler(bullet);
+                            }
+                        }}
+                        position={linkPopupState.position}
+                        containerRef={linkPopupRef}
+                    />
+                )}
+            </main>
+        </div>
+    );
+};
+
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+    <App />
+);
+    </script>
+  </body>
+</html>
