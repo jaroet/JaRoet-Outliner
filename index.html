@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>myOutliner</title>
+    <title>Jaroet Outliner</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
     <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Configure Babel -->
@@ -39,14 +44,25 @@
         width: 8px;
         height: 8px;
       }
+      /* Light theme */
       ::-webkit-scrollbar-track {
-        background: #1a202c; /* dark gray */
+        background: #f1f5f9; /* cool-gray-100 */
       }
       ::-webkit-scrollbar-thumb {
-        background: #4a5568; /* medium gray */
+        background: #cbd5e1; /* cool-gray-300 */
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; /* cool-gray-400 */
+      }
+      /* Dark theme */
+      .dark ::-webkit-scrollbar-track {
+        background: #1a202c; /* dark gray */
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #4a5568; /* medium gray */
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
         background: #718096; /* light gray */
       }
     </style>
@@ -61,7 +77,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-900 text-gray-200 antialiased">
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-200">
     <div id="root"></div>
     <script type="text/babel" data-type="module">
 import React from 'react';
@@ -126,62 +142,123 @@ const AppointmentIcon = ({ className = 'w-4 h-4' }) => (
 
 const SettingsIcon = ({ className = 'w-5 h-5' }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434-.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
 
+const CloudIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.5 4.5 0 0 0 2.25 15Z" />
+    </svg>
+);
+
+const CheckCircleIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+);
+
+const ArrowPathIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12c0-3.75 3-6.75 6.75-6.75s6.75 3 6.75 6.75-3 6.75-6.75 6.75S4.5 15.75 4.5 12Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v.01M17.364 6.636l-.007.007M4.5 12H4m13.5 0h.01M6.636 17.364l-.007-.007M12 19.5v-.01" />
+    </svg>
+);
+
+const SunIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.95-4.223-1.591 1.591M5.25 12H3m4.223-4.95-1.591-1.591M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z" />
+    </svg>
+);
+
+const MoonIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25c0 5.385 4.365 9.75 9.75 9.75 2.806 0 5.347-1.257 7.141-3.248a9.753 9.753 0 0 1 1.861-3.75Z" />
+    </svg>
+);
 
 // From App.tsx (constants and helpers)
-const JOURNAL_ROOT_TEXT = 'Daily Log';
+const JOURNAL_ROOT_TEXT = 'Dagelijks Logboek';
 
 const initialData = [
   {
     id: 'journal-root',
     text: JOURNAL_ROOT_TEXT,
-    note: "Use Ctrl+J to jump to today's log.",
+    note: "Gebruik Ctrl+J om direct naar de notities van vandaag te gaan.",
     children: [],
     isCollapsed: false,
   },
   {
-    id: '1',
-    text: 'Welcome to your Workflowy Clone!',
-    note: 'This is a note. Use Shift+Enter to add notes to your bullets.',
+    id: 'doc-root',
+    text: 'Uitleg & Documentatie',
+    note: "Hier vind je een overzicht van de belangrijkste functies en sneltoetsen om het maximale uit de Jaroet Outliner te halen.",
     children: [
       {
-        id: '2',
-        text: 'Features',
+        id: 'gs-1',
+        text: 'Snelstartgids',
         note: '',
         children: [
-          { id: '3', text: 'Infinite nested lists', note: '', children: [], isCollapsed: true },
-          { id: '4', text: 'Zooming (click the bullet point or use Ctrl+Down)', note: '', children: [], isCollapsed: true },
-          { id: '5', text: 'Ctrl+Right to unfold, Ctrl+Left to navigate to parent or fold', note: '', children: [], isCollapsed: true },
-          { id: '6', text: 'Search', note: '', children: [], isCollapsed: true },
-          { id: '7', text: 'Import/Export JSON data', note: '', children: [], isCollapsed: true },
+          { id: 'gs-2', text: 'Klik op een item om te beginnen met typen.', note: '', children: [], isCollapsed: false },
+          { id: 'gs-3', text: 'Druk op `Enter` om een nieuw item aan te maken.', note: '', children: [], isCollapsed: false },
+          { id: 'gs-4', text: 'Druk op `Tab` om een item te laten inspringen (sub-item).', note: '', children: [], isCollapsed: false },
+          { id: 'gs-5', text: 'Druk op `Shift+Tab` om een item te laten uitspringen.', note: '', children: [], isCollapsed: false },
         ],
-        isCollapsed: true,
+        isCollapsed: false,
       },
       {
-        id: '8',
-        text: 'Hotkeys',
+        id: 'kf-1',
+        text: 'Belangrijkste Functies',
         note: '',
         children: [
-            { id: '9', text: 'Enter: Create new item', note: '', children: [], isCollapsed: true },
-            { id: '10', text: 'Tab: Indent item', note: '', children: [], isCollapsed: true },
-            { id: '11', text: 'Shift+Tab: Outdent item', note: '', children: [], isCollapsed: true },
-            { id: '12', text: 'Backspace on empty item: Delete', note: '', children: [], isCollapsed: true },
-            { id: '13', text: 'Arrow Up/Down: Navigate items', note: '', children: [], isCollapsed: true },
-            { id: '14', text: 'Ctrl+Up: Zoom out', note: '', children: [], isCollapsed: true },
-            { id: '15', text: 'Arrow Left (at start): Move to parent', note: '', children: [], isCollapsed: true },
-            { id: '16', text: 'Arrow Right (at end): Move to next item', note: '', children: [], isCollapsed: true },
-            { id: '17', text: '[[ to link to another item', note: '', children: [], isCollapsed: true },
-            { id: '18', text: 'Ctrl+Shift+K: Quick Find', note: '', children: [], isCollapsed: true },
-            { id: '19', text: "Ctrl+J: Go to today's daily log", note: '', children: [], isCollapsed: true },
-            { id: '20', text: "Alt+Up/Down: Move item up/down", note: '', children: [], isCollapsed: true },
-            { id: '21', text: "Ctrl+L: Insert link", note: '', children: [], isCollapsed: true },
+          { id: 'kf-2', text: "Inzoomen: Klik op een bolletje om te focussen op dat item en de sub-items. Het is alsof je een nieuw document opent voor dat onderwerp.", note: '', children: [], isCollapsed: false },
+          { id: 'kf-3', text: 'Uitzoomen: Gebruik de broodkruimels bovenaan of druk op `Ctrl+Up` om terug te gaan.', note: '', children: [], isCollapsed: false },
+          { id: 'kf-4', text: 'Notities: Druk op `Shift+Enter` om extra details toe te voegen. Het bolletje krijgt een andere kleur om aan te geven dat er een notitie is.', note: '', children: [], isCollapsed: false },
+          { id: 'kf-5', text: 'In-/uitklappen: Klik op het driehoekje naast een item om de sub-items te verbergen (inklappen) of te tonen (uitklappen).', note: '', children: [], isCollapsed: false },
+          { id: 'kf-6', text: "Dagelijks logboek: Druk op `Ctrl+J` om direct naar een speciale sectie voor de datum van vandaag te springen. Ideaal voor een journaal.", note: '', children: [], isCollapsed: false },
+          { id: 'kf-7', text: "Snel Zoeken: Kun je iets niet vinden? Druk op `Ctrl+Shift+K` om een krachtige zoekbalk te openen.", note: '', children: [], isCollapsed: false },
         ],
-        isCollapsed: true,
-      }
+        isCollapsed: false,
+      },
+      {
+        id: 'hk-1',
+        text: 'Alle Sneltoetsen',
+        note: 'Leer deze sneltoetsen om razendsnel te navigeren en organiseren.',
+        children: [
+          { 
+            id: 'hk-edit', text: 'Aanmaken & Bewerken', note: '', children: [
+              { id: 'hk-e-1', text: 'Enter : Maak een nieuw item aan', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-2', text: 'Tab : Huidig item laten inspringen', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-3', text: 'Shift+Tab : Huidig item laten uitspringen', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-4', text: 'Shift+Enter : Notitie toevoegen of bewerken', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-5', text: 'Backspace (op een leeg item) : Verwijder het item', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-6', text: 'Ctrl+L : Maak van geselecteerde tekst een link', note: '', children: [], isCollapsed: false },
+              { id: 'hk-e-7', text: '[[ : Begin te typen om te linken naar een ander item', note: '', children: [], isCollapsed: false },
+            ],
+            isCollapsed: true,
+          },
+          {
+            id: 'hk-nav', text: 'Navigatie & Weergave', note: '', children: [
+                { id: 'hk-n-1', text: 'Pijl omhoog/omlaag : Navigeer tussen items', note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-2', text: 'Ctrl+Pijl omlaag (of klik op bolletje) : Zoom in', note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-3', text: 'Ctrl+Pijl omhoog : Zoom uit', note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-4', text: 'Ctrl+Pijl links : Klap item in (indien sub-items) of ga naar bovenliggend item', note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-5', text: 'Ctrl+Pijl rechts : Klap een ingeklapt item uit', note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-6', text: "Ctrl+J : Ga naar het logboek van vandaag", note: '', children: [], isCollapsed: false },
+                { id: 'hk-n-7', text: 'Ctrl+Shift+K : Open het "Snel Zoeken" venster', note: '', children: [], isCollapsed: false },
+            ],
+            isCollapsed: true,
+          },
+          {
+            id: 'hk-org', text: 'Organiseren', note: '', children: [
+                { id: 'hk-o-1', text: 'Alt+Pijl omhoog : Verplaats item omhoog', note: '', children: [], isCollapsed: false },
+                { id: 'hk-o-2', text: 'Alt+Pijl omlaag : Verplaats item omlaag', note: '', children: [], isCollapsed: false },
+            ],
+            isCollapsed: true,
+          }
+        ],
+        isCollapsed: false,
+      },
     ],
     isCollapsed: false,
   },
@@ -213,7 +290,7 @@ const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRe
 
   return (
     <div
-      className="absolute z-20 bg-gray-800 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-full max-w-2xl"
+      className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-full max-w-2xl"
       style={{ top: position.top, left: position.left }}
     >
       <ul ref={containerRef}>
@@ -222,14 +299,14 @@ const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRe
             <button
               onClick={() => onSelect(bullet)}
               className={`w-full text-left px-3 py-2 text-sm ${
-                index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-700'
+                index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
                title={bullet.text}
             >
               <span className="truncate block">{bullet.text || <em>Untitled</em>}</span>
               {bullet.path.length > 0 && (
                   <span className={`text-xs truncate block ${
-                    index === selectedIndex ? 'text-white/80' : 'text-gray-500'
+                    index === selectedIndex ? 'text-white/80' : 'text-gray-400 dark:text-gray-500'
                   }`}>{bullet.path.join(' / ')}</span>
               )}
             </button>
@@ -295,15 +372,15 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-30 flex justify-center items-start pt-20"
+      className="fixed inset-0 bg-black/40 dark:bg-black/60 z-30 flex justify-center items-start pt-20"
       onClick={onClose}
     >
       <div
-        className="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        <div className="p-4 border-b border-gray-700 relative text-[var(--main-color)]">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 relative text-[var(--main-color)]">
           <span className="absolute inset-y-0 left-0 flex items-center pl-7">
             <SearchIcon />
           </span>
@@ -313,7 +390,7 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
             placeholder="Quick find..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full bg-gray-900 text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
+            className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
           />
         </div>
         <div className="overflow-y-auto">
@@ -323,14 +400,14 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
                 <li
                   key={bullet.id}
                   ref={index === selectedIndex ? selectedItemRef : null}
-                  className={`cursor-pointer ${index === selectedIndex ? 'bg-[var(--main-color)]' : 'hover:bg-gray-700'}`}
+                  className={`cursor-pointer ${index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                   onClick={() => onNavigate(bullet.id)}
                 >
-                  <div className="px-4 py-2 border-b border-gray-700/50">
-                    <p className="text-gray-200 truncate">{bullet.text || <em>Untitled</em>}</p>
+                  <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+                    <p className="text-gray-800 dark:text-gray-200 truncate">{bullet.text || <em>Untitled</em>}</p>
                     {bullet.path.length > 0 && (
                         <p className={`text-xs truncate ${
-                            index === selectedIndex ? 'text-white/80' : 'text-gray-500'
+                            index === selectedIndex ? 'text-white/80' : 'text-gray-400 dark:text-gray-500'
                         }`}>{bullet.path.join(' / ')}</p>
                     )}
                   </div>
@@ -338,7 +415,7 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500 p-4 text-center">No results found.</p>
+            <p className="text-gray-400 dark:text-gray-500 p-4 text-center">No results found.</p>
           )}
         </div>
       </div>
@@ -347,6 +424,20 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
 };
 
 // From components/Toolbar.tsx
+const SyncIndicator = ({ status }) => {
+    switch (status) {
+        case 'syncing':
+            return <div title="Saving to Gist..." className="p-2 text-gray-400"><ArrowPathIcon className="animate-spin" /></div>;
+        case 'synced':
+            return <div title="Data saved to Gist" className="p-2 text-green-400"><CheckCircleIcon /></div>;
+        case 'error':
+            return <div title="Sync failed. Check console and settings." className="p-2 text-red-400"><CloudIcon /></div>;
+        case 'offline':
+        default:
+            return <div title="Data is being saved to your local browser" className="p-2 text-gray-400"><CloudIcon /></div>;
+    }
+};
+
 const Toolbar = ({
   searchQuery,
   onSearchChange,
@@ -356,6 +447,10 @@ const Toolbar = ({
   onBreadcrumbClick,
   fileName,
   onOpenSettings,
+  syncStatus,
+  onGoToToday,
+  theme,
+  onThemeToggle,
 }) => {
   const { useRef } = React;
   const fileInputRef = useRef(null);
@@ -392,18 +487,18 @@ const Toolbar = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-gray-800/80 backdrop-blur-sm p-2 flex flex-col sm:flex-row items-center gap-4 border-b border-gray-700 text-[var(--main-color)]">
+    <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex flex-col sm:flex-row items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
       <div className="flex-grow w-full sm:w-auto">
         <div className="flex items-center gap-2">
-            <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+            <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <HomeIcon />
             </button>
             {breadcrumbs.map((crumb, index) => (
                 <React.Fragment key={crumb.id}>
-                <span className="text-gray-500">/</span>
+                <span className="text-gray-400 dark:text-gray-500">/</span>
                 <button
                     onClick={() => onBreadcrumbClick(crumb.id)}
-                    className="px-2 py-1 text-sm text-gray-200 rounded-md hover:bg-gray-700 transition-colors truncate max-w-xs"
+                    className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate max-w-xs"
                     title={crumb.text}
                 >
                     {crumb.text || <em>Untitled</em>}
@@ -411,12 +506,15 @@ const Toolbar = ({
                 </React.Fragment>
             ))}
             {breadcrumbs.length === 0 && (
-                <span className="text-gray-200 font-semibold ml-2 truncate" title={fileName}>{fileName}</span>
+                <span className="text-gray-800 dark:text-gray-200 font-semibold ml-2 truncate" title={fileName}>{fileName}</span>
             )}
         </div>
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto">
+        <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <AppointmentIcon className="w-5 h-5" />
+        </button>
         <div className="relative flex-grow">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <SearchIcon />
@@ -426,11 +524,12 @@ const Toolbar = ({
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-gray-700 text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] transition-shadow"
+            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] transition-shadow"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+            <SyncIndicator status={syncStatus} />
             <input
                 type="file"
                 ref={fileInputRef}
@@ -438,13 +537,16 @@ const Toolbar = ({
                 accept=".json"
                 onChange={handleFileChange}
             />
-            <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+            <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <UploadIcon />
             </button>
-            <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+            <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <DownloadIcon />
             </button>
-            <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-700 transition-colors">
+            <button onClick={onThemeToggle} title="Toggle Theme" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <SettingsIcon />
             </button>
         </div>
@@ -728,7 +830,7 @@ const BulletItem = ({
       <React.Fragment>
         {parts.map((part, i) =>
           part.toLowerCase() === highlight.toLowerCase() ? (
-            <span key={i} className="bg-yellow-500/50 text-white rounded-sm">
+            <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
               {part}
             </span>
           ) : ( part )
@@ -800,14 +902,14 @@ const BulletItem = ({
 
   return (
     <div className="flex flex-col group">
-        <div className={`flex items-start py-1 relative ${isFocused ? 'bg-gray-800/[.6] rounded' : ''}`}>
+        <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
             <div
                 style={{ marginLeft: `${level * 1.5}rem` }}
                 className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]"
             >
                 <button
                     onClick={toggleCollapse}
-                    className={`transition-opacity duration-150 text-gray-500 hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
+                    className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
                 >
                     {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                 </button>
@@ -824,12 +926,12 @@ const BulletItem = ({
                                 value={bullet.text}
                                 onChange={handleTextChange}
                                 onKeyDown={handleTextKeyDown}
-                                className="w-full bg-transparent outline-none text-gray-200 resize-none overflow-hidden leading-6"
+                                className="w-full bg-transparent outline-none text-gray-800 dark:text-gray-200 resize-none overflow-hidden leading-6"
                                 rows={1}
                             />
                         ) : (
                             <div onClick={() => onFocusChange(bullet.id)} className="w-full cursor-text min-h-[1.5rem] leading-6 whitespace-pre-wrap break-words">
-                            {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-500">...</span>}
+                            {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}
                     </div>
@@ -841,7 +943,7 @@ const BulletItem = ({
                         onChange={(e) => onUpdate(bullet.id, { note: e.target.value })}
                         onKeyDown={handleNoteKeyDown}
                         onBlur={handleNoteBlur}
-                        className="w-full text-sm bg-gray-800 text-gray-400 outline-none p-1 rounded-sm mt-1 resize-y"
+                        className="w-full text-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none p-1 rounded-sm mt-1 resize-y"
                         placeholder="Add a note..."
                         rows={3}
                     />
@@ -849,7 +951,7 @@ const BulletItem = ({
             </div>
         </div>
       {!bullet.isCollapsed && hasChildren && (
-        <div className="border-l border-gray-700/50">
+        <div className="border-l border-gray-300 dark:border-gray-700/50">
           {bullet.children.map((child) => (
             <BulletItem
                 key={child.id}
@@ -946,6 +1048,10 @@ const FONT_LIST = [
   'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'
 ];
 
+const GIST_FILENAME = 'JaroetOutliner-v1.json';
+const GIST_DESCRIPTION = 'Jaroet Outliner Application Data';
+const GITHUB_API_URL = 'https://api.github.com';
+
 const SettingsModal = ({ isOpen, onClose, onSave, currentSettings }) => {
     const { useState, useEffect } = React;
     const [settings, setSettings] = useState(currentSettings);
@@ -972,30 +1078,45 @@ const SettingsModal = ({ isOpen, onClose, onSave, currentSettings }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 z-30 flex justify-center items-center" onClick={onClose}>
-            <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-                <h2 className="p-4 text-lg font-semibold border-b border-gray-700">Settings</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <h2 className="p-4 text-lg font-semibold border-b border-gray-200 dark:border-gray-700">Settings</h2>
                 <div className="p-4 space-y-4">
                     <div>
-                        <label htmlFor="fileName" className="block text-sm font-medium text-gray-400 mb-1">File Name</label>
-                        <input type="text" id="fileName" name="fileName" value={settings.fileName} onChange={handleInputChange} className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"/>
+                        <label htmlFor="fileName" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">File Name</label>
+                        <input type="text" id="fileName" name="fileName" value={settings.fileName} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"/>
                     </div>
                     <div>
-                        <label htmlFor="mainColor" className="block text-sm font-medium text-gray-400 mb-1">Main Color</label>
-                        <input type="color" id="mainColor" name="mainColor" value={settings.mainColor} onChange={handleInputChange} className="w-full h-10 p-1 bg-gray-700 rounded-md cursor-pointer"/>
+                        <label htmlFor="mainColor" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Main Color</label>
+                        <input type="color" id="mainColor" name="mainColor" value={settings.mainColor} onChange={handleInputChange} className="w-full h-10 p-1 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer"/>
                     </div>
                     <div>
-                        <label htmlFor="fontFamily" className="block text-sm font-medium text-gray-400 mb-1">Font</label>
-                        <select id="fontFamily" name="fontFamily" value={settings.fontFamily} onChange={handleInputChange} className="w-full bg-gray-700 text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]">
+                        <label htmlFor="fontFamily" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font</label>
+                        <select id="fontFamily" name="fontFamily" value={settings.fontFamily} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]">
                             {FONT_LIST.map(font => <option key={font} value={font}>{font}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="fontSize" className="block text-sm font-medium text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
+                        <label htmlFor="fontSize" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
                         <input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/>
                     </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h3 className="text-md font-semibold mb-2">GitHub Sync</h3>
+                         <div>
+                            <label htmlFor="githubPat" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Personal Access Token</label>
+                            <input type="password" id="githubPat" name="githubPat" value={settings.githubPat} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]" placeholder="ghp_..."/>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                Requires <code className="bg-gray-200 dark:bg-gray-900 px-1 rounded-sm text-xs">gist</code> scope. Your token is stored locally.
+                                <a href={`https://github.com/settings/tokens/new?scopes=gist&description=${encodeURIComponent(GIST_DESCRIPTION)}`} target="_blank" rel="noopener noreferrer" className="text-[var(--main-color)] underline ml-2">Create one</a>
+                            </p>
+                        </div>
+                        <div className="mt-2">
+                            <label htmlFor="gistId" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Gist ID (auto-managed)</label>
+                            <input type="text" id="gistId" name="gistId" value={settings.gistId} readOnly disabled className="w-full bg-gray-200 dark:bg-gray-900 text-gray-400 dark:text-gray-500 px-3 py-2 rounded-md cursor-not-allowed"/>
+                        </div>
+                    </div>
                 </div>
-                <div className="p-4 flex justify-end gap-2 border-t border-gray-700">
-                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button>
+                <div className="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
                     <button onClick={handleSave} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Save</button>
                 </div>
             </div>
@@ -1014,12 +1135,20 @@ const App = () => {
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [linkSelectionHandler, setLinkSelectionHandler] = useState({ handler: null });
     const prevFocusId = useRef(null);
+    const dataLoadedRef = useRef(false);
+    const saveTimeoutRef = useRef(null);
+    const prevCoreDataRef = useRef(null);
+    const [theme, setTheme] = useState('dark');
+    
+    const [syncStatus, setSyncStatus] = useState('offline');
     
     const [settings, setSettings] = useState({
         mainColor: '#60a5fa',
         fileName: 'My Outline',
         fontFamily: 'sans-serif',
         fontSize: 16,
+        githubPat: '',
+        gistId: '',
     });
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
@@ -1035,45 +1164,179 @@ const App = () => {
         setFocusOptions({ id, position });
     }, []);
 
-    useEffect(() => {
-        try {
-            const savedSettings = localStorage.getItem('workflowy-clone-settings');
-            if (savedSettings) {
-                setSettings(JSON.parse(savedSettings));
-            }
-        } catch (error) {
-            console.error("Failed to load settings from localStorage", error);
-        }
+    const getCoreDataString = useCallback((nodes) => {
+        const removeUiState = (b) => {
+            const { isCollapsed, ...coreBullet } = b;
+            return {
+                ...coreBullet,
+                children: coreBullet.children.map(removeUiState),
+            };
+        };
+        const coreBullets = nodes.map(removeUiState);
+        return JSON.stringify(coreBullets);
+    }, []);
 
-        try {
-            const savedData = localStorage.getItem('workflowy-clone-data');
-            if (savedData) {
-                const parsedData = JSON.parse(savedData);
-                if (!parsedData.find((b) => b.text === JOURNAL_ROOT_TEXT)) {
-                    parsedData.unshift({
-                        id: 'journal-root',
-                        text: JOURNAL_ROOT_TEXT,
-                        note: "Use Ctrl+J to jump to today's log.",
-                        children: [],
-                        isCollapsed: false,
-                    });
-                }
-                setBullets(parsedData);
-            }
-        } catch (error) {
-            console.error("Failed to load data from localStorage", error);
-            setBullets(initialData);
-        }
+    const handleThemeToggle = useCallback(() => {
+        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('workflowy-clone-data', JSON.stringify(bullets));
-    }, [bullets]);
-    
+        const root = window.document.documentElement;
+        const isDark = theme === 'dark';
+        root.classList.toggle('dark', isDark);
+        localStorage.setItem('jaroet-outliner-theme', theme);
+    }, [theme]);
+
+    // Load settings and data on initial mount
     useEffect(() => {
+        const loadData = async () => {
+            // Load theme first to prevent flash of wrong theme
+            const savedTheme = localStorage.getItem('jaroet-outliner-theme');
+            if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+                setTheme(savedTheme);
+            }
+
+            let loadedSettings;
+            const defaultSettings = {
+                mainColor: '#60a5fa',
+                fileName: 'My Outline',
+                fontFamily: 'sans-serif',
+                fontSize: 16,
+                githubPat: '',
+                gistId: '',
+            };
+            try {
+                const savedSettings = localStorage.getItem('workflowy-clone-settings');
+                // Merging with default settings to ensure all keys are present
+                loadedSettings = { ...defaultSettings, ...(savedSettings ? JSON.parse(savedSettings) : {}) };
+                setSettings(loadedSettings);
+            } catch (error) {
+                console.error("Failed to load settings from localStorage", error);
+                loadedSettings = defaultSettings;
+            }
+
+            // Always try loading from local storage first as a baseline.
+            let localBullets = null;
+            try {
+                const savedData = localStorage.getItem('workflowy-clone-data');
+                if (savedData) {
+                   const data = JSON.parse(savedData);
+                   if (Array.isArray(data)) {
+                       localBullets = data;
+                   }
+                }
+            } catch(e) {
+               console.error("Failed to parse local data", e);
+            }
+            
+            let initialLoadData = localBullets || initialData;
+            setBullets(initialLoadData);
+            prevCoreDataRef.current = getCoreDataString(initialLoadData);
+    
+            const getHeaders = (token) => ({
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+            });
+    
+            if (loadedSettings.githubPat) {
+                setSyncStatus('syncing');
+                try {
+                    let gistId = loadedSettings.gistId;
+                    let gist;
+
+                    if (gistId) {
+                        const response = await fetch(`${GITHUB_API_URL}/gists/${gistId}`, { 
+                            headers: getHeaders(loadedSettings.githubPat),
+                            cache: 'no-cache'
+                        });
+                        if (response.ok) {
+                            gist = await response.json();
+                        } else if (response.status === 404) {
+                            console.warn("Gist ID not found, searching for it...");
+                            gistId = ''; 
+                        } else {
+                            throw new Error(`GitHub API error: ${response.statusText}`);
+                        }
+                    }
+
+                    if (!gistId) {
+                        const response = await fetch(`${GITHUB_API_URL}/gists`, { 
+                            headers: getHeaders(loadedSettings.githubPat),
+                            cache: 'no-cache'
+                        });
+                        if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
+                        const gists = await response.json();
+                        const foundGist = gists.find(g => g.description === GIST_DESCRIPTION && g.files[GIST_FILENAME]);
+                        if (foundGist) {
+                            gist = foundGist;
+                            gistId = foundGist.id;
+                        }
+                    }
+
+                    if (gist) {
+                        const fileContent = gist.files[GIST_FILENAME]?.content;
+                        let gistData;
+                        try {
+                            gistData = JSON.parse(fileContent || '[]');
+                        } catch (e) {
+                            console.error("Failed to parse Gist content", e);
+                            gistData = null; // Mark as failed parse
+                        }
+                        
+                        if (Array.isArray(gistData)) {
+                            if (gistData.length > 0) {
+                                setBullets(gistData);
+                                prevCoreDataRef.current = getCoreDataString(gistData);
+                            } else {
+                                console.log("Gist is empty. Preserving local data.");
+                            }
+                        }
+                        
+                        if (settings.gistId !== gist.id) {
+                            setSettings(s => ({ ...s, gistId: gist.id }));
+                        }
+
+                    } else {
+                        console.log("No Gist found, creating a new one...");
+                        const content = JSON.stringify(initialLoadData);
+                        
+                        const response = await fetch(`${GITHUB_API_URL}/gists`, {
+                            method: 'POST',
+                            headers: getHeaders(loadedSettings.githubPat),
+                            body: JSON.stringify({
+                                description: GIST_DESCRIPTION,
+                                public: false,
+                                files: { [GIST_FILENAME]: { content } }
+                            })
+                        });
+                        const newGist = await response.json();
+                        if (!response.ok) throw new Error(newGist.message || "Failed to create Gist");
+                        
+                        setSettings(s => ({ ...s, gistId: newGist.id }));
+                    }
+                    setSyncStatus('synced');
+                } catch (error) {
+                    console.error("Failed to sync with GitHub Gist:", error);
+                    setSyncStatus('error');
+                }
+            } else {
+                setSyncStatus('offline');
+            }
+            
+            setZoomedBulletId(null);
+            isInitialFocusSet.current = false;
+            dataLoadedRef.current = true;
+        };
+
+        loadData();
+    }, [getCoreDataString]);
+
+    // Save settings and data
+    useEffect(() => {
+        // Always save settings locally
         localStorage.setItem('workflowy-clone-settings', JSON.stringify(settings));
         
-        document.title = `${settings.fileName || 'Untitled'} - myOutliner`;
+        document.title = `${settings.fileName || 'Untitled'} - Jaroet Outliner`;
         
         const root = document.documentElement;
         root.style.setProperty('--main-color', settings.mainColor);
@@ -1081,7 +1344,51 @@ const App = () => {
         root.style.setProperty('--font-family', settings.fontFamily);
         root.style.setProperty('--font-size', `${settings.fontSize}px`);
 
-    }, [settings]);
+        if (!dataLoadedRef.current) return;
+        
+        localStorage.setItem('workflowy-clone-data', JSON.stringify(bullets));
+        
+        const currentCoreData = getCoreDataString(bullets);
+        const hasCoreDataChanged = currentCoreData !== prevCoreDataRef.current;
+
+        if (settings.githubPat && settings.gistId) {
+            if (hasCoreDataChanged) {
+                setSyncStatus(s => s === 'error' ? 'error' : 'syncing');
+                if (saveTimeoutRef.current) {
+                    clearTimeout(saveTimeoutRef.current);
+                }
+                saveTimeoutRef.current = setTimeout(async () => {
+                    try {
+                        const headers = {
+                            'Authorization': `token ${settings.githubPat}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                        };
+                        const body = JSON.stringify({
+                            files: { [GIST_FILENAME]: { content: JSON.stringify(bullets) } }
+                        });
+                        const response = await fetch(`${GITHUB_API_URL}/gists/${settings.gistId}`, {
+                            method: 'PATCH',
+                            headers,
+                            body
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || `GitHub API error: ${response.statusText}`);
+                        }
+                        setSyncStatus('synced');
+                        prevCoreDataRef.current = currentCoreData;
+                    } catch (error) {
+                        console.error("Failed to save to Gist:", error);
+                        setSyncStatus('error');
+                    }
+                }, 2000);
+            }
+        } else {
+            setSyncStatus('offline');
+        }
+
+    }, [settings, bullets, getCoreDataString]);
 
     const findBulletAndParent = useCallback((
         id,
@@ -1140,17 +1447,14 @@ const App = () => {
     const handleZoom = useCallback((id) => {
         const oldZoomedBulletId = zoomedBulletId;
         
-        // A zoom out is navigating to a parent/ancestor in the breadcrumb path, or to the root.
         const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
                              (id !== null && breadcrumbs.some(b => b.id === id));
         
-        if (id === null) { // Zooming out to root
+        if (id === null) { 
             setZoomedBulletId(null);
             if (oldZoomedBulletId) {
-                // Focus on the bullet we were just zoomed into.
                 setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
             } else {
-                 // Fallback: if already at root, focus first visible item.
                 const getVisibleIds = (nodes) => {
                     let ids = [];
                     for (const node of nodes) {
@@ -1172,7 +1476,6 @@ const App = () => {
         const bulletToZoom = findBulletAndParent(id, bullets)?.node;
     
         if (bulletToZoom && bulletToZoom.children.length === 0) {
-            // This is for zooming into a leaf node. We create a new bullet and focus it.
             const newBullet = createNewBullet();
             const newBullets = JSON.parse(JSON.stringify(bullets));
             const found = findBulletAndParent(id, newBullets);
@@ -1190,10 +1493,8 @@ const App = () => {
         } else if (bulletToZoom && bulletToZoom.children.length > 0) {
             setZoomedBulletId(id);
             if (isZoomingOut && oldZoomedBulletId) {
-                // When zooming out, focus on the node we were just in.
                 setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
             } else {
-                // When zooming in, focus on the first child.
                 const getVisibleIds = (nodes) => {
                     let ids = [];
                     for (const node of nodes) {
@@ -1210,7 +1511,6 @@ const App = () => {
                 }
             }
         } else {
-            // Fallback for bullet not found
             setZoomedBulletId(id);
         }
     }, [bullets, handleFocusChange, zoomedBulletId, breadcrumbs, findBulletAndParent]);
@@ -1571,16 +1871,14 @@ const App = () => {
         
         let left = rect.left + window.scrollX;
         
-        // Ensure the popup doesn't overflow the right edge of the viewport
         if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) {
             left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX;
         }
 
-        // Ensure the popup doesn't start off-screen on the left
         left = Math.max(VIEWPORT_PADDING_PX, left);
 
         const suggestions = !query 
-            ? flatBullets.slice(0, 50) // Show some initial items if query is empty
+            ? flatBullets.slice(0, 50) 
             : flatBullets.map(bullet => {
                 const lowerText = bullet.text.toLowerCase();
                 const lowerQuery = query.toLowerCase();
@@ -1592,7 +1890,7 @@ const App = () => {
                 }
                 return { ...bullet, score };
             })
-            .filter(bullet => bullet.score > 0 && bullet.id !== bulletId) // Don't link to self
+            .filter(bullet => bullet.score > 0 && bullet.id !== bulletId) 
             .sort((a, b) => b.score - a.score);
 
         setLinkPopupState({
@@ -1600,7 +1898,7 @@ const App = () => {
             targetId: bulletId,
             query: query,
             position: { top: rect.bottom + window.scrollY, left: left },
-            suggestions: suggestions.slice(0, 100), // Limit suggestions
+            suggestions: suggestions.slice(0, 100), 
             selectedIndex: 0,
         });
 
@@ -1692,7 +1990,6 @@ const App = () => {
             const parent = path.length > 1 ? path[path.length - 2] : null;
             handleZoom(parent ? parent.id : null);
             setIsSearchModalOpen(false);
-            // Use timeout to ensure the view has re-rendered before focusing
             setTimeout(() => {
                 handleFocusChange(bulletId, 'end');
             }, 0);
@@ -1711,6 +2008,10 @@ const App = () => {
                 onBreadcrumbClick={handleZoom}
                 fileName={settings.fileName}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
+                syncStatus={syncStatus}
+                onGoToToday={handleGoToJournal}
+                theme={theme}
+                onThemeToggle={handleThemeToggle}
             />
             <SearchModal
                 isOpen={isSearchModalOpen}
@@ -1755,8 +2056,8 @@ const App = () => {
                         isJournalRoot={bullet.text === JOURNAL_ROOT_TEXT && zoomedBulletId === null}
                     />
                 )) : (
-                    <div className="flex justify-center items-center h-full text-gray-500">
-                        <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-600 px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
+                    <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
+                        <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                            {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
                         </button>
                     </div>
