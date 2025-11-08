@@ -128,9 +128,10 @@ const HomeIcon = ({ className = 'w-5 h-5' }) => (
     </svg>
 );
 
-const NoteIcon = ({ className = 'w-4 h-4' }) => (
+const TagIcon = ({ className = 'w-4 h-4' }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
     </svg>
 );
 
@@ -142,7 +143,7 @@ const AppointmentIcon = ({ className = 'w-4 h-4' }) => (
 
 const SettingsIcon = ({ className = 'w-5 h-5' }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434-.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
@@ -180,6 +181,7 @@ const MoonIcon = ({ className = 'w-5 h-5' }) => (
 
 // From App.tsx (constants and helpers)
 const JOURNAL_ROOT_TEXT = 'Dagelijks Logboek';
+const TAGS_ROOT_TEXT = 'Tags';
 
 const initialData = [
   {
@@ -217,6 +219,7 @@ const initialData = [
           { id: 'kf-5', text: 'In-/uitklappen: Klik op het driehoekje naast een item om de sub-items te verbergen (inklappen) of te tonen (uitklappen).', note: '', children: [], isCollapsed: false },
           { id: 'kf-6', text: "Dagelijks logboek: Druk op `Ctrl+J` om direct naar een speciale sectie voor de datum van vandaag te springen. Ideaal voor een journaal.", note: '', children: [], isCollapsed: false },
           { id: 'kf-7', text: "Snel Zoeken: Kun je iets niet vinden? Druk op `Ctrl+Shift+K` om een krachtige zoekbalk te openen.", note: '', children: [], isCollapsed: false },
+          { id: 'kf-8', text: "Tags: Type #tagnaam om een tag aan te maken. Een overzicht van al je tags verschijnt automatisch onder de 'Tags' sectie.", note: '', children: [], isCollapsed: false },
         ],
         isCollapsed: false,
       },
@@ -583,6 +586,8 @@ const BulletItem = ({
   isLinkPopupOpen,
   linkPopupTargetId,
   isJournalRoot,
+  isTagsRoot,
+  onNavigateTo,
 }) => {
   const { useState, useRef, useEffect, useCallback } = React;
   const [isEditing, setIsEditing] = useState(false);
@@ -667,6 +672,49 @@ const BulletItem = ({
   const handleTextKeyDown = (e) => {
     const input = e.target;
     const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
+    
+    if (bullet.isReadOnly) {
+        let handled = true;
+        if (e.ctrlKey) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
+                    else if (level > 0) onFocusParent(bullet.id);
+                    break;
+                case 'ArrowRight':
+                    if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
+                    break;
+                case 'ArrowDown':
+                    onZoom(bullet.id);
+                    break;
+                default:
+                    handled = false;
+            }
+        } else {
+            switch(e.key) {
+                case 'Enter':
+                    if (bullet.originalId) {
+                        onNavigateTo(bullet.originalId);
+                    } else if (hasChildren) {
+                        onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
+                    }
+                    break;
+                case 'ArrowUp': onFocusMove('up'); break;
+                case 'ArrowDown': onFocusMove('down'); break;
+                case 'ArrowLeft': onFocusParent(bullet.id); break;
+                case 'ArrowRight': 
+                    if(hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
+                    else onFocusMove('down', 'start'); 
+                    break;
+                default: handled = false;
+            }
+        }
+
+        if (handled) {
+            e.preventDefault();
+        }
+        return;
+    }
 
     if (isPopupActive) {
         let handled = true;
@@ -748,7 +796,8 @@ const BulletItem = ({
                 else if (level > 0) onFocusParent(bullet.id);
                 break;
             case 'ArrowRight':
-                if (hasChildren) onUpdate(bullet.id, { isCollapsed: false });
+                if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
+                else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
                 break;
             case 'ArrowDown': onZoom(bullet.id); break;
             default: handled = false;
@@ -839,14 +888,41 @@ const BulletItem = ({
     );
   };
 
-  const renderTextWithRichContent = (text, highlight, options = { internalLinks: true }) => {
-    const combinedRegex = /(\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const renderTextWithRichContent = (text, highlight, options = { internalLinks: true, renderTagsOnly: false }) => {
+    if (options.renderTagsOnly) {
+        const tagRegex = /(#\w+)/g;
+        const parts = text.split(tagRegex);
+        return (
+            <React.Fragment>
+                {parts.map((part, index) => {
+                    if (part.startsWith('#') && /#\w+/.test(part)) {
+                        return (
+                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                                {part}
+                            </span>
+                        );
+                    }
+                    return <span key={index}>{part}</span>;
+                })}
+            </React.Fragment>
+        );
+    }
+
+    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
     const parts = text.split(combinedRegex);
 
     return (
       <React.Fragment>
         {parts.map((part, index) => {
             if (!part) return null;
+            
+            if (part.startsWith('#') && /#\w+/.test(part)) {
+                return (
+                    <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                         {highlightText(part, highlight)}
+                    </span>
+                );
+            }
 
             if (options.internalLinks && part.startsWith('[[') && part.endsWith(']]')) {
                 const linkText = part.slice(2, -2);
@@ -899,6 +975,24 @@ const BulletItem = ({
   }
 
   const circleColor = bullet.note ? 'var(--note-color)' : 'var(--main-color)';
+  
+  const handleTextClick = () => {
+    if (bullet.isReadOnly) {
+        if (bullet.originalId) {
+            onNavigateTo(bullet.originalId);
+        } else {
+            onFocusChange(bullet.id);
+        }
+    } else {
+        onFocusChange(bullet.id);
+    }
+  };
+
+  const renderBulletIcon = () => {
+    if (isJournalRoot) return <AppointmentIcon className="w-4 h-4" />;
+    if (isTagsRoot) return <TagIcon className="w-4 h-4" />;
+    return <CircleIcon className="w-2 h-2" color={circleColor} />;
+  }
 
   return (
     <div className="flex flex-col group">
@@ -914,23 +1008,32 @@ const BulletItem = ({
                     {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                 </button>
                 <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors">
-                    {isJournalRoot ? <AppointmentIcon className="w-4 h-4" /> : <CircleIcon className="w-2 h-2" color={circleColor} />}
+                    {renderBulletIcon()}
                 </button>
             </div>
             <div className="flex-grow ml-2">
                 <div className="flex items-center">
                     <div className="flex-grow">
                         {isEditing ? (
-                            <textarea
-                                ref={textInputRef}
-                                value={bullet.text}
-                                onChange={handleTextChange}
-                                onKeyDown={handleTextKeyDown}
-                                className="w-full bg-transparent outline-none text-gray-800 dark:text-gray-200 resize-none overflow-hidden leading-6"
-                                rows={1}
-                            />
+                            <div className="relative">
+                                <div
+                                    className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words"
+                                    aria-hidden="true"
+                                >
+                                    {renderTextWithRichContent(bullet.text, '', { renderTagsOnly: true })}
+                                </div>
+                                <textarea
+                                    ref={textInputRef}
+                                    value={bullet.text}
+                                    onChange={handleTextChange}
+                                    onKeyDown={handleTextKeyDown}
+                                    readOnly={bullet.isReadOnly}
+                                    className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6"
+                                    rows={1}
+                                />
+                            </div>
                         ) : (
-                            <div onClick={() => onFocusChange(bullet.id)} className="w-full cursor-text min-h-[1.5rem] leading-6 whitespace-pre-wrap break-words">
+                            <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 whitespace-pre-wrap break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
                             {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}
@@ -980,6 +1083,8 @@ const BulletItem = ({
                 isLinkPopupOpen={isLinkPopupOpen}
                 linkPopupTargetId={linkPopupTargetId}
                 isJournalRoot={false}
+                isTagsRoot={false}
+                onNavigateTo={onNavigateTo}
             />
           ))}
         </div>
@@ -1151,7 +1256,7 @@ const App = () => {
         gistId: '',
     });
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
+    const [tagCollapseState, setTagCollapseState] = useState({});
 
     const [linkPopupState, setLinkPopupState] = useState({
         isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
@@ -1389,6 +1494,92 @@ const App = () => {
         }
 
     }, [settings, bullets, getCoreDataString]);
+    
+    const flatBullets = useMemo(() => {
+        const results = [];
+        const traverse = (nodes, currentPath) => {
+            for (const node of nodes) {
+                results.push({
+                    id: node.id,
+                    text: node.text,
+                    path: currentPath,
+                });
+                if (node.children && node.children.length > 0) {
+                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                }
+            }
+        };
+        traverse(bullets, []);
+        return results;
+    }, [bullets]);
+
+    const tagsData = useMemo(() => {
+        const tagMap = new Map();
+        const tagRegex = /#(\w+)/g;
+        
+        for (const bullet of flatBullets) {
+            const matches = bullet.text.match(tagRegex);
+            if (matches) {
+                for (const match of matches) {
+                    const tagName = match.substring(1);
+                    if (!tagMap.has(tagName)) {
+                        tagMap.set(tagName, []);
+                    }
+                    tagMap.get(tagName).push(bullet);
+                }
+            }
+        }
+        return tagMap;
+    }, [flatBullets]);
+
+    const tagsBullet = useMemo(() => {
+        const sortedTags = Array.from(tagsData.keys()).sort((a, b) => a.localeCompare(b));
+        
+        const tagChildren = sortedTags.map(tagName => {
+            const references = tagsData.get(tagName);
+            const tagId = `tag-#${tagName}`;
+            const referenceChildren = references.map(ref => ({
+                id: `ref-${ref.id}-${tagName}`,
+                text: ref.text,
+                note: '',
+                children: [],
+                isCollapsed: false,
+                isReadOnly: true,
+                originalId: ref.id
+            }));
+
+            return {
+                id: tagId,
+                text: `#${tagName}`,
+                note: '',
+                children: referenceChildren,
+                isCollapsed: tagCollapseState[tagId] ?? true,
+                isReadOnly: true
+            };
+        });
+
+        return {
+            id: 'tags-root',
+            text: TAGS_ROOT_TEXT,
+            note: '',
+            children: tagChildren,
+            isCollapsed: tagCollapseState['tags-root'] ?? true,
+            isReadOnly: true
+        };
+    }, [tagsData, tagCollapseState]);
+
+    const combinedData = useMemo(() => {
+        const data = JSON.parse(JSON.stringify(bullets));
+        if (tagsBullet.children.length > 0) {
+            const journalIndex = data.findIndex(b => b.text === JOURNAL_ROOT_TEXT);
+            if (journalIndex !== -1) {
+                data.splice(journalIndex + 1, 0, tagsBullet);
+            } else {
+                data.unshift(tagsBullet);
+            }
+        }
+        return data;
+    }, [bullets, tagsBullet]);
 
     const findBulletAndParent = useCallback((
         id,
@@ -1412,7 +1603,7 @@ const App = () => {
 
         if (prevId && prevId !== currentId) {
             const found = findBulletAndParent(prevId, bullets);
-            if (found && found.node.text === '' && found.node.note === '' && found.node.children.length === 0) {
+            if (found && !found.node.isReadOnly && found.node.text === '' && found.node.note === '' && found.node.children.length === 0) {
                 const newBullets = JSON.parse(JSON.stringify(bullets));
                 const foundAgain = findBulletAndParent(prevId, newBullets);
                 if (foundAgain) {
@@ -1440,13 +1631,37 @@ const App = () => {
             }
             return false;
         };
-        findPath(bullets, []);
+        findPath(combinedData, []);
         return path;
-    }, [bullets, zoomedBulletId]);
+    }, [combinedData, zoomedBulletId]);
+    
+    const handleNavigate = useCallback((bulletId) => {
+        const path = [];
+        const findPath = (nodes, currentPath) => {
+            for (const node of nodes) {
+                const newPath = [...currentPath, node];
+                if (node.id === bulletId) {
+                    path.push(...newPath);
+                    return true;
+                }
+                if (findPath(node.children, newPath)) return true;
+            }
+            return false;
+        };
+        findPath(bullets, []);
+    
+        if (path.length > 0) {
+            const parent = path.length > 1 ? path[path.length - 2] : null;
+            setZoomedBulletId(parent ? parent.id : null);
+            setIsSearchModalOpen(false);
+            setTimeout(() => {
+                handleFocusChange(bulletId, 'end');
+            }, 0);
+        }
+    }, [bullets, handleFocusChange]);
 
     const handleZoom = useCallback((id) => {
         const oldZoomedBulletId = zoomedBulletId;
-        
         const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
                              (id !== null && breadcrumbs.some(b => b.id === id));
         
@@ -1465,7 +1680,7 @@ const App = () => {
                     }
                     return ids;
                 };
-                const rootVisibleIds = getVisibleIds(bullets);
+                const rootVisibleIds = getVisibleIds(combinedData);
                 if (rootVisibleIds.length > 0) {
                     handleFocusChange(rootVisibleIds[0]);
                 }
@@ -1473,9 +1688,9 @@ const App = () => {
             return;
         }
     
-        const bulletToZoom = findBulletAndParent(id, bullets)?.node;
+        const bulletToZoom = findBulletAndParent(id, combinedData)?.node;
     
-        if (bulletToZoom && bulletToZoom.children.length === 0) {
+        if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
             const newBullet = createNewBullet();
             const newBullets = JSON.parse(JSON.stringify(bullets));
             const found = findBulletAndParent(id, newBullets);
@@ -1490,12 +1705,12 @@ const App = () => {
             } else {
                 setZoomedBulletId(id);
             }
-        } else if (bulletToZoom && bulletToZoom.children.length > 0) {
+        } else if (bulletToZoom) {
             setZoomedBulletId(id);
             if (isZoomingOut && oldZoomedBulletId) {
                 setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-            } else {
-                const getVisibleIds = (nodes) => {
+            } else if (bulletToZoom.children.length > 0) {
+                 const getVisibleIds = (nodes) => {
                     let ids = [];
                     for (const node of nodes) {
                         ids.push(node.id);
@@ -1510,13 +1725,11 @@ const App = () => {
                     handleFocusChange(visibleChildrenIds[0]);
                 }
             }
-        } else {
-            setZoomedBulletId(id);
         }
-    }, [bullets, handleFocusChange, zoomedBulletId, breadcrumbs, findBulletAndParent]);
+    }, [zoomedBulletId, bullets, combinedData, handleFocusChange, breadcrumbs, findBulletAndParent]);
 
     const displayedBullets = useMemo(() => {
-        if (!zoomedBulletId) return bullets;
+        if (!zoomedBulletId) return combinedData;
         const findZoomed = (nodes) => {
             for (const node of nodes) {
                 if (node.id === zoomedBulletId) return node;
@@ -1525,9 +1738,9 @@ const App = () => {
             }
             return null;
         }
-        const zoomedNode = findZoomed(bullets);
+        const zoomedNode = findZoomed(combinedData);
         return zoomedNode ? zoomedNode.children : [];
-    }, [bullets, zoomedBulletId]);
+    }, [combinedData, zoomedBulletId]);
 
     const visibleBulletIds = useMemo(() => {
         const getVisibleIds = (nodes) => {
@@ -1584,9 +1797,9 @@ const App = () => {
         }
         
         setBullets(newBullets);
-        handleZoom(monthNode.id);
+        setZoomedBulletId(monthNode.id);
         setTimeout(() => handleFocusChange(dayNode.id), 0);
-    }, [bullets, handleZoom, handleFocusChange]);
+    }, [bullets, handleFocusChange]);
 
     useEffect(() => {
         const handleGlobalKeyDown = (e) => {
@@ -1634,14 +1847,29 @@ const App = () => {
     };
     
     const handleUpdate = useCallback((id, updates) => {
+        const found = findBulletAndParent(id, combinedData);
+        if (found?.node.isReadOnly) return;
+
         setBullets(prevBullets =>
             mapBullets(prevBullets, bullet =>
                 bullet.id === id ? { ...bullet, ...updates } : bullet
             )
         );
+    }, [combinedData, findBulletAndParent]);
+
+    const handleTagUpdate = useCallback((id, updates) => {
+        if ('isCollapsed' in updates) {
+            setTagCollapseState(prev => ({
+                ...prev,
+                [id]: updates.isCollapsed,
+            }));
+        }
     }, []);
 
     const addSibling = (targetId, newBullet) => {
+        const foundTarget = findBulletAndParent(targetId, combinedData);
+        if (foundTarget?.node.isReadOnly) return;
+
         const newBullets = JSON.parse(JSON.stringify(bullets));
         let baseNodes = newBullets;
         if(zoomedBulletId){
@@ -1658,9 +1886,12 @@ const App = () => {
 
     const handleAddSibling = useCallback((id) => {
        addSibling(id, createNewBullet());
-    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
+    }, [bullets, zoomedBulletId, combinedData, handleFocusChange, findBulletAndParent]);
 
     const handleDelete = useCallback((id) => {
+        const foundTarget = findBulletAndParent(id, combinedData);
+        if (foundTarget?.node.isReadOnly) return;
+
         const newBullets = JSON.parse(JSON.stringify(bullets));
         const found = findBulletAndParent(id, newBullets);
         if (found) {
@@ -1669,27 +1900,34 @@ const App = () => {
             setBullets(newBullets);
             handleFocusChange(prevSiblingId || null);
         }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
     
     const handleIndent = useCallback((id) => {
+        const foundTarget = findBulletAndParent(id, combinedData);
+        if (foundTarget?.node.isReadOnly) return;
+
         const newBullets = JSON.parse(JSON.stringify(bullets));
         const found = findBulletAndParent(id, newBullets);
         if (found && found.index > 0) {
             const prevSibling = found.siblings[found.index - 1];
+             if (prevSibling.isReadOnly) return;
             const [movedNode] = found.siblings.splice(found.index, 1);
             prevSibling.children.push(movedNode);
             prevSibling.isCollapsed = false;
             setBullets(newBullets);
             handleFocusChange(id);
         }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
     
     const handleOutdent = useCallback((id) => {
+        const foundTarget = findBulletAndParent(id, combinedData);
+        if (foundTarget?.node.isReadOnly) return;
+
         const newBullets = JSON.parse(JSON.stringify(bullets));
         const found = findBulletAndParent(id, newBullets);
         if (found && found.parent) {
             const parentInfo = findBulletAndParent(found.parent.id, newBullets);
-            if(parentInfo){
+            if(parentInfo && !parentInfo.node.isReadOnly){
                 const [movedNode] = found.siblings.splice(found.index, 1);
                 const subsequentSiblings = found.siblings.splice(found.index);
                 movedNode.children.push(...subsequentSiblings);
@@ -1699,7 +1937,7 @@ const App = () => {
                 handleFocusChange(id);
             }
         }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
 
     const handleFoldAll = useCallback((id, collapse) => {
         const setCollapseRecursively = (nodes) => {
@@ -1707,7 +1945,9 @@ const App = () => {
                 const newNode = { ...node };
                 if (newNode.children.length > 0) {
                     newNode.isCollapsed = collapse;
-                    newNode.children = setCollapseRecursively(newNode.children);
+                    if (!newNode.isReadOnly) {
+                        newNode.children = setCollapseRecursively(newNode.children);
+                    }
                 }
                 return newNode;
             });
@@ -1734,6 +1974,9 @@ const App = () => {
     }, []);
 
     const handleMoveBullet = useCallback((id, direction) => {
+        const foundTarget = findBulletAndParent(id, combinedData);
+        if (foundTarget?.node.isReadOnly) return;
+
         const newBullets = JSON.parse(JSON.stringify(bullets));
         const found = findBulletAndParent(id, newBullets);
     
@@ -1752,10 +1995,10 @@ const App = () => {
                 setBullets(newBullets);
             }
         }
-    }, [bullets, findBulletAndParent]);
+    }, [bullets, combinedData, findBulletAndParent]);
 
     const handleFocusParent = useCallback((id) => {
-        const currentTree = zoomedBulletId ? displayedBullets : bullets;
+        const currentTree = zoomedBulletId ? displayedBullets : combinedData;
         const findInCurrentView = (
             bulletId,
             nodes,
@@ -1774,14 +2017,14 @@ const App = () => {
         if (found?.parent) {
             handleFocusChange(found.parent.id);
         }
-    }, [zoomedBulletId, bullets, displayedBullets, handleFocusChange]);
+    }, [zoomedBulletId, combinedData, displayedBullets, handleFocusChange]);
 
     const handleFocusChild = useCallback((id) => {
-        const found = findBulletAndParent(id, bullets);
+        const found = findBulletAndParent(id, combinedData);
         if (found?.node && found.node.children.length > 0 && !found.node.isCollapsed) {
             handleFocusChange(found.node.children[0].id, 'start');
         }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+    }, [combinedData, handleFocusChange, findBulletAndParent]);
 
 
     const handleExport = () => {
@@ -1805,7 +2048,7 @@ const App = () => {
         if (zoomedBulletId) {
             const newBullets = JSON.parse(JSON.stringify(bullets));
             const found = findBulletAndParent(zoomedBulletId, newBullets);
-            if (found) {
+            if (found && !found.node.isReadOnly) {
                 found.node.children.push(newBullet);
                 found.node.isCollapsed = false;
                 setBullets(newBullets);
@@ -1839,25 +2082,6 @@ const App = () => {
             }
         }
     }, [currentFocusId, visibleBulletIds, handleFocusChange]);
-
-    const flatBullets = useMemo(() => {
-        const results = [];
-        const traverse = (nodes, currentPath) => {
-            for (const node of nodes) {
-                results.push({
-                    id: node.id,
-                    text: node.text,
-                    path: currentPath,
-                });
-                if (node.children && node.children.length > 0) {
-                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                }
-            }
-        };
-        traverse(bullets, []);
-        return results;
-    }, [bullets]);
-
 
     // --- Link Popup Logic ---
 
@@ -1964,38 +2188,12 @@ const App = () => {
             findPath(bullets, []);
             
             const parent = path.length > 1 ? path[path.length - 2] : null;
-            handleZoom(parent ? parent.id : null);
+            setZoomedBulletId(parent ? parent.id : null);
             setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0);
         } else {
             console.warn(`Link target not found: "${linkText}"`);
         }
-    }, [bullets, handleZoom, handleFocusChange]);
-
-    const handleNavigate = (bulletId) => {
-        const path = [];
-        const findPath = (nodes, currentPath) => {
-            for (const node of nodes) {
-                const newPath = [...currentPath, node];
-                if (node.id === bulletId) {
-                    path.push(...newPath);
-                    return true;
-                }
-                if (findPath(node.children, newPath)) return true;
-            }
-            return false;
-        };
-        findPath(bullets, []);
-    
-        if (path.length > 0) {
-            const parent = path.length > 1 ? path[path.length - 2] : null;
-            handleZoom(parent ? parent.id : null);
-            setIsSearchModalOpen(false);
-            setTimeout(() => {
-                handleFocusChange(bulletId, 'end');
-            }, 0);
-        }
-    };
-
+    }, [bullets, handleFocusChange]);
 
     return (
         <div className="h-screen w-screen flex flex-col">
@@ -2005,7 +2203,7 @@ const App = () => {
                 onImport={handleImport}
                 onExport={handleExport}
                 breadcrumbs={breadcrumbs}
-                onBreadcrumbClick={handleZoom}
+                onBreadcrumbClick={setZoomedBulletId}
                 fileName={settings.fileName}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
                 syncStatus={syncStatus}
@@ -2027,34 +2225,37 @@ const App = () => {
             />
             <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32">
                 {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
-                    <BulletItem
-                        key={bullet.id}
-                        bullet={bullet}
-                        level={0}
-                        onUpdate={handleUpdate}
-                        onAddSibling={handleAddSibling}
-                        onDelete={handleDelete}
-                        onIndent={handleIndent}
-                        onOutdent={handleOutdent}
-                        onFocusChange={handleFocusChange}
-                        onZoom={handleZoom}
-                        onFocusMove={handleFocusMove}
-                        onFocusParent={handleFocusParent}
-                        onFocusChild={handleFocusChild}
-                        onFoldAll={handleFoldAll}
-                        onMoveBullet={handleMoveBullet}
-                        currentFocusId={currentFocusId}
-                        focusPosition={focusPosition}
-                        searchQuery={searchQuery}
-                        onLinkClick={handleLinkClick}
-                        onTriggerLinkPopup={handleTriggerLinkPopup}
-                        onCloseLinkPopup={handleCloseLinkPopup}
-                        onLinkNavigate={handleLinkNavigate}
-                        onLinkSelect={handleLinkSelect}
-                        isLinkPopupOpen={linkPopupState.isOpen}
-                        linkPopupTargetId={linkPopupState.targetId}
-                        isJournalRoot={bullet.text === JOURNAL_ROOT_TEXT && zoomedBulletId === null}
-                    />
+                    <div key={bullet.id} className={bullet.id === 'tags-root' ? 'opacity-75' : ''}>
+                        <BulletItem
+                            bullet={bullet}
+                            level={0}
+                            onUpdate={bullet.isReadOnly ? handleTagUpdate : handleUpdate}
+                            onAddSibling={handleAddSibling}
+                            onDelete={handleDelete}
+                            onIndent={handleIndent}
+                            onOutdent={handleOutdent}
+                            onFocusChange={handleFocusChange}
+                            onZoom={handleZoom}
+                            onFocusMove={handleFocusMove}
+                            onFocusParent={handleFocusParent}
+                            onFocusChild={handleFocusChild}
+                            onFoldAll={handleFoldAll}
+                            onMoveBullet={handleMoveBullet}
+                            currentFocusId={currentFocusId}
+                            focusPosition={focusPosition}
+                            searchQuery={searchQuery}
+                            onLinkClick={handleLinkClick}
+                            onTriggerLinkPopup={handleTriggerLinkPopup}
+                            onCloseLinkPopup={handleCloseLinkPopup}
+                            onLinkNavigate={handleLinkNavigate}
+                            onLinkSelect={handleLinkSelect}
+                            isLinkPopupOpen={linkPopupState.isOpen}
+                            linkPopupTargetId={linkPopupState.targetId}
+                            isJournalRoot={bullet.text === JOURNAL_ROOT_TEXT && zoomedBulletId === null}
+                            isTagsRoot={bullet.id === 'tags-root'}
+                            onNavigateTo={handleNavigate}
+                        />
+                    </div>
                 )) : (
                     <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
                         <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
