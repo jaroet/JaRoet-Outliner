@@ -13,6 +13,8 @@
     </script>
     <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Add Dexie.js for IndexedDB -->
+    <script src="https://unpkg.com/dexie@4.0.7/dist/dexie.js"></script>
     <!-- Configure Babel -->
     <script>
       Babel.config({
@@ -83,6 +85,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 // All application code is bundled here to run from file://
+
+// Dexie DB setup
+class JaroetDatabase extends Dexie {
+    keyValuePairs;
+
+    constructor() {
+        super("JaroetOutlinerDB");
+        this.version(1).stores({
+            // Store simple key-value pairs, mimicking localStorage but async
+            keyValuePairs: 'key', 
+        });
+        this.keyValuePairs = this.table('keyValuePairs');
+    }
+}
+
+const db = new JaroetDatabase();
+
 
 // From components/Icons.tsx
 const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
@@ -1282,21 +1301,23 @@ const App = () => {
     }, []);
 
     const handleThemeToggle = useCallback(() => {
-        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-    }, []);
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        db.keyValuePairs.put({ key: 'theme', value: newTheme });
+    }, [theme]);
 
     useEffect(() => {
         const root = window.document.documentElement;
         const isDark = theme === 'dark';
         root.classList.toggle('dark', isDark);
-        localStorage.setItem('jaroet-outliner-theme', theme);
     }, [theme]);
 
     // Load settings and data on initial mount
     useEffect(() => {
         const loadData = async () => {
             // Load theme first to prevent flash of wrong theme
-            const savedTheme = localStorage.getItem('jaroet-outliner-theme');
+            const savedThemeEntry = await db.keyValuePairs.get('theme');
+            const savedTheme = savedThemeEntry?.value;
             if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
                 setTheme(savedTheme);
             }
@@ -1311,27 +1332,25 @@ const App = () => {
                 gistId: '',
             };
             try {
-                const savedSettings = localStorage.getItem('workflowy-clone-settings');
-                // Merging with default settings to ensure all keys are present
-                loadedSettings = { ...defaultSettings, ...(savedSettings ? JSON.parse(savedSettings) : {}) };
+                const savedSettingsEntry = await db.keyValuePairs.get('settings');
+                const savedSettings = savedSettingsEntry?.value;
+                loadedSettings = { ...defaultSettings, ...(savedSettings || {}) };
                 setSettings(loadedSettings);
             } catch (error) {
-                console.error("Failed to load settings from localStorage", error);
+                console.error("Failed to load settings from IndexedDB", error);
                 loadedSettings = defaultSettings;
             }
 
-            // Always try loading from local storage first as a baseline.
+            // Always try loading from local DB first as a baseline.
             let localBullets = null;
             try {
-                const savedData = localStorage.getItem('workflowy-clone-data');
-                if (savedData) {
-                   const data = JSON.parse(savedData);
-                   if (Array.isArray(data)) {
-                       localBullets = data;
-                   }
+                const savedDataEntry = await db.keyValuePairs.get('bullets');
+                const savedData = savedDataEntry?.value;
+                if (savedData && Array.isArray(savedData)) {
+                   localBullets = savedData;
                 }
             } catch(e) {
-               console.error("Failed to parse local data", e);
+               console.error("Failed to parse local data from IndexedDB", e);
             }
             
             let initialLoadData = localBullets || initialData;
@@ -1438,8 +1457,8 @@ const App = () => {
 
     // Save settings and data
     useEffect(() => {
-        // Always save settings locally
-        localStorage.setItem('workflowy-clone-settings', JSON.stringify(settings));
+        // Always save settings locally to IndexedDB
+        db.keyValuePairs.put({ key: 'settings', value: settings });
         
         document.title = `${settings.fileName || 'Untitled'} - Jaroet Outliner`;
         
@@ -1451,7 +1470,8 @@ const App = () => {
 
         if (!dataLoadedRef.current) return;
         
-        localStorage.setItem('workflowy-clone-data', JSON.stringify(bullets));
+        // Save main bullet data to IndexedDB
+        db.keyValuePairs.put({ key: 'bullets', value: bullets });
         
         const currentCoreData = getCoreDataString(bullets);
         const hasCoreDataChanged = currentCoreData !== prevCoreDataRef.current;
