@@ -225,12 +225,58 @@ const initialData = [
     id: 'journal-root',
     text: DAILY_LOG_ROOT_TEXT,
     children: [],
-    isCollapsed: false,
+    isCollapsed: true,
   },
   {
     id: 'doc-root',
     text: 'Help & Documentation',
     children: [
+      {
+        id: 'changelog-root',
+        text: 'Changelog',
+        children: [
+             {
+                id: 'cl-4',
+                text: new Date().toLocaleDateString() + ': Sidebar Updates',
+                children: [
+                    { id: 'cl-4-a', text: "Added a tags filter search field in the sidebar.", children: [], isCollapsed: false },
+                    { id: 'cl-4-b', text: 'Fixed folding logic for sidebar search and tags branches when empty.', children: [], isCollapsed: false },
+                    { id: 'cl-4-c', text: 'Improved keyboard navigation for sidebar inputs.', children: [], isCollapsed: false },
+                ],
+                isCollapsed: false
+            },
+            {
+                id: 'cl-3',
+                text: 'Sidebar Enhancements',
+                children: [
+                    { id: 'cl-3-a', text: "Added a search filter in the sidebar.", children: [], isCollapsed: false },
+                    { id: 'cl-3-b', text: 'Improved keyboard navigation in the sidebar.', children: [], isCollapsed: false },
+                ],
+                isCollapsed: false
+            },
+            {
+                id: 'cl-2',
+                text: 'Bug Fixes & Optimizations',
+                children: [
+                    { id: 'cl-2-a', text: "Fixed a crash when expanding the 'Tags' section in the sidebar.", children: [], isCollapsed: false },
+                    { id: 'cl-2-b', text: 'Refactored internal bullet addition logic for better consistency.', children: [], isCollapsed: false },
+                ],
+                isCollapsed: false
+            },
+            {
+                id: 'cl-1',
+                text: 'Code Refactoring & Cleanup',
+                children: [
+                    { id: 'cl-1-a', text: 'Removed unused color utility functions.', children: [], isCollapsed: false },
+                    { id: 'cl-1-b', text: 'Upgraded object cloning to `structuredClone` for better performance.', children: [], isCollapsed: false },
+                    { id: 'cl-1-c', text: 'Improved unique ID generation using `crypto.randomUUID`.', children: [], isCollapsed: false },
+                    { id: 'cl-1-d', text: 'Optimized text rendering to reduce unnecessary recalculations.', children: [], isCollapsed: false },
+                ],
+                isCollapsed: true
+            }
+        ],
+        isCollapsed: false
+      },
       {
         id: 'gs-1',
         text: 'Quick Start Guide',
@@ -299,12 +345,12 @@ const initialData = [
         isCollapsed: false,
       }
     ],
-    isCollapsed: false,
+    isCollapsed: true,
   },
 ];
 
 const createNewBullet = (text = '') => ({
-    id: Date.now().toString() + Math.random().toString(),
+    id: crypto.randomUUID(),
     text,
     children: [],
     isCollapsed: false,
@@ -404,6 +450,20 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
     }
   };
 
+  const highlightMatch = (text, q) => {
+      if (!q || !text) return text;
+      const parts = text.split(new RegExp(`(${q})`, 'gi'));
+      return (
+          <span>
+              {parts.map((part, i) => 
+                  part.toLowerCase() === q.toLowerCase() ? 
+                  <span key={i} className="bg-yellow-400/40 dark:bg-yellow-600/40 rounded-sm">{part}</span> : 
+                  part
+              )}
+          </span>
+      );
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -438,16 +498,29 @@ const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
                 <li
                   key={bullet.id}
                   ref={index === selectedIndex ? selectedItemRef : null}
-                  className={`cursor-pointer ${index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                   onClick={() => onNavigate(bullet.id)}
                 >
                   <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                    <p className="text-gray-800 dark:text-gray-200 truncate">{bullet.text || <em>Untitled</em>}</p>
-                    {bullet.path.length > 0 && (
-                        <p className={`text-xs truncate ${
-                            index === selectedIndex ? 'text-white/80' : 'text-gray-400 dark:text-gray-500'
-                        }`}>{bullet.path.join(' / ')}</p>
-                    )}
+                    <div className={`text-sm font-medium truncate mb-1 ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
+                        {highlightMatch(bullet.text, query) || <em>Untitled</em>}
+                    </div>
+                    <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${
+                        index === selectedIndex ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                        {bullet.path.length > 0 ? (
+                            bullet.path.map((segment, i) => (
+                                <React.Fragment key={i}>
+                                    <span className="truncate max-w-[200px]" title={segment}>{segment}</span>
+                                    {i < bullet.path.length - 1 && (
+                                        <span className="opacity-50 flex-shrink-0">/</span>
+                                    )}
+                                </React.Fragment>
+                            ))
+                        ) : (
+                             <span className="italic opacity-50">Top level</span>
+                        )}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -614,7 +687,7 @@ const BulletItem = ({
   onNavigateTo,
   activePanel,
 }) => {
-  const { useState, useRef, useEffect, useCallback } = React;
+  const { useState, useRef, useEffect, useCallback, useMemo } = React;
   const [isEditing, setIsEditing] = useState(false);
   const textInputRef = useRef(null);
 
@@ -917,7 +990,11 @@ const BulletItem = ({
     );
   };
 
-  const renderTextWithRichContent = (text, highlight, options = { internalLinks: true, renderTagsOnly: false }) => {
+  const renderedRichText = useMemo(() => {
+    const text = bullet.text;
+    const highlight = searchQuery;
+    const options = { internalLinks: true, renderTagsOnly: false };
+    
     if (options.renderTagsOnly) {
         const tagRegex = /(#\w+)/g;
         const parts = text.split(tagRegex);
@@ -937,7 +1014,7 @@ const BulletItem = ({
         );
     }
 
-    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|www\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|\b(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|\bwww\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
     const parts = text.split(combinedRegex);
 
     return (
@@ -997,8 +1074,29 @@ const BulletItem = ({
         })}
       </React.Fragment>
     );
-  };
+  }, [bullet.text, searchQuery, onLinkClick]);
   
+  // For the hidden overlay to match textarea
+  const renderedRichTextSimple = useMemo(() => {
+        const text = bullet.text;
+        const tagRegex = /(#\w+)/g;
+        const parts = text.split(tagRegex);
+        return (
+            <React.Fragment>
+                {parts.map((part, index) => {
+                    if (part.startsWith('#') && /#\w+/.test(part)) {
+                        return (
+                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                                {part}
+                            </span>
+                        );
+                    }
+                    return <span key={index}>{part}</span>;
+                })}
+            </React.Fragment>
+        );
+  }, [bullet.text]);
+
   if (searchQuery && !matchesSearch(bullet, searchQuery)) {
       return null;
   }
@@ -1050,7 +1148,7 @@ const BulletItem = ({
                                     className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words"
                                     aria-label="true"
                                 >
-                                    {renderTextWithRichContent(bullet.text, '', { renderTagsOnly: true })}
+                                    {renderedRichTextSimple}
                                 </div>
                                 <textarea
                                     ref={textInputRef}
@@ -1065,7 +1163,7 @@ const BulletItem = ({
                             </div>
                         ) : (
                             <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
-                            {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-400 dark:text-gray-500">...</span>}
+                            {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}
                     </div>
@@ -1121,6 +1219,7 @@ const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId
     const hasChildren = bullet.children && bullet.children.length > 0;
     const isFocused = sidebarFocusId === bullet.id && activePanel === 'sidebar';
     const isSearchRoot = bullet.id === 'sidebar-search-root';
+    const isTagsRoot = bullet.id === 'tags-root';
 
     useEffect(() => {
         if (isFocused && itemRef.current) {
@@ -1134,7 +1233,7 @@ const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId
         onFocus(bullet.id);
         if (bullet.originalId) {
             onNavigateTo(bullet.originalId);
-        } else if (hasChildren || isSearchRoot) {
+        } else if (hasChildren || isSearchRoot || isTagsRoot) {
             onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
         }
     };
@@ -1142,7 +1241,7 @@ const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId
     const toggleCollapse = (e) => {
         e.stopPropagation();
         onFocus(bullet.id);
-        if(hasChildren || isSearchRoot) {
+        if(hasChildren || isSearchRoot || isTagsRoot) {
             onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
         }
     }
@@ -1166,7 +1265,7 @@ const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId
             >
                 <button
                     onClick={toggleCollapse}
-                    className={`flex-shrink-0 transition-opacity duration-150 text-gray-500 hover:text-gray-300 ${hasChildren || isSearchRoot ? 'opacity-100' : 'opacity-0'}`}
+                    className={`flex-shrink-0 transition-opacity duration-150 text-gray-500 hover:text-gray-300 ${hasChildren || isSearchRoot || isTagsRoot ? 'opacity-100' : 'opacity-0'}`}
                     aria-label={bullet.isCollapsed ? "Expand" : "Collapse"}
                 >
                     {bullet.isCollapsed ? <ChevronRightIcon className="w-3 h-3"/> : <ChevronDownIcon className="w-3 h-3"/>}
@@ -1186,7 +1285,8 @@ const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId
                             level={level + 1}
                             sidebarFocusId={sidebarFocusId}
                             activePanel={activePanel}
-                            onFocus={onSidebarFocus}
+                            onFocus={onFocus}
+                            middleContent={null}
                         />
                     ))}
                 </div>
@@ -1203,12 +1303,16 @@ const Sidebar = ({
     activePanel,
     sidebarSearchQuery,
     onSearchQueryChange,
+    sidebarTagsSearchQuery,
+    onTagsSearchQueryChange,
     onSidebarKeyDown,
     onSidebarFocus,
 }) => {
     const sidebarRef = React.useRef(null);
     const searchInputRef = React.useRef(null);
+    const tagsSearchInputRef = React.useRef(null);
     const isSearchFocused = sidebarFocusId === 'sidebar-search-input';
+    const isTagsSearchFocused = sidebarFocusId === 'sidebar-tags-search-input';
 
     React.useEffect(() => {
         if (activePanel === 'sidebar' && sidebarRef.current && !sidebarFocusId) {
@@ -1221,6 +1325,12 @@ const Sidebar = ({
             searchInputRef.current.focus();
         }
     }, [isSearchFocused]);
+
+    React.useEffect(() => {
+        if(isTagsSearchFocused && tagsSearchInputRef.current) {
+            tagsSearchInputRef.current.focus();
+        }
+    }, [isTagsSearchFocused]);
 
     const renderSearchInput = () => (
         <div className="pl-5 pt-2 pb-2">
@@ -1236,6 +1346,26 @@ const Sidebar = ({
                     value={sidebarSearchQuery}
                     onChange={(e) => onSearchQueryChange(e.target.value)}
                     onFocus={() => onSidebarFocus('sidebar-search-input')}
+                    className="w-full bg-gray-900/50 text-gray-200 text-sm pl-7 pr-2 py-1 rounded-md focus:outline-none"
+                />
+            </div>
+        </div>
+    );
+
+    const renderTagsSearchInput = () => (
+        <div className="pl-5 pt-2 pb-2">
+            <div className={`relative text-gray-400 focus-within:text-[var(--main-color)] ${isTagsSearchFocused ? 'ring-1 ring-[var(--main-color)] rounded-md' : ''}`}>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-2">
+                    <SearchIcon className="w-3.5 h-3.5" />
+                </span>
+                <input
+                    ref={tagsSearchInputRef}
+                    id="sidebar-tags-search-input"
+                    type="text"
+                    placeholder="Filter tags..."
+                    value={sidebarTagsSearchQuery}
+                    onChange={(e) => onTagsSearchQueryChange(e.target.value)}
+                    onFocus={() => onSidebarFocus('sidebar-tags-search-input')}
                     className="w-full bg-gray-900/50 text-gray-200 text-sm pl-7 pr-2 py-1 rounded-md focus:outline-none"
                 />
             </div>
@@ -1259,7 +1389,10 @@ const Sidebar = ({
                             sidebarFocusId={sidebarFocusId}
                             activePanel={activePanel}
                             onFocus={onSidebarFocus}
-                            middleContent={bullet.id === 'sidebar-search-root' ? renderSearchInput() : null}
+                            middleContent={
+                                bullet.id === 'sidebar-search-root' ? renderSearchInput() :
+                                bullet.id === 'tags-root' ? renderTagsSearchInput() : null
+                            }
                         />
                     </div>
                 ))}
@@ -1279,51 +1412,6 @@ const Resizer = ({ onMouseDown }) => {
 
 
 // --- Main App Component ---
-function hexToHsl(hex) {
-    let r = 0, g = 0, b = 0;
-    if (hex.length == 4) {
-        r = "0x" + hex[1] + hex[1];
-        g = "0x" + hex[2] + hex[2];
-        b = "0x" + hex[3] + hex[3];
-    } else if (hex.length == 7) {
-        r = "0x" + hex[1] + hex[2];
-        g = "0x" + hex[3] + hex[4];
-        b = "0x" + hex[5] + hex[6];
-    }
-    r /= 255; g /= 255; b /= 255;
-    let cmin = Math.min(r,g,b), cmax = Math.max(r,g,b), delta = cmax - cmin, h = 0, s = 0, l = 0;
-    if (delta == 0) h = 0;
-    else if (cmax == r) h = ((g - b) / delta) % 6;
-    else if (cmax == g) h = (b - r) / delta + 2;
-    else h = (r - g) / delta + 4;
-    h = Math.round(h * 60);
-    if (h < 0) h += 360;
-    l = (cmax + cmin) / 2;
-    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
-    s = +(s * 100).toFixed(1);
-    l = +(l * 100).toFixed(1);
-    return [h, s, l];
-}
-
-function hslToHex(h, s, l) {
-    s /= 100;
-    l /= 100;
-    let c = (1 - Math.abs(2 * l - 1)) * s,
-        x = c * (1 - Math.abs((h / 60) % 2 - 1)),
-        m = l - c/2,
-        r = 0, g = 0, b = 0;
-    if (0 <= h && h < 60) { [r,g,b] = [c,x,0] } 
-    else if (60 <= h && h < 120) { [r,g,b] = [x,c,0] }
-    else if (120 <= h && h < 180) { [r,g,b] = [0,c,x] }
-    else if (180 <= h && h < 240) { [r,g,b] = [0,x,c] }
-    else if (240 <= h && h < 300) { [r,g,b] = [x,0,c] }
-    else if (300 <= h && h < 360) { [r,g,b] = [c,0,x] }
-    r = Math.round((r + m) * 255).toString(16).padStart(2,'0');
-    g = Math.round((g + m) * 255).toString(16).padStart(2,'0');
-    b = Math.round((b + m) * 255).toString(16).padStart(2,'0');
-    return `#${r}${g}${b}`;
-}
-
 const FONT_LIST = [
   'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 
   'Times New Roman', 'Georgia', 'Garamond', 
@@ -1439,6 +1527,7 @@ const App = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
     const [isResizing, setIsResizing] = useState(false);
     const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
+    const [sidebarTagsSearchQuery, setSidebarTagsSearchQuery] = useState('');
     const [sidebarTree, setSidebarTree] = useState([]);
 
     // Focus management state
@@ -1747,6 +1836,9 @@ const App = () => {
             if (matches) {
                 for (const match of matches) {
                     const tagName = match.substring(1);
+                     if (sidebarTagsSearchQuery && !tagName.toLowerCase().includes(sidebarTagsSearchQuery.toLowerCase())) {
+                        continue;
+                    }
                     if (!tagsData.has(tagName)) tagsData.set(tagName, []);
                     tagsData.get(tagName).push(bullet);
                 }
@@ -1795,9 +1887,9 @@ const App = () => {
         }
         
         const newTree = [searchBullet];
-        if (tagsBullet.children.length > 0) newTree.push(tagsBullet);
+        if (tagsBullet.children.length > 0 || sidebarTagsSearchQuery) newTree.push(tagsBullet);
         setSidebarTree(newTree);
-    }, [flatBullets, sidebarSearchQuery]);
+    }, [flatBullets, sidebarSearchQuery, sidebarTagsSearchQuery]);
 
     useEffect(() => {
         const currentId = focusOptions.id;
@@ -1806,7 +1898,7 @@ const App = () => {
         if (prevId && prevId !== currentId) {
             const found = findBulletAndParent(prevId, bullets);
             if (found && !found.node.isReadOnly && found.node.text === '' && found.node.children.length === 0) {
-                const newBullets = JSON.parse(JSON.stringify(bullets));
+                const newBullets = structuredClone(bullets);
                 const foundAgain = findBulletAndParent(prevId, newBullets);
                 if (foundAgain) {
                     foundAgain.siblings.splice(foundAgain.index, 1);
@@ -1894,7 +1986,7 @@ const App = () => {
     
         if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
             const newBullet = createNewBullet();
-            const newBullets = JSON.parse(JSON.stringify(bullets));
+            const newBullets = structuredClone(bullets);
             const found = findBulletAndParent(id, newBullets);
             if (found) {
                 found.node.children.push(newBullet);
@@ -1972,7 +2064,7 @@ const App = () => {
         const day = now.getDate().toString().padStart(2, '0');
         const dayText = `${year}-${month}-${day}`;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullets = structuredClone(bullets);
         
         let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
         if (!journalNode) {
@@ -2010,6 +2102,9 @@ const App = () => {
                 ids.push(node.id);
                 if(node.id === 'sidebar-search-root' && !node.isCollapsed){
                     ids.push('sidebar-search-input');
+                }
+                if(node.id === 'tags-root' && !node.isCollapsed){
+                    ids.push('sidebar-tags-search-input');
                 }
                 if (!node.isCollapsed && node.children.length > 0) {
                     ids = ids.concat(getVisibleIds(node.children));
@@ -2131,33 +2226,30 @@ const App = () => {
         };
     }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange, toggleSidebar, isSidebarCollapsed, activePanel, visibleSidebarIds, sidebarFocusId, handleSidebarUpdate]);
 
-    const addSibling = (targetId, newBullet) => {
-        const foundTarget = findBulletAndParent(targetId, bullets);
+    const handleAddSibling = useCallback((id, text = '') => {
+        const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullet = createNewBullet(text);
+        const newBullets = structuredClone(bullets);
         let baseNodes = newBullets;
         if(zoomedBulletId){
             const zoomed = findBulletAndParent(zoomedBulletId, newBullets);
             if(zoomed) baseNodes = zoomed.node.children;
         }
-        const found = findBulletAndParent(targetId, baseNodes);
+        const found = findBulletAndParent(id, baseNodes);
         if (found) {
             found.siblings.splice(found.index + 1, 0, newBullet);
             setBullets(newBullets);
             handleFocusChange(newBullet.id);
         }
-    }
-
-    const handleAddSibling = useCallback((id, text = '') => {
-       addSibling(id, createNewBullet(text));
     }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
 
     const handleDelete = useCallback((id) => {
         const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullets = structuredClone(bullets);
         const found = findBulletAndParent(id, newBullets);
         if (found) {
             const prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id;
@@ -2171,7 +2263,7 @@ const App = () => {
         const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullets = structuredClone(bullets);
         const found = findBulletAndParent(id, newBullets);
         if (found && found.index > 0) {
             const prevSibling = found.siblings[found.index - 1];
@@ -2188,7 +2280,7 @@ const App = () => {
         const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullets = structuredClone(bullets);
         const found = findBulletAndParent(id, newBullets);
         if (found && found.parent) {
             const parentInfo = findBulletAndParent(found.parent.id, newBullets);
@@ -2242,7 +2334,7 @@ const App = () => {
         const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
-        const newBullets = JSON.parse(JSON.stringify(bullets));
+        const newBullets = structuredClone(bullets);
         const found = findBulletAndParent(id, newBullets);
     
         if (!found) return;
@@ -2311,7 +2403,7 @@ const App = () => {
     const handleAddItemToCurrentView = useCallback(() => {
         const newBullet = createNewBullet();
         if (zoomedBulletId) {
-            const newBullets = JSON.parse(JSON.stringify(bullets));
+            const newBullets = structuredClone(bullets);
             const found = findBulletAndParent(zoomedBulletId, newBullets);
             if (found && !found.node.isReadOnly) {
                 found.node.children.push(newBullet);
@@ -2357,9 +2449,26 @@ const App = () => {
                 if (searchRootIndex !== -1 && visibleSidebarIds.length > searchRootIndex + 2) { // +2 to skip input itself
                     setSidebarFocusId(visibleSidebarIds[searchRootIndex + 2]);
                 }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSidebarFocusId('sidebar-search-root');
             }
             return;
         };
+
+        if (e.target.id === 'sidebar-tags-search-input') {
+            if(e.key === 'ArrowDown') {
+                e.preventDefault();
+                const tagsRootIndex = visibleSidebarIds.indexOf('tags-root');
+                if (tagsRootIndex !== -1 && visibleSidebarIds.length > tagsRootIndex + 2) { 
+                    setSidebarFocusId(visibleSidebarIds[tagsRootIndex + 2]);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSidebarFocusId('tags-root');
+            }
+            return;
+        }
 
         const findNode = (id, nodes) => {
             for (const node of nodes) {
@@ -2404,17 +2513,17 @@ const App = () => {
                 case 'ArrowDown': moveFocus('down'); break;
                 case 'Enter':
                     if (currentItem && currentItem.originalId) handleNavigate(currentItem.originalId);
-                    else if (currentItem && currentItem.children?.length > 0) {
+                    else if (currentItem && (currentItem.children?.length > 0 || currentItem.id === 'sidebar-search-root' || currentItem.id === 'tags-root')) {
                         handleSidebarUpdate(currentItem.id, { isCollapsed: !currentItem.isCollapsed });
                     }
                     break;
                 case 'ArrowRight':
-                    if (currentItem && currentItem.children?.length > 0 && currentItem.isCollapsed) {
+                    if (currentItem && (currentItem.children?.length > 0 || currentItem.id === 'sidebar-search-root' || currentItem.id === 'tags-root') && currentItem.isCollapsed) {
                         handleSidebarUpdate(currentItem.id, { isCollapsed: false });
                     }
                     break;
                 case 'ArrowLeft':
-                    if (currentItem && currentItem.children?.length > 0 && !currentItem.isCollapsed) {
+                    if (currentItem && (currentItem.children?.length > 0 || currentItem.id === 'sidebar-search-root' || currentItem.id === 'tags-root') && !currentItem.isCollapsed) {
                         handleSidebarUpdate(currentItem.id, { isCollapsed: true });
                     }
                     break;
@@ -2650,6 +2759,8 @@ const App = () => {
                             activePanel={activePanel}
                             sidebarSearchQuery={sidebarSearchQuery}
                             onSearchQueryChange={setSidebarSearchQuery}
+                            sidebarTagsSearchQuery={sidebarTagsSearchQuery}
+                            onTagsSearchQueryChange={setSidebarTagsSearchQuery}
                             onSidebarKeyDown={handleSidebarKeyDown}
                             onSidebarFocus={handleSidebarFocus}
                         />
