@@ -33,13 +33,13 @@
     <style>
       :root {
         --main-color: #60a5fa;
-        --note-color: #2dd4bf;
         --font-family: sans-serif;
         --font-size: 16px;
       }
       body {
         font-family: var(--font-family);
         font-size: var(--font-size);
+        overflow: hidden; /* Prevent body scroll when resizing */
       }
       /* Simple scrollbar styling for a more modern look */
       ::-webkit-scrollbar {
@@ -59,13 +59,18 @@
       }
       /* Dark theme */
       .dark ::-webkit-scrollbar-track {
-        background: #1a202c; /* dark gray */
+        background: #1e293b; /* slate-800 */
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #4a5568; /* medium gray */
+        background: #475569; /* slate-600 */
       }
       .dark ::-webkit-scrollbar-thumb:hover {
-        background: #718096; /* light gray */
+        background: #64748b; /* slate-500 */
+      }
+      .focus-outline {
+        outline: 2px solid var(--main-color);
+        outline-offset: -1px;
+        border-radius: 4px;
       }
     </style>
   <script type="importmap">
@@ -198,89 +203,101 @@ const MoonIcon = ({ className = 'w-5 h-5' }) => (
     </svg>
 );
 
+const SidebarLeftIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
+    </svg>
+);
+
+const SidebarRightIcon = ({ className = 'w-5 h-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12.75 19.5l-7.5-7.5 7.5-7.5m-6 15l-7.5-7.5 7.5-7.5" />
+    </svg>
+);
+
 // From App.tsx (constants and helpers)
-const JOURNAL_ROOT_TEXT = 'Dagelijks Logboek';
+const DAILY_LOG_ROOT_TEXT = 'Daily Log';
 const TAGS_ROOT_TEXT = 'Tags';
+const SEARCH_ROOT_TEXT = 'Search';
 
 const initialData = [
   {
     id: 'journal-root',
-    text: JOURNAL_ROOT_TEXT,
-    note: "Gebruik Ctrl+J om direct naar de notities van vandaag te gaan.",
+    text: DAILY_LOG_ROOT_TEXT,
     children: [],
     isCollapsed: false,
   },
   {
     id: 'doc-root',
-    text: 'Uitleg & Documentatie',
-    note: "Hier vind je een overzicht van de belangrijkste functies en sneltoetsen om het maximale uit de Jaroet Outliner te halen.",
+    text: 'Help & Documentation',
     children: [
       {
         id: 'gs-1',
-        text: 'Snelstartgids',
-        note: '',
+        text: 'Quick Start Guide',
         children: [
-          { id: 'gs-2', text: 'Klik op een item om te beginnen met typen.', note: '', children: [], isCollapsed: false },
-          { id: 'gs-3', text: 'Druk op `Enter` om een nieuw item aan te maken.', note: '', children: [], isCollapsed: false },
-          { id: 'gs-4', text: 'Druk op `Tab` om een item te laten inspringen (sub-item).', note: '', children: [], isCollapsed: false },
-          { id: 'gs-5', text: 'Druk op `Shift+Tab` om een item te laten uitspringen.', note: '', children: [], isCollapsed: false },
+          { id: 'gs-2', text: 'Click on an item to start typing.', children: [], isCollapsed: false },
+          { id: 'gs-3', text: 'Press `Enter` to split an item or create a new one.', children: [], isCollapsed: false },
+          { id: 'gs-4', text: 'Press `Shift+Enter` to create a new line within an item.', children: [], isCollapsed: false },
+          { id: 'gs-5', text: 'Press `Tab` to indent an item (make it a child).', children: [], isCollapsed: false },
+          { id: 'gs-6', text: 'Press `Shift+Tab` to outdent an item.', children: [], isCollapsed: false },
         ],
         isCollapsed: false,
       },
       {
         id: 'kf-1',
-        text: 'Belangrijkste Functies',
-        note: '',
+        text: 'Key Features',
         children: [
-          { id: 'kf-2', text: "Inzoomen: Klik op een bolletje om te focussen op dat item en de sub-items. Het is alsof je een nieuw document opent voor dat onderwerp.", note: '', children: [], isCollapsed: false },
-          { id: 'kf-3', text: 'Uitzoomen: Gebruik de broodkruimels bovenaan of druk op `Ctrl+Up` om terug te gaan.', note: '', children: [], isCollapsed: false },
-          { id: 'kf-4', text: 'Notities: Druk op `Shift+Enter` om extra details toe te voegen. Het bolletje krijgt een andere kleur om aan te geven dat er een notitie is.', note: '', children: [], isCollapsed: false },
-          { id: 'kf-5', text: 'In-/uitklappen: Klik op het driehoekje naast een item om de sub-items te verbergen (inklappen) of te tonen (uitklappen).', note: '', children: [], isCollapsed: false },
-          { id: 'kf-6', text: "Dagelijks logboek: Druk op `Ctrl+J` om direct naar een speciale sectie voor de datum van vandaag te springen. Ideaal voor een journaal.", note: '', children: [], isCollapsed: false },
-          { id: 'kf-7', text: "Snel Zoeken: Kun je iets niet vinden? Druk op `Ctrl+Shift+K` om een krachtige zoekbalk te openen.", note: '', children: [], isCollapsed: false },
-          { id: 'kf-8', text: "Tags: Type #tagnaam om een tag aan te maken. Een overzicht van al je tags verschijnt automatisch onder de 'Tags' sectie.", note: '', children: [], isCollapsed: false },
+          { id: 'kf-2', text: "Zoom In: Click a bullet point to focus on that item and its children.", children: [], isCollapsed: false },
+          { id: 'kf-3', text: 'Zoom Out: Use the breadcrumbs at the top or press `Ctrl+Up` to go back.', children: [], isCollapsed: false },
+          { id: 'kf-5', text: 'Expand/Collapse: Click the triangle next to an item to show or hide its children.', children: [], isCollapsed: false },
+          { id: 'kf-6', text: "Daily Log: Press `Ctrl+J` to jump directly to a special section for today's date.", children: [], isCollapsed: false },
+          { id: 'kf-7', text: "Quick Find: Press `Ctrl+Shift+K` to open the search bar.", children: [], isCollapsed: false },
+          { id: 'kf-8', text: "Tags: Type #tagname to create a tag. An overview of all your tags will automatically appear under the 'Tags' section in the sidebar.", children: [], isCollapsed: false },
+          { id: 'kf-9', text: "Sidebar: Press `Ctrl+\\` to toggle the sidebar.", children: [], isCollapsed: false },
+          { id: 'kf-10', text: "Focus: Press `Ctrl+'` to switch focus between the main outline and the sidebar.", children: [], isCollapsed: false },
         ],
         isCollapsed: false,
       },
       {
         id: 'hk-1',
-        text: 'Alle Sneltoetsen',
-        note: 'Leer deze sneltoetsen om razendsnel te navigeren en organiseren.',
+        text: 'All Hotkeys',
         children: [
           { 
-            id: 'hk-edit', text: 'Aanmaken & Bewerken', note: '', children: [
-              { id: 'hk-e-1', text: 'Enter : Maak een nieuw item aan', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-2', text: 'Tab : Huidig item laten inspringen', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-3', text: 'Shift+Tab : Huidig item laten uitspringen', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-4', text: 'Shift+Enter : Notitie toevoegen of bewerken', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-5', text: 'Backspace (op een leeg item) : Verwijder het item', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-6', text: 'Ctrl+L : Maak van geselecteerde tekst een link', note: '', children: [], isCollapsed: false },
-              { id: 'hk-e-7', text: '[[ : Begin te typen om te linken naar een ander item', note: '', children: [], isCollapsed: false },
+            id: 'hk-edit', text: 'Creating & Editing', children: [
+              { id: 'hk-e-1', text: 'Enter : Create a new item or split the current one', children: [], isCollapsed: false },
+              { id: 'hk-e-2', text: 'Shift+Enter : Add a new line within the current item', children: [], isCollapsed: false },
+              { id: 'hk-e-3', text: 'Tab : Indent current item', children: [], isCollapsed: false },
+              { id: 'hk-e-4', text: 'Shift+Tab : Outdent current item', children: [], isCollapsed: false },
+              { id: 'hk-e-5', text: 'Backspace (on an empty item) : Delete the item', children: [], isCollapsed: false },
+              { id: 'hk-e-6', text: 'Ctrl+L : Turn selected text into a link', children: [], isCollapsed: false },
+              { id: 'hk-e-7', text: '[[ : Start typing to link to another item', children: [], isCollapsed: false },
             ],
             isCollapsed: true,
           },
           {
-            id: 'hk-nav', text: 'Navigatie & Weergave', note: '', children: [
-                { id: 'hk-n-1', text: 'Pijl omhoog/omlaag : Navigeer tussen items', note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-2', text: 'Ctrl+Pijl omlaag (of klik op bolletje) : Zoom in', note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-3', text: 'Ctrl+Pijl omhoog : Zoom uit', note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-4', text: 'Ctrl+Pijl links : Klap item in (indien sub-items) of ga naar bovenliggend item', note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-5', text: 'Ctrl+Pijl rechts : Klap een ingeklapt item uit', note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-6', text: "Ctrl+J : Ga naar het logboek van vandaag", note: '', children: [], isCollapsed: false },
-                { id: 'hk-n-7', text: 'Ctrl+Shift+K : Open het "Snel Zoeken" venster', note: '', children: [], isCollapsed: false },
+            id: 'hk-nav', text: 'Navigation & View', children: [
+                { id: 'hk-n-1', text: 'Up/Down Arrow : Navigate between items', children: [], isCollapsed: false },
+                { id: 'hk-n-2', text: 'Ctrl+Down Arrow (or click bullet) : Zoom in', children: [], isCollapsed: false },
+                { id: 'hk-n-3', text: 'Ctrl+Up Arrow : Zoom out', children: [], isCollapsed: false },
+                { id: 'hk-n-4', text: 'Ctrl+Left Arrow : Collapse item (if it has children) or go to parent', children: [], isCollapsed: false },
+                { id: 'hk-n-5', text: 'Ctrl+Right Arrow : Expand a collapsed item', children: [], isCollapsed: false },
+                { id: 'hk-n-6', text: "Ctrl+J : Go to today's log", children: [], isCollapsed: false },
+                { id: 'hk-n-7', text: 'Ctrl+Shift+K : Open the "Quick Find" window', children: [], isCollapsed: false },
+                { id: 'hk-n-8', text: 'Ctrl+\\ : Toggle sidebar visibility', children: [], isCollapsed: false },
+                { id: 'hk-n-9', text: "Ctrl+' : Switch focus between outline and sidebar", children: [], isCollapsed: false },
             ],
             isCollapsed: true,
           },
           {
-            id: 'hk-org', text: 'Organiseren', note: '', children: [
-                { id: 'hk-o-1', text: 'Alt+Pijl omhoog : Verplaats item omhoog', note: '', children: [], isCollapsed: false },
-                { id: 'hk-o-2', text: 'Alt+Pijl omlaag : Verplaats item omlaag', note: '', children: [], isCollapsed: false },
+            id: 'hk-org', text: 'Organizing', children: [
+                { id: 'hk-o-1', text: 'Alt+Up Arrow : Move item up', children: [], isCollapsed: false },
+                { id: 'hk-o-2', text: 'Alt+Down Arrow : Move item down', children: [], isCollapsed: false },
             ],
             isCollapsed: true,
           }
         ],
         isCollapsed: false,
-      },
+      }
     ],
     isCollapsed: false,
   },
@@ -289,7 +306,6 @@ const initialData = [
 const createNewBullet = (text = '') => ({
     id: Date.now().toString() + Math.random().toString(),
     text,
-    note: '',
     children: [],
     isCollapsed: false,
 });
@@ -461,8 +477,6 @@ const SyncIndicator = ({ status }) => {
 };
 
 const Toolbar = ({
-  searchQuery,
-  onSearchChange,
   onImport,
   onExport,
   breadcrumbs,
@@ -473,6 +487,8 @@ const Toolbar = ({
   onGoToToday,
   theme,
   onThemeToggle,
+  onToggleSidebar,
+  isSidebarCollapsed,
 }) => {
   const { useRef } = React;
   const fileInputRef = useRef(null);
@@ -509,18 +525,17 @@ const Toolbar = ({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex flex-col sm:flex-row items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
-      <div className="flex-grow w-full sm:w-auto">
-        <div className="flex items-center gap-2">
+    <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+        <div className="flex-grow flex items-center gap-2 overflow-hidden">
             <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <HomeIcon />
             </button>
-            {breadcrumbs.map((crumb, index) => (
+            {breadcrumbs.map((crumb) => (
                 <React.Fragment key={crumb.id}>
                 <span className="text-gray-400 dark:text-gray-500">/</span>
                 <button
                     onClick={() => onBreadcrumbClick(crumb.id)}
-                    className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate max-w-xs"
+                    className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate"
                     title={crumb.text}
                 >
                     {crumb.text || <em>Untitled</em>}
@@ -531,24 +546,11 @@ const Toolbar = ({
                 <span className="text-gray-800 dark:text-gray-200 font-semibold ml-2 truncate" title={fileName}>{fileName}</span>
             )}
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="flex items-center gap-2">
         <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <AppointmentIcon className="w-5 h-5" />
         </button>
-        <div className="relative flex-grow">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <SearchIcon />
-          </span>
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] transition-shadow"
-          />
-        </div>
 
         <div className="flex items-center gap-1">
             <SyncIndicator status={syncStatus} />
@@ -570,6 +572,9 @@ const Toolbar = ({
             </button>
             <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <SettingsIcon />
+            </button>
+            <button onClick={onToggleSidebar} title="Toggle Sidebar (Ctrl+\)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                {isSidebarCollapsed ? <SidebarLeftIcon /> : <SidebarRightIcon />}
             </button>
         </div>
       </div>
@@ -607,24 +612,22 @@ const BulletItem = ({
   isJournalRoot,
   isTagsRoot,
   onNavigateTo,
+  activePanel,
 }) => {
   const { useState, useRef, useEffect, useCallback } = React;
   const [isEditing, setIsEditing] = useState(false);
-  const [isNoteVisible, setIsNoteVisible] = useState(false);
   const textInputRef = useRef(null);
-  const noteInputRef = useRef(null);
 
   const isFocused = currentFocusId === bullet.id;
   
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && activePanel === 'main') {
       setIsEditing(true);
     } else {
       setIsEditing(false);
-      setIsNoteVisible(false);
       onCloseLinkPopup();
     }
-  }, [isFocused, onCloseLinkPopup]);
+  }, [isFocused, activePanel, onCloseLinkPopup]);
 
   useEffect(() => {
     if (isEditing && textInputRef.current) {
@@ -828,10 +831,24 @@ const BulletItem = ({
       case 'Enter':
         e.preventDefault();
         if (e.shiftKey) {
-            setIsNoteVisible(true);
-            setTimeout(() => noteInputRef.current?.focus(), 0);
+            const { value, selectionStart, selectionEnd } = input;
+            const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd);
+            onUpdate(bullet.id, { text: newValue });
+
+            setTimeout(() => {
+                if (textInputRef.current) {
+                    const newCursorPos = selectionStart + 1;
+                    textInputRef.current.focus();
+                    textInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                }
+            }, 0);
         } else {
-            onAddSibling(bullet.id);
+            const { value, selectionStart } = input;
+            const textBeforeCursor = value.substring(0, selectionStart);
+            const textAfterCursor = value.substring(selectionStart);
+            
+            onUpdate(bullet.id, { text: textBeforeCursor });
+            onAddSibling(bullet.id, textAfterCursor);
         }
         break;
       case 'Tab':
@@ -856,26 +873,6 @@ const BulletItem = ({
     }
   };
 
-  const handleNoteBlur = () => {
-    if (bullet.note.trim() === '') {
-      if (bullet.note !== '') onUpdate(bullet.id, { note: '' });
-      setIsNoteVisible(false);
-    }
-  };
-
-  const handleNoteKeyDown = (e) => {
-      const textarea = e.target;
-      if (e.key === 'ArrowUp' && textarea.selectionStart === 0) {
-          e.preventDefault();
-          setIsNoteVisible(false);
-          textInputRef.current?.focus();
-      }
-      if (e.key === 'ArrowDown' && textarea.selectionStart === textarea.value.length) {
-        e.preventDefault();
-        onFocusMove('down');
-      }
-  }
-
   const toggleCollapse = () => {
     if (hasChildren) {
       onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
@@ -886,23 +883,36 @@ const BulletItem = ({
       if (!q) return true;
       const query = q.toLowerCase();
       const textMatch = b.text.toLowerCase().includes(query);
-      const noteMatch = b.note?.toLowerCase().includes(query);
       const childrenMatch = b.children.some(child => matchesSearch(child, q));
-      return textMatch || noteMatch || childrenMatch;
+      return textMatch || childrenMatch;
   };
 
   const highlightText = (text, highlight) => {
-    if (!highlight) return text;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    if (!text) return text;
+    const regex = highlight ? new RegExp(`(${highlight})`, 'gi') : null;
+    const parts = highlight ? text.split(regex) : [text];
+    
     return (
       <React.Fragment>
-        {parts.map((part, i) =>
-          part.toLowerCase() === highlight.toLowerCase() ? (
-            <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
-              {part}
-            </span>
-          ) : ( part )
-        )}
+        {parts.map((part, i) => {
+            if (!part) return null;
+            const lines = part.split('\n');
+            const partWithBreaks = lines.map((line, j) => (
+                <React.Fragment key={j}>
+                    {line}
+                    {j < lines.length - 1 && <br />}
+                </React.Fragment>
+            ));
+
+            if (highlight && part.toLowerCase() === highlight.toLowerCase()) {
+                return (
+                    <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
+                        {partWithBreaks}
+                    </span>
+                );
+            }
+            return <React.Fragment key={i}>{partWithBreaks}</React.Fragment>;
+        })}
       </React.Fragment>
     );
   };
@@ -993,7 +1003,7 @@ const BulletItem = ({
       return null;
   }
 
-  const circleColor = bullet.note ? 'var(--note-color)' : 'var(--main-color)';
+  const circleColor = 'var(--main-color)';
   
   const handleTextClick = () => {
     if (bullet.isReadOnly) {
@@ -1015,7 +1025,7 @@ const BulletItem = ({
 
   return (
     <div className="flex flex-col group">
-        <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
+        <div className={`flex items-start py-1 relative ${isFocused && activePanel === 'main' ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
             <div
                 style={{ marginLeft: `${level * 1.5}rem` }}
                 className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]"
@@ -1023,10 +1033,11 @@ const BulletItem = ({
                 <button
                     onClick={toggleCollapse}
                     className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
+                    aria-label={bullet.isCollapsed ? 'Expand' : 'Collapse'}
                 >
                     {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                 </button>
-                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors">
+                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors" aria-label="Zoom in">
                     {renderBulletIcon()}
                 </button>
             </div>
@@ -1037,7 +1048,7 @@ const BulletItem = ({
                             <div className="relative">
                                 <div
                                     className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words"
-                                    aria-hidden="true"
+                                    aria-label="true"
                                 >
                                     {renderTextWithRichContent(bullet.text, '', { renderTagsOnly: true })}
                                 </div>
@@ -1049,27 +1060,16 @@ const BulletItem = ({
                                     readOnly={bullet.isReadOnly}
                                     className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6"
                                     rows={1}
+                                    aria-label="Edit item"
                                 />
                             </div>
                         ) : (
-                            <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 whitespace-pre-wrap break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
+                            <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
                             {bullet.text ? renderTextWithRichContent(bullet.text, searchQuery) : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}
                     </div>
                 </div>
-                {isEditing && isNoteVisible && (
-                    <textarea
-                        ref={noteInputRef}
-                        value={bullet.note}
-                        onChange={(e) => onUpdate(bullet.id, { note: e.target.value })}
-                        onKeyDown={handleNoteKeyDown}
-                        onBlur={handleNoteBlur}
-                        className="w-full text-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none p-1 rounded-sm mt-1 resize-y"
-                        placeholder="Add a note..."
-                        rows={3}
-                    />
-                )}
             </div>
         </div>
       {!bullet.isCollapsed && hasChildren && (
@@ -1104,6 +1104,7 @@ const BulletItem = ({
                 isJournalRoot={false}
                 isTagsRoot={false}
                 onNavigateTo={onNavigateTo}
+                activePanel={activePanel}
             />
           ))}
         </div>
@@ -1113,8 +1114,171 @@ const BulletItem = ({
 };
 
 
-// From App.tsx
+// --- Sidebar Components ---
+const SidebarItem = ({ bullet, onUpdate, onNavigateTo, level = 0, sidebarFocusId, activePanel, onFocus, middleContent }) => {
+    const { useRef, useEffect } = React;
+    const itemRef = useRef(null);
+    const hasChildren = bullet.children && bullet.children.length > 0;
+    const isFocused = sidebarFocusId === bullet.id && activePanel === 'sidebar';
+    const isSearchRoot = bullet.id === 'sidebar-search-root';
 
+    useEffect(() => {
+        if (isFocused && itemRef.current) {
+            itemRef.current.focus({ preventScroll: true });
+            itemRef.current.scrollIntoView({ block: 'nearest', inline: 'start' });
+        }
+    }, [isFocused]);
+    
+    const handleClick = (e) => {
+        e.stopPropagation();
+        onFocus(bullet.id);
+        if (bullet.originalId) {
+            onNavigateTo(bullet.originalId);
+        } else if (hasChildren || isSearchRoot) {
+            onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
+        }
+    };
+    
+    const toggleCollapse = (e) => {
+        e.stopPropagation();
+        onFocus(bullet.id);
+        if(hasChildren || isSearchRoot) {
+            onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
+        }
+    }
+
+    const renderIcon = () => {
+        if (bullet.text === SEARCH_ROOT_TEXT) return <SearchIcon className="w-3.5 h-3.5" />;
+        if (bullet.text === TAGS_ROOT_TEXT) return <TagIcon className="w-3.5 h-3.5" />;
+        return <CircleIcon className="w-1.5 h-1.5" />;
+    };
+
+    return (
+        <div>
+            <div 
+                ref={itemRef}
+                tabIndex={-1}
+                role="button"
+                aria-label={bullet.text}
+                className={`flex items-center p-1 rounded-md text-sm cursor-pointer outline-none ${isFocused ? 'bg-gray-700' : 'hover:bg-gray-700/50'}`}
+                style={{ paddingLeft: `${level * 1 + 0.25}rem` }}
+                onClick={handleClick}
+            >
+                <button
+                    onClick={toggleCollapse}
+                    className={`flex-shrink-0 transition-opacity duration-150 text-gray-500 hover:text-gray-300 ${hasChildren || isSearchRoot ? 'opacity-100' : 'opacity-0'}`}
+                    aria-label={bullet.isCollapsed ? "Expand" : "Collapse"}
+                >
+                    {bullet.isCollapsed ? <ChevronRightIcon className="w-3 h-3"/> : <ChevronDownIcon className="w-3 h-3"/>}
+                </button>
+                 <div className="ml-2 w-4 h-4 flex items-center justify-center">{renderIcon()}</div>
+                <span className="ml-2 truncate flex-grow" title={bullet.text}>{bullet.text}</span>
+            </div>
+            {!bullet.isCollapsed && (
+                <div>
+                    {middleContent}
+                    {bullet.children.map(child => (
+                        <SidebarItem
+                            key={child.id}
+                            bullet={child}
+                            onUpdate={onUpdate}
+                            onNavigateTo={onNavigateTo}
+                            level={level + 1}
+                            sidebarFocusId={sidebarFocusId}
+                            activePanel={activePanel}
+                            onFocus={onSidebarFocus}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const Sidebar = ({
+    sidebarTree,
+    onSidebarUpdate,
+    onNavigateTo,
+    sidebarFocusId,
+    activePanel,
+    sidebarSearchQuery,
+    onSearchQueryChange,
+    onSidebarKeyDown,
+    onSidebarFocus,
+}) => {
+    const sidebarRef = React.useRef(null);
+    const searchInputRef = React.useRef(null);
+    const isSearchFocused = sidebarFocusId === 'sidebar-search-input';
+
+    React.useEffect(() => {
+        if (activePanel === 'sidebar' && sidebarRef.current && !sidebarFocusId) {
+            sidebarRef.current.focus();
+        }
+    }, [activePanel, sidebarFocusId]);
+    
+    React.useEffect(() => {
+        if(isSearchFocused && searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, [isSearchFocused]);
+
+    const renderSearchInput = () => (
+        <div className="pl-5 pt-2 pb-2">
+            <div className={`relative text-gray-400 focus-within:text-[var(--main-color)] ${isSearchFocused ? 'ring-1 ring-[var(--main-color)] rounded-md' : ''}`}>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-2">
+                    <SearchIcon className="w-3.5 h-3.5" />
+                </span>
+                <input
+                    ref={searchInputRef}
+                    id="sidebar-search-input"
+                    type="text"
+                    placeholder="Search all items..."
+                    value={sidebarSearchQuery}
+                    onChange={(e) => onSearchQueryChange(e.target.value)}
+                    onFocus={() => onSidebarFocus('sidebar-search-input')}
+                    className="w-full bg-gray-900/50 text-gray-200 text-sm pl-7 pr-2 py-1 rounded-md focus:outline-none"
+                />
+            </div>
+        </div>
+    );
+
+    return (
+        <aside
+            ref={sidebarRef}
+            tabIndex={-1}
+            onKeyDown={onSidebarKeyDown}
+            className={`bg-gray-800/50 dark:bg-slate-900/70 p-2 flex flex-col h-full text-gray-200 outline-none ${activePanel === 'sidebar' ? 'focus-outline' : ''}`}
+        >
+            <div className="flex-grow overflow-y-auto">
+                {sidebarTree.map(bullet => (
+                    <div key={bullet.id} className="mb-2">
+                        <SidebarItem
+                            bullet={bullet}
+                            onUpdate={onSidebarUpdate}
+                            onNavigateTo={onNavigateTo}
+                            sidebarFocusId={sidebarFocusId}
+                            activePanel={activePanel}
+                            onFocus={onSidebarFocus}
+                            middleContent={bullet.id === 'sidebar-search-root' ? renderSearchInput() : null}
+                        />
+                    </div>
+                ))}
+            </div>
+        </aside>
+    );
+};
+
+const Resizer = ({ onMouseDown }) => {
+    return (
+        <div
+            className="flex-shrink-0 w-1.5 cursor-col-resize hover:bg-[var(--main-color)] transition-colors duration-200"
+            onMouseDown={onMouseDown}
+        />
+    );
+};
+
+
+// --- Main App Component ---
 function hexToHsl(hex) {
     let r = 0, g = 0, b = 0;
     if (hex.length == 4) {
@@ -1158,12 +1322,6 @@ function hslToHex(h, s, l) {
     g = Math.round((g + m) * 255).toString(16).padStart(2,'0');
     b = Math.round((b + m) * 255).toString(16).padStart(2,'0');
     return `#${r}${g}${b}`;
-}
-
-function deriveNoteColor(hex) {
-    const [h, s, l] = hexToHsl(hex);
-    const newHue = (h + 150) % 360;
-    return hslToHex(newHue, s, Math.min(l + 10, 80));
 }
 
 const FONT_LIST = [
@@ -1275,7 +1433,17 @@ const App = () => {
         gistId: '',
     });
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [tagCollapseState, setTagCollapseState] = useState({});
+
+    // Sidebar state
+    const [sidebarWidth, setSidebarWidth] = useState(280);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+    const [isResizing, setIsResizing] = useState(false);
+    const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
+    const [sidebarTree, setSidebarTree] = useState([]);
+
+    // Focus management state
+    const [activePanel, setActivePanel] = useState('main');
+    const [sidebarFocusId, setSidebarFocusId] = useState(null);
 
     const [linkPopupState, setLinkPopupState] = useState({
         isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
@@ -1286,6 +1454,14 @@ const App = () => {
 
     const handleFocusChange = useCallback((id, position = 'end') => {
         setFocusOptions({ id, position });
+        if (id) {
+            setActivePanel('main');
+        }
+    }, []);
+
+    const handleSidebarFocus = useCallback((id) => {
+        setSidebarFocusId(id);
+        setActivePanel('sidebar');
     }, []);
 
     const getCoreDataString = useCallback((nodes) => {
@@ -1321,6 +1497,13 @@ const App = () => {
             if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
                 setTheme(savedTheme);
             }
+            
+            // Load sidebar state
+            const savedSidebarState = await db.keyValuePairs.get('sidebarState');
+            if (savedSidebarState?.value) {
+                setSidebarWidth(savedSidebarState.value.width || 280);
+                setIsSidebarCollapsed(savedSidebarState.value.isCollapsed ?? true);
+            }
 
             let loadedSettings;
             const defaultSettings = {
@@ -1354,6 +1537,7 @@ const App = () => {
             }
             
             let initialLoadData = localBullets || initialData;
+            
             setBullets(initialLoadData);
             prevCoreDataRef.current = getCoreDataString(initialLoadData);
     
@@ -1457,18 +1641,17 @@ const App = () => {
 
     // Save settings and data
     useEffect(() => {
+        if (!dataLoadedRef.current) return;
         // Always save settings locally to IndexedDB
         db.keyValuePairs.put({ key: 'settings', value: settings });
+        db.keyValuePairs.put({ key: 'sidebarState', value: { width: sidebarWidth, isCollapsed: isSidebarCollapsed }});
         
         document.title = `${settings.fileName || 'Untitled'} - Jaroet Outliner`;
         
         const root = document.documentElement;
         root.style.setProperty('--main-color', settings.mainColor);
-        root.style.setProperty('--note-color', deriveNoteColor(settings.mainColor));
         root.style.setProperty('--font-family', settings.fontFamily);
         root.style.setProperty('--font-size', `${settings.fontSize}px`);
-
-        if (!dataLoadedRef.current) return;
         
         // Save main bullet data to IndexedDB
         db.keyValuePairs.put({ key: 'bullets', value: bullets });
@@ -1513,7 +1696,7 @@ const App = () => {
             setSyncStatus('offline');
         }
 
-    }, [settings, bullets, getCoreDataString]);
+    }, [settings, bullets, sidebarWidth, isSidebarCollapsed, getCoreDataString]);
     
     const flatBullets = useMemo(() => {
         const results = [];
@@ -1533,73 +1716,11 @@ const App = () => {
         return results;
     }, [bullets]);
 
-    const tagsData = useMemo(() => {
-        const tagMap = new Map();
-        const tagRegex = /#(\w+)/g;
-        
-        for (const bullet of flatBullets) {
-            const matches = bullet.text.match(tagRegex);
-            if (matches) {
-                for (const match of matches) {
-                    const tagName = match.substring(1);
-                    if (!tagMap.has(tagName)) {
-                        tagMap.set(tagName, []);
-                    }
-                    tagMap.get(tagName).push(bullet);
-                }
-            }
-        }
-        return tagMap;
-    }, [flatBullets]);
-
-    const tagsBullet = useMemo(() => {
-        const sortedTags = Array.from(tagsData.keys()).sort((a, b) => a.localeCompare(b));
-        
-        const tagChildren = sortedTags.map(tagName => {
-            const references = tagsData.get(tagName);
-            const tagId = `tag-#${tagName}`;
-            const referenceChildren = references.map(ref => ({
-                id: `ref-${ref.id}-${tagName}`,
-                text: ref.text,
-                note: '',
-                children: [],
-                isCollapsed: false,
-                isReadOnly: true,
-                originalId: ref.id
-            }));
-
-            return {
-                id: tagId,
-                text: `#${tagName}`,
-                note: '',
-                children: referenceChildren,
-                isCollapsed: tagCollapseState[tagId] ?? true,
-                isReadOnly: true
-            };
-        });
-
-        return {
-            id: 'tags-root',
-            text: TAGS_ROOT_TEXT,
-            note: '',
-            children: tagChildren,
-            isCollapsed: tagCollapseState['tags-root'] ?? true,
-            isReadOnly: true
-        };
-    }, [tagsData, tagCollapseState]);
-
-    const combinedData = useMemo(() => {
-        const data = JSON.parse(JSON.stringify(bullets));
-        if (tagsBullet.children.length > 0) {
-            const journalIndex = data.findIndex(b => b.text === JOURNAL_ROOT_TEXT);
-            if (journalIndex !== -1) {
-                data.splice(journalIndex + 1, 0, tagsBullet);
-            } else {
-                data.unshift(tagsBullet);
-            }
-        }
-        return data;
-    }, [bullets, tagsBullet]);
+    const sidebarSearchResults = useMemo(() => {
+        if (!sidebarSearchQuery) return [];
+        const lowerCaseQuery = sidebarSearchQuery.toLowerCase();
+        return flatBullets.filter(b => b.text.toLowerCase().includes(lowerCaseQuery));
+    }, [sidebarSearchQuery, flatBullets]);
 
     const findBulletAndParent = useCallback((
         id,
@@ -1617,13 +1738,74 @@ const App = () => {
         return null;
     }, []);
 
+    // --- Sidebar Data ---
+    useEffect(() => {
+        const tagsData = new Map();
+        const tagRegex = /#(\w+)/g;
+        for (const bullet of flatBullets) {
+            const matches = bullet.text.match(tagRegex);
+            if (matches) {
+                for (const match of matches) {
+                    const tagName = match.substring(1);
+                    if (!tagsData.has(tagName)) tagsData.set(tagName, []);
+                    tagsData.get(tagName).push(bullet);
+                }
+            }
+        }
+
+        const sortedTags = Array.from(tagsData.keys()).sort((a, b) => a.localeCompare(b));
+        const tagsBulletChildren = sortedTags.map(tagName => {
+            const references = tagsData.get(tagName);
+            return {
+                id: `tag-#${tagName}`, text: `#${tagName}`,
+                children: references.map(ref => ({
+                    id: `ref-${ref.id}-${tagName}`, text: ref.text, children: [],
+                    isCollapsed: true, isReadOnly: true, originalId: ref.id,
+                })),
+                isCollapsed: true, isReadOnly: true,
+            };
+        });
+
+        const tagsBullet = {
+            id: 'tags-root', text: TAGS_ROOT_TEXT,
+            children: tagsBulletChildren, isCollapsed: true, isReadOnly: true,
+        };
+        
+        const searchBulletChildren = sidebarSearchResults.map(res => ({
+            id: `sidebar-res-${res.id}`, text: res.text, children: [], 
+            isCollapsed: true, isReadOnly: true, originalId: res.id, path: res.path,
+        }));
+        
+        const searchBullet = {
+            id: 'sidebar-search-root', text: SEARCH_ROOT_TEXT,
+            children: searchBulletChildren, isCollapsed: !sidebarSearchQuery, isReadOnly: true,
+        };
+
+        const currentSearchNode = sidebarTree.find(b => b.id === 'sidebar-search-root');
+        if (currentSearchNode) {
+            searchBullet.isCollapsed = currentSearchNode.isCollapsed;
+        }
+        const currentTagsNode = sidebarTree.find(b => b.id === 'tags-root');
+        if (currentTagsNode) {
+            tagsBullet.isCollapsed = currentTagsNode.isCollapsed;
+            tagsBullet.children.forEach(tagChild => {
+                const oldTag = currentTagsNode.children.find(t => t.id === tagChild.id);
+                if (oldTag) tagChild.isCollapsed = oldTag.isCollapsed;
+            });
+        }
+        
+        const newTree = [searchBullet];
+        if (tagsBullet.children.length > 0) newTree.push(tagsBullet);
+        setSidebarTree(newTree);
+    }, [flatBullets, sidebarSearchQuery]);
+
     useEffect(() => {
         const currentId = focusOptions.id;
         const prevId = prevFocusId.current;
 
         if (prevId && prevId !== currentId) {
             const found = findBulletAndParent(prevId, bullets);
-            if (found && !found.node.isReadOnly && found.node.text === '' && found.node.note === '' && found.node.children.length === 0) {
+            if (found && !found.node.isReadOnly && found.node.text === '' && found.node.children.length === 0) {
                 const newBullets = JSON.parse(JSON.stringify(bullets));
                 const foundAgain = findBulletAndParent(prevId, newBullets);
                 if (foundAgain) {
@@ -1651,9 +1833,9 @@ const App = () => {
             }
             return false;
         };
-        findPath(combinedData, []);
+        findPath(bullets, []);
         return path;
-    }, [combinedData, zoomedBulletId]);
+    }, [bullets, zoomedBulletId]);
     
     const handleNavigate = useCallback((bulletId) => {
         const path = [];
@@ -1700,7 +1882,7 @@ const App = () => {
                     }
                     return ids;
                 };
-                const rootVisibleIds = getVisibleIds(combinedData);
+                const rootVisibleIds = getVisibleIds(bullets);
                 if (rootVisibleIds.length > 0) {
                     handleFocusChange(rootVisibleIds[0]);
                 }
@@ -1708,7 +1890,7 @@ const App = () => {
             return;
         }
     
-        const bulletToZoom = findBulletAndParent(id, combinedData)?.node;
+        const bulletToZoom = findBulletAndParent(id, bullets)?.node;
     
         if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
             const newBullet = createNewBullet();
@@ -1746,10 +1928,10 @@ const App = () => {
                 }
             }
         }
-    }, [zoomedBulletId, bullets, combinedData, handleFocusChange, breadcrumbs, findBulletAndParent]);
+    }, [zoomedBulletId, bullets, handleFocusChange, breadcrumbs, findBulletAndParent]);
 
     const displayedBullets = useMemo(() => {
-        if (!zoomedBulletId) return combinedData;
+        if (!zoomedBulletId) return bullets;
         const findZoomed = (nodes) => {
             for (const node of nodes) {
                 if (node.id === zoomedBulletId) return node;
@@ -1758,9 +1940,9 @@ const App = () => {
             }
             return null;
         }
-        const zoomedNode = findZoomed(combinedData);
+        const zoomedNode = findZoomed(bullets);
         return zoomedNode ? zoomedNode.children : [];
-    }, [combinedData, zoomedBulletId]);
+    }, [bullets, zoomedBulletId]);
 
     const visibleBulletIds = useMemo(() => {
         const getVisibleIds = (nodes) => {
@@ -1792,9 +1974,9 @@ const App = () => {
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
         
-        let journalNode = newBullets.find((b) => b.text === JOURNAL_ROOT_TEXT);
+        let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
         if (!journalNode) {
-            journalNode = createNewBullet(JOURNAL_ROOT_TEXT);
+            journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
             newBullets.unshift(journalNode);
         }
 
@@ -1821,6 +2003,83 @@ const App = () => {
         setTimeout(() => handleFocusChange(dayNode.id), 0);
     }, [bullets, handleFocusChange]);
 
+    const visibleSidebarIds = useMemo(() => {
+        const getVisibleIds = (nodes) => {
+            let ids = [];
+            for (const node of nodes) {
+                ids.push(node.id);
+                if(node.id === 'sidebar-search-root' && !node.isCollapsed){
+                    ids.push('sidebar-search-input');
+                }
+                if (!node.isCollapsed && node.children.length > 0) {
+                    ids = ids.concat(getVisibleIds(node.children));
+                }
+            }
+            return ids;
+        };
+        return getVisibleIds(sidebarTree);
+    }, [sidebarTree]);
+
+    const mapBullets = (
+        nodes,
+        callback
+    ) => {
+        return nodes.map(node => {
+            const newNode = callback(node);
+            return {
+                ...newNode,
+                children: mapBullets(newNode.children, callback),
+            };
+        });
+    };
+    
+    const handleUpdate = useCallback((id, updates) => {
+        const found = findBulletAndParent(id, bullets);
+        if (found?.node.isReadOnly) return;
+
+        setBullets(prevBullets =>
+            mapBullets(prevBullets, bullet =>
+                bullet.id === id ? { ...bullet, ...updates } : bullet
+            )
+        );
+    }, [bullets, findBulletAndParent]);
+    
+    const handleSidebarUpdate = useCallback((id, updates) => {
+        if ('isCollapsed' in updates) {
+            const mapSidebarTree = (nodes) => {
+                return nodes.map(node => {
+                    if (node.id === id) {
+                        return { ...node, ...updates };
+                    }
+                    if (node.children) {
+                        return { ...node, children: mapSidebarTree(node.children) };
+                    }
+                    return node;
+                });
+            };
+            setSidebarTree(prev => mapSidebarTree(prev));
+        }
+    }, []);
+
+    const toggleSidebar = useCallback(() => {
+        setIsSidebarCollapsed(prev => {
+            const willBeCollapsed = !prev;
+            if (willBeCollapsed) {
+                setActivePanel('main');
+                if (!currentFocusId && visibleBulletIds.length > 0) {
+                    handleFocusChange(visibleBulletIds[0]);
+                }
+            } else {
+                setActivePanel('sidebar');
+                if (!sidebarFocusId) {
+                    handleSidebarUpdate('sidebar-search-root', { isCollapsed: false });
+                    setSidebarFocusId('sidebar-search-input');
+                }
+            }
+            return willBeCollapsed;
+        });
+    }, [visibleBulletIds, currentFocusId, sidebarFocusId, handleFocusChange, handleSidebarUpdate]);
+
     useEffect(() => {
         const handleGlobalKeyDown = (e) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
@@ -1837,8 +2096,27 @@ const App = () => {
                     const parentId = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].id : null;
                     handleZoom(parentId);
                 }
-            } 
-            else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !currentFocusId && visibleBulletIds.length > 0) {
+            }
+            else if (e.ctrlKey && (e.key === '\\' || e.key === 'å')) { // `å` for some keyboards
+                 e.preventDefault();
+                 toggleSidebar();
+            }
+            else if (e.ctrlKey && e.key === "'") {
+                e.preventDefault();
+                if (activePanel === 'main' && !isSidebarCollapsed) {
+                     if (!sidebarFocusId) {
+                         handleSidebarUpdate('sidebar-search-root', { isCollapsed: false });
+                         setSidebarFocusId('sidebar-search-input');
+                     }
+                     setActivePanel('sidebar');
+                } else {
+                    if (!currentFocusId && visibleBulletIds.length > 0) {
+                        handleFocusChange(visibleBulletIds[0]);
+                    }
+                    setActivePanel('main');
+                }
+            }
+            else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !currentFocusId && activePanel === 'main' && visibleBulletIds.length > 0) {
                 const target = e.target;
                 if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
                     e.preventDefault();
@@ -1851,43 +2129,10 @@ const App = () => {
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange]);
-
-    const mapBullets = (
-        nodes,
-        callback
-    ) => {
-        return nodes.map(node => {
-            const newNode = callback(node);
-            return {
-                ...newNode,
-                children: mapBullets(newNode.children, callback),
-            };
-        });
-    };
-    
-    const handleUpdate = useCallback((id, updates) => {
-        const found = findBulletAndParent(id, combinedData);
-        if (found?.node.isReadOnly) return;
-
-        setBullets(prevBullets =>
-            mapBullets(prevBullets, bullet =>
-                bullet.id === id ? { ...bullet, ...updates } : bullet
-            )
-        );
-    }, [combinedData, findBulletAndParent]);
-
-    const handleTagUpdate = useCallback((id, updates) => {
-        if ('isCollapsed' in updates) {
-            setTagCollapseState(prev => ({
-                ...prev,
-                [id]: updates.isCollapsed,
-            }));
-        }
-    }, []);
+    }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange, toggleSidebar, isSidebarCollapsed, activePanel, visibleSidebarIds, sidebarFocusId, handleSidebarUpdate]);
 
     const addSibling = (targetId, newBullet) => {
-        const foundTarget = findBulletAndParent(targetId, combinedData);
+        const foundTarget = findBulletAndParent(targetId, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
@@ -1904,12 +2149,12 @@ const App = () => {
         }
     }
 
-    const handleAddSibling = useCallback((id) => {
-       addSibling(id, createNewBullet());
-    }, [bullets, zoomedBulletId, combinedData, handleFocusChange, findBulletAndParent]);
+    const handleAddSibling = useCallback((id, text = '') => {
+       addSibling(id, createNewBullet(text));
+    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
 
     const handleDelete = useCallback((id) => {
-        const foundTarget = findBulletAndParent(id, combinedData);
+        const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
@@ -1920,10 +2165,10 @@ const App = () => {
             setBullets(newBullets);
             handleFocusChange(prevSiblingId || null);
         }
-    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
+    }, [bullets, handleFocusChange, findBulletAndParent]);
     
     const handleIndent = useCallback((id) => {
-        const foundTarget = findBulletAndParent(id, combinedData);
+        const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
@@ -1937,10 +2182,10 @@ const App = () => {
             setBullets(newBullets);
             handleFocusChange(id);
         }
-    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
+    }, [bullets, handleFocusChange, findBulletAndParent]);
     
     const handleOutdent = useCallback((id) => {
-        const foundTarget = findBulletAndParent(id, combinedData);
+        const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
@@ -1957,7 +2202,7 @@ const App = () => {
                 handleFocusChange(id);
             }
         }
-    }, [bullets, combinedData, handleFocusChange, findBulletAndParent]);
+    }, [bullets, handleFocusChange, findBulletAndParent]);
 
     const handleFoldAll = useCallback((id, collapse) => {
         const setCollapseRecursively = (nodes) => {
@@ -1994,7 +2239,7 @@ const App = () => {
     }, []);
 
     const handleMoveBullet = useCallback((id, direction) => {
-        const foundTarget = findBulletAndParent(id, combinedData);
+        const foundTarget = findBulletAndParent(id, bullets);
         if (foundTarget?.node.isReadOnly) return;
 
         const newBullets = JSON.parse(JSON.stringify(bullets));
@@ -2015,10 +2260,10 @@ const App = () => {
                 setBullets(newBullets);
             }
         }
-    }, [bullets, combinedData, findBulletAndParent]);
+    }, [bullets, findBulletAndParent]);
 
     const handleFocusParent = useCallback((id) => {
-        const currentTree = zoomedBulletId ? displayedBullets : combinedData;
+        const currentTree = zoomedBulletId ? displayedBullets : bullets;
         const findInCurrentView = (
             bulletId,
             nodes,
@@ -2037,14 +2282,14 @@ const App = () => {
         if (found?.parent) {
             handleFocusChange(found.parent.id);
         }
-    }, [zoomedBulletId, combinedData, displayedBullets, handleFocusChange]);
+    }, [zoomedBulletId, bullets, displayedBullets, handleFocusChange]);
 
     const handleFocusChild = useCallback((id) => {
-        const found = findBulletAndParent(id, combinedData);
+        const found = findBulletAndParent(id, bullets);
         if (found?.node && found.node.children.length > 0 && !found.node.isCollapsed) {
             handleFocusChange(found.node.children[0].id, 'start');
         }
-    }, [combinedData, handleFocusChange, findBulletAndParent]);
+    }, [bullets, handleFocusChange, findBulletAndParent]);
 
 
     const handleExport = () => {
@@ -2102,6 +2347,82 @@ const App = () => {
             }
         }
     }, [currentFocusId, visibleBulletIds, handleFocusChange]);
+
+    // --- Sidebar KeyDown Handler ---
+    const handleSidebarKeyDown = useCallback((e) => {
+        if (e.target.id === 'sidebar-search-input') {
+            if(e.key === 'ArrowDown') {
+                e.preventDefault();
+                const searchRootIndex = visibleSidebarIds.indexOf('sidebar-search-root');
+                if (searchRootIndex !== -1 && visibleSidebarIds.length > searchRootIndex + 2) { // +2 to skip input itself
+                    setSidebarFocusId(visibleSidebarIds[searchRootIndex + 2]);
+                }
+            }
+            return;
+        };
+
+        const findNode = (id, nodes) => {
+            for (const node of nodes) {
+                if (node.id === id) return node;
+                const found = findNode(id, node.children);
+                if (found) return found;
+            }
+            return null;
+        };
+        const currentItem = findNode(sidebarFocusId, sidebarTree);
+
+        const moveFocus = (dir) => {
+            const currentIndex = visibleSidebarIds.indexOf(sidebarFocusId);
+            if (currentIndex === -1) return;
+            const nextIndex = dir === 'up' ? currentIndex - 1 : currentIndex + 1;
+            if (nextIndex >= 0 && nextIndex < visibleSidebarIds.length) {
+                setSidebarFocusId(visibleSidebarIds[nextIndex]);
+            }
+        };
+
+        let handled = true;
+        if (e.ctrlKey) {
+            switch (e.key) {
+                case 'ArrowDown':
+                    if (currentItem && currentItem.originalId) handleNavigate(currentItem.originalId);
+                    break;
+                case 'ArrowRight':
+                    if (currentItem && currentItem.children?.length > 0 && currentItem.isCollapsed) {
+                        handleSidebarUpdate(currentItem.id, { isCollapsed: false });
+                    }
+                    break;
+                case 'ArrowLeft':
+                     if (currentItem && currentItem.children?.length > 0 && !currentItem.isCollapsed) {
+                        handleSidebarUpdate(currentItem.id, { isCollapsed: true });
+                    }
+                    break;
+                default: handled = false;
+            }
+        } else {
+             switch (e.key) {
+                case 'ArrowUp': moveFocus('up'); break;
+                case 'ArrowDown': moveFocus('down'); break;
+                case 'Enter':
+                    if (currentItem && currentItem.originalId) handleNavigate(currentItem.originalId);
+                    else if (currentItem && currentItem.children?.length > 0) {
+                        handleSidebarUpdate(currentItem.id, { isCollapsed: !currentItem.isCollapsed });
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (currentItem && currentItem.children?.length > 0 && currentItem.isCollapsed) {
+                        handleSidebarUpdate(currentItem.id, { isCollapsed: false });
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (currentItem && currentItem.children?.length > 0 && !currentItem.isCollapsed) {
+                        handleSidebarUpdate(currentItem.id, { isCollapsed: true });
+                    }
+                    break;
+                default: handled = false;
+            }
+        }
+       if (handled) e.preventDefault();
+    }, [sidebarFocusId, sidebarTree, visibleSidebarIds, handleNavigate, handleSidebarUpdate]);
 
     // --- Link Popup Logic ---
 
@@ -2215,23 +2536,127 @@ const App = () => {
         }
     }, [bullets, handleFocusChange]);
 
+    // --- Sidebar Resize Logic ---
+    const handleResizeMouseDown = (e) => {
+        e.preventDefault();
+        setIsResizing(true);
+    };
+
+    const handleResizeMouseMove = useCallback((e) => {
+        if (isResizing) {
+            const newWidth = window.innerWidth - e.clientX;
+            const MIN_WIDTH = 200;
+            const MAX_WIDTH = 500;
+            setSidebarWidth(Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH)));
+        }
+    }, [isResizing]);
+
+    const handleResizeMouseUp = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleResizeMouseMove);
+        window.addEventListener('mouseup', handleResizeMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleResizeMouseMove);
+            window.removeEventListener('mouseup', handleResizeMouseUp);
+        };
+    }, [handleResizeMouseMove, handleResizeMouseUp]);
+
+
     return (
         <div className="h-screen w-screen flex flex-col">
             <Toolbar
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
                 onImport={handleImport}
                 onExport={handleExport}
                 breadcrumbs={breadcrumbs}
-                onBreadcrumbClick={setZoomedBulletId}
+                onBreadcrumbClick={handleZoom}
                 fileName={settings.fileName}
                 onOpenSettings={() => setIsSettingsModalOpen(true)}
                 syncStatus={syncStatus}
                 onGoToToday={handleGoToJournal}
                 theme={theme}
                 onThemeToggle={handleThemeToggle}
+                onToggleSidebar={toggleSidebar}
+                isSidebarCollapsed={isSidebarCollapsed}
             />
-            <SearchModal
+            <div className="flex flex-grow overflow-hidden">
+                <main className={`flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none ${activePanel === 'main' ? 'focus-outline' : ''}`}>
+                    {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
+                        <div key={bullet.id}>
+                            <BulletItem
+                                bullet={bullet}
+                                level={0}
+                                onUpdate={handleUpdate}
+                                onAddSibling={handleAddSibling}
+                                onDelete={handleDelete}
+                                onIndent={handleIndent}
+                                onOutdent={handleOutdent}
+                                onFocusChange={handleFocusChange}
+                                onZoom={handleZoom}
+                                onFocusMove={handleFocusMove}
+                                onFocusParent={handleFocusParent}
+                                onFocusChild={handleFocusChild}
+                                onFoldAll={handleFoldAll}
+                                onMoveBullet={handleMoveBullet}
+                                currentFocusId={currentFocusId}
+                                focusPosition={focusPosition}
+                                searchQuery={searchQuery}
+                                onLinkClick={handleLinkClick}
+                                onTriggerLinkPopup={handleTriggerLinkPopup}
+                                onCloseLinkPopup={handleCloseLinkPopup}
+                                onLinkNavigate={handleLinkNavigate}
+                                onLinkSelect={handleLinkSelect}
+                                isLinkPopupOpen={linkPopupState.isOpen}
+                                linkPopupTargetId={linkPopupState.targetId}
+                                isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null}
+                                isTagsRoot={false}
+                                onNavigateTo={handleNavigate}
+                                activePanel={activePanel}
+                            />
+                        </div>
+                    )) : (
+                        <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
+                            <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                               {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
+                            </button>
+                        </div>
+                    )}
+                     {linkPopupState.isOpen && (
+                        <LinkPopup
+                            suggestions={linkPopupState.suggestions}
+                            selectedIndex={linkPopupState.selectedIndex}
+                            onSelect={(bullet) => {
+                                if (linkSelectionHandler.handler) {
+                                    linkSelectionHandler.handler(bullet);
+                                }
+                            }}
+                            position={linkPopupState.position}
+                            containerRef={linkPopupRef}
+                        />
+                    )}
+                </main>
+                {!isSidebarCollapsed && (
+                    <Resizer onMouseDown={handleResizeMouseDown} />
+                )}
+                {!isSidebarCollapsed && (
+                    <div style={{ width: `${sidebarWidth}px` }} className="flex-shrink-0 h-full">
+                         <Sidebar
+                            sidebarTree={sidebarTree}
+                            onSidebarUpdate={handleSidebarUpdate}
+                            onNavigateTo={handleNavigate}
+                            sidebarFocusId={sidebarFocusId}
+                            activePanel={activePanel}
+                            sidebarSearchQuery={sidebarSearchQuery}
+                            onSearchQueryChange={setSidebarSearchQuery}
+                            onSidebarKeyDown={handleSidebarKeyDown}
+                            onSidebarFocus={handleSidebarFocus}
+                        />
+                    </div>
+                )}
+            </div>
+             <SearchModal
                 isOpen={isSearchModalOpen}
                 onClose={() => setIsSearchModalOpen(false)}
                 bullets={flatBullets}
@@ -2243,60 +2668,6 @@ const App = () => {
                 onSave={setSettings}
                 currentSettings={settings}
             />
-            <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32">
-                {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
-                    <div key={bullet.id} className={bullet.id === 'tags-root' ? 'opacity-75' : ''}>
-                        <BulletItem
-                            bullet={bullet}
-                            level={0}
-                            onUpdate={bullet.isReadOnly ? handleTagUpdate : handleUpdate}
-                            onAddSibling={handleAddSibling}
-                            onDelete={handleDelete}
-                            onIndent={handleIndent}
-                            onOutdent={handleOutdent}
-                            onFocusChange={handleFocusChange}
-                            onZoom={handleZoom}
-                            onFocusMove={handleFocusMove}
-                            onFocusParent={handleFocusParent}
-                            onFocusChild={handleFocusChild}
-                            onFoldAll={handleFoldAll}
-                            onMoveBullet={handleMoveBullet}
-                            currentFocusId={currentFocusId}
-                            focusPosition={focusPosition}
-                            searchQuery={searchQuery}
-                            onLinkClick={handleLinkClick}
-                            onTriggerLinkPopup={handleTriggerLinkPopup}
-                            onCloseLinkPopup={handleCloseLinkPopup}
-                            onLinkNavigate={handleLinkNavigate}
-                            onLinkSelect={handleLinkSelect}
-                            isLinkPopupOpen={linkPopupState.isOpen}
-                            linkPopupTargetId={linkPopupState.targetId}
-                            isJournalRoot={bullet.text === JOURNAL_ROOT_TEXT && zoomedBulletId === null}
-                            isTagsRoot={bullet.id === 'tags-root'}
-                            onNavigateTo={handleNavigate}
-                        />
-                    </div>
-                )) : (
-                    <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
-                        <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                           {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
-                        </button>
-                    </div>
-                )}
-                 {linkPopupState.isOpen && (
-                    <LinkPopup
-                        suggestions={linkPopupState.suggestions}
-                        selectedIndex={linkPopupState.selectedIndex}
-                        onSelect={(bullet) => {
-                            if (linkSelectionHandler.handler) {
-                                linkSelectionHandler.handler(bullet);
-                            }
-                        }}
-                        position={linkPopupState.position}
-                        containerRef={linkPopupRef}
-                    />
-                )}
-            </main>
         </div>
     );
 };
