@@ -1093,6 +1093,10 @@ export const App = () => {
                     />
                 )}
             </main>
+            <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
+                <span title={settings.fileName} className="truncate">{settings.fileName}</span>
+                <span>Version 0.1.2</span>
+            </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
                 onClose={handleCloseSearch}

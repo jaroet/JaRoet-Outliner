@@ -58,7 +58,7 @@ const renderRichTextContent = (
                 {parts.map((part, index) => {
                     if (part.startsWith('#') && /#\w+/.test(part)) {
                         return (
-                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                            <span key={index} className="tag-span">
                                 {part}
                             </span>
                         );
@@ -79,7 +79,7 @@ const renderRichTextContent = (
             
             if (part.startsWith('#') && /#\w+/.test(part)) {
                 return (
-                    <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                    <span key={index} className="tag-span">
                          {highlightText(part, highlight)}
                     </span>
                 );

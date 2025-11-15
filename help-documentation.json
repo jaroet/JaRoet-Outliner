@@ -74,6 +74,33 @@
     "text": "Changelog",
     "children": [
         {
+            "id": "cl-13",
+            "text": "2024-08-04: Status Bar Enhancement",
+            "children": [
+                { "id": "cl-13-a", "text": "The text in the status bar now uses the main theme color, making it more vibrant and consistent with the UI.", "children": [], "isCollapsed": false },
+                { "id": "cl-13-b", "text": "Updated application version to 0.1.2.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "cl-12",
+            "text": "2024-08-03: UI Polish & Versioning",
+            "children": [
+                { "id": "cl-12-a", "text": "Moved the outline title from the top toolbar to the bottom status bar for a cleaner look.", "children": [], "isCollapsed": false },
+                { "id": "cl-12-b", "text": "Updated application version to 0.1.1.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "cl-11",
+            "text": "2024-08-02: Status Bar & Versioning",
+            "children": [
+                { "id": "cl-11-a", "text": "Added a status bar to the bottom of the application.", "children": [], "isCollapsed": false },
+                { "id": "cl-11-b", "text": "The status bar now displays the current app version, starting with v0.1.0.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
             "id": "cl-10",
             "text": "2024-08-01: UI & Formatting Improvements",
             "children": [

@@ -70,7 +70,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <HomeIcon />
             </button>
-            {breadcrumbs.map((crumb) => (
+            {breadcrumbs.map((crumb, index) => (
                 <React.Fragment key={crumb.id}>
                 <span className="text-gray-400 dark:text-gray-500">/</span>
                 <button
@@ -82,9 +82,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </button>
                 </React.Fragment>
             ))}
-            {breadcrumbs.length === 0 && (
-                <span className="text-gray-800 dark:text-gray-200 font-semibold ml-2 truncate" title={fileName}>{fileName}</span>
-            )}
         </div>
 
       <div className="flex items-center gap-2">
