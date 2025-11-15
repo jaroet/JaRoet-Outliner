@@ -39,3 +39,7 @@ body {
   outline-offset: -1px;
   border-radius: 4px;
 }
+.selected-item-bg {
+  /* Mix with 20% black to darken the main color, ensuring good contrast with white text */
+  background-color: color-mix(in srgb, var(--main-color) 80%, black);
+}

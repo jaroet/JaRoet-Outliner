@@ -306,7 +306,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
                 <li
                   key={bullet.id}
                   ref={index === selectedIndex ? selectedItemRef : null}
-                  className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                   onClick={() => onNavigate(bullet.id)}
                 >
                   <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">

@@ -32,7 +32,7 @@ export const TagPopup: React.FC<TagPopupProps> = ({ suggestions, selectedIndex, 
             <button
               onClick={() => onSelect(tag)}
               className={`w-full text-left px-3 py-2 text-sm ${
-                index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
                title={tag}
             >

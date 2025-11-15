@@ -33,7 +33,7 @@ export const LinkPopup: React.FC<LinkPopupProps> = ({ suggestions, selectedIndex
             <button
               onClick={() => onSelect(bullet)}
               className={`w-full text-left px-3 py-2 text-sm ${
-                index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
                title={bullet.text}
             >

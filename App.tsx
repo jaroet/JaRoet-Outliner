@@ -843,7 +843,14 @@ export const App = () => {
     const handleCloseSearch = () => {
         setIsSearchModalOpen(false);
         if (focusBeforeModalRef.current) {
-            handleFocusChange(focusBeforeModalRef.current);
+            const idToRestore = focusBeforeModalRef.current;
+            // By setting the position to 'start' and then immediately back to 'end' in a timeout,
+            // we ensure the focus effect's dependencies change in BulletItem, forcing it to re-run
+            // and re-apply focus, even if the focused ID hasn't changed.
+            handleFocusChange(idToRestore, 'start');
+            setTimeout(() => {
+                handleFocusChange(idToRestore, 'end');
+            }, 0);
             focusBeforeModalRef.current = null;
         }
     };
