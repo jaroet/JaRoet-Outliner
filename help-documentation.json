@@ -20,7 +20,7 @@
       { "id": "kf-3", "text": "Zoom Out: Use the breadcrumbs at the top or press `Ctrl+Up` to go back.", "children": [], "isCollapsed": false },
       { "id": "kf-5", "text": "Expand/Collapse: Click the triangle next to an item to show or hide its children.", "children": [], "isCollapsed": false },
       { "id": "kf-6", "text": "Daily Log: Press `Ctrl+J` to jump directly to a special section for today's date.", "children": [], "isCollapsed": false },
-      { "id": "kf-7", "text": "Quick Find: Press `Ctrl+Shift+K` to open the search bar.", "children": [], "isCollapsed": false },
+      { "id": "kf-7", "text": "Quick Find: Press `Ctrl+Shift+K` to open the search bar. You can search for multiple terms (e.g., `#project release`) and use `OR` for broader results (e.g., `#bug OR #fix`).", "children": [], "isCollapsed": false },
       { "id": "kf-8", "text": "Tags: Type `#tagname` to create a tag, which will be visually highlighted.", "children": [], "isCollapsed": false }
     ],
     "isCollapsed": false
@@ -73,6 +73,16 @@
     "id": "changelog-root",
     "text": "Changelog",
     "children": [
+        {
+            "id": "cl-8",
+            "text": "2024-07-30: Advanced Search",
+            "children": [
+                { "id": "cl-8-a", "text": "Enhanced the 'Quick Find' modal to support multi-word and multi-tag searches.", "children": [], "isCollapsed": false },
+                { "id": "cl-8-b", "text": "By default, multiple terms are combined with AND logic (e.g., `#doc changelog` finds items with both).", "children": [], "isCollapsed": false },
+                { "id": "cl-8-c", "text": "You can now use `OR` to find items matching any of the terms (e.g., `#doc OR changelog`).", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
         {
             "id": "cl-7",
             "text": "2024-07-29: Further Optimization",
