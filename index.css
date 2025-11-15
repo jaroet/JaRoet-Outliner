@@ -1,0 +1,41 @@
+:root {
+  --main-color: #60a5fa;
+  --font-family: sans-serif;
+  --font-size: 16px;
+}
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  overflow: hidden; /* Prevent body scroll when resizing */
+}
+/* Simple scrollbar styling for a more modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+/* Light theme */
+::-webkit-scrollbar-track {
+  background: #f1f5f9; /* cool-gray-100 */
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* cool-gray-300 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* cool-gray-400 */
+}
+/* Dark theme */
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b; /* slate-800 */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569; /* slate-600 */
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b; /* slate-500 */
+}
+.focus-outline {
+  outline: 2px solid var(--main-color);
+  outline-offset: -1px;
+  border-radius: 4px;
+}
