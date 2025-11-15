@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { SearchIcon } from './Icons';
+import { TagPopup } from './TagPopup';
 import type { FlatBullet } from '../types';
 
 interface SearchModalProps {
@@ -7,54 +8,69 @@ interface SearchModalProps {
     onClose: () => void;
     bullets: FlatBullet[];
     onNavigate: (id: string) => void;
+    allTags: string[];
 }
 
-export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate }) => {
+type Tab = 'search' | 'edited' | 'created';
+
+export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate, allTags }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<Tab>('search');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const selectedItemRef = useRef<HTMLLIElement>(null);
+  const tagPopupRef = useRef<HTMLUListElement>(null);
+
+  const [tagPopupState, setTagPopupState] = useState({
+    isOpen: false,
+    suggestions: [] as string[],
+    selectedIndex: 0,
+  });
 
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
       setQuery('');
       setSelectedIndex(0);
+      setActiveTab('search');
+      handleCloseTagPopup();
     }
   }, [isOpen]);
   
-  // Reset index when query changes to avoid out-of-bounds errors
   useEffect(() => {
     setSelectedIndex(0);
-  }, [query]);
+  }, [query, activeTab]);
 
-  const filteredBullets = useMemo(() => {
+  const listContent = useMemo(() => {
+    let sourceList: FlatBullet[];
+    
+    if (activeTab === 'edited') {
+        sourceList = [...bullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    } else if (activeTab === 'created') {
+        sourceList = [...bullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } else {
+        sourceList = bullets;
+    }
+
     const trimmedQuery = query.trim();
     if (!trimmedQuery) {
-      return bullets;
+      return sourceList;
     }
 
     const lowerCaseQuery = trimmedQuery.toLowerCase();
-    
-    // Split by " OR " to get the main clauses for OR logic
     const orClauses = lowerCaseQuery.split(/\s+or\s+/i);
-
-    // For each clause, split by space to get terms that must all be present (AND logic)
     const searchConditionGroups = orClauses.map(clause => 
         clause.split(/\s+/).filter(term => term)
     );
 
-    return bullets.filter(bullet => {
+    return sourceList.filter(bullet => {
         const lowerCaseText = bullet.text.toLowerCase();
-        
-        // A bullet is a match if it satisfies at least one of the OR condition groups
         return searchConditionGroups.some(andTerms => {
-            // Within a group, the bullet must contain ALL terms
             return andTerms.every(term => lowerCaseText.includes(term));
         });
     });
-  }, [query, bullets]);
+  }, [query, bullets, activeTab]);
 
   useEffect(() => {
     if (selectedItemRef.current) {
@@ -62,14 +78,126 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
     }
   }, [selectedIndex]);
 
+  const handleCloseTagPopup = useCallback(() => {
+    setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+  }, []);
+
+  const handleTagSelection = useCallback((selectedTag: string) => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const text = input.value;
+    const cursor = input.selectionStart ?? text.length;
+
+    const textBeforeCursor = text.substring(0, cursor);
+    const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+
+    if (match) {
+        const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
+        const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
+        setQuery(newText);
+        handleCloseTagPopup();
+
+        setTimeout(() => {
+            const newCursorPos = startIndex + selectedTag.length + 1;
+            input.focus();
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    }
+  }, [handleCloseTagPopup]);
+
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    const cursor = e.target.selectionStart;
+    setQuery(text);
+
+    if (cursor === null) {
+      handleCloseTagPopup();
+      return;
+    }
+
+    const textBeforeCursor = text.substring(0, cursor);
+    const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+    
+    if (tagMatch) {
+        const query = tagMatch[1];
+        const lowerCaseQuery = query.toLowerCase();
+        const suggestions = allTags.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
+
+        if (suggestions.length > 0) {
+            setTagPopupState({
+                isOpen: true,
+                suggestions: suggestions.slice(0, 100),
+                selectedIndex: 0,
+            });
+        } else {
+            handleCloseTagPopup();
+        }
+    } else {
+        handleCloseTagPopup();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const count = filteredBullets.length;
+    if (tagPopupState.isOpen && tagPopupState.suggestions.length > 0) {
+        let handled = true;
+        switch (e.key) {
+            case 'ArrowUp':
+                setTagPopupState(prev => ({
+                    ...prev,
+                    selectedIndex: (prev.selectedIndex - 1 + prev.suggestions.length) % prev.suggestions.length,
+                }));
+                break;
+            case 'ArrowDown':
+                setTagPopupState(prev => ({
+                    ...prev,
+                    selectedIndex: (prev.selectedIndex + 1) % prev.suggestions.length,
+                }));
+                break;
+            case 'Tab':
+                const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
+                handleTagSelection(selectedTag);
+                break;
+            case 'Escape':
+                handleCloseTagPopup();
+                break;
+            default:
+                handled = false;
+        }
+        if (handled) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    if (e.ctrlKey) {
+        const tabs: Tab[] = ['search', 'edited', 'created'];
+        const currentIndex = tabs.indexOf(activeTab);
+        let handled = true;
+
+        if (e.key === 'ArrowRight') {
+            const nextIndex = (currentIndex + 1) % tabs.length;
+            setActiveTab(tabs[nextIndex]);
+        } else if (e.key === 'ArrowLeft') {
+            const nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            setActiveTab(tabs[nextIndex]);
+        } else {
+            handled = false;
+        }
+
+        if (handled) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    const count = listContent.length;
     if (e.key === 'Escape') {
       onClose();
       return;
     }
 
-    if (count === 0) return;
+    if (count === 0 && e.key !== 'Enter') return;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -79,8 +207,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
       setSelectedIndex(prev => (prev - 1 + count) % count);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredBullets[selectedIndex]) {
-        onNavigate(filteredBullets[selectedIndex].id);
+      if (listContent.length > 0 && listContent[selectedIndex]) {
+        onNavigate(listContent[selectedIndex].id);
       }
     }
   };
@@ -88,22 +216,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
   const highlightMatch = (text: string, q: string) => {
       const trimmedQuery = q.trim();
       if (!trimmedQuery || !text) return text;
-
-      // Extract all individual terms for highlighting, removing 'OR'
-      const termsToHighlight = trimmedQuery
-          .toLowerCase()
-          .replace(/\s+or\s+/gi, ' ')
-          .split(/\s+/)
-          .filter(Boolean);
-
+      const termsToHighlight = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
       const uniqueTerms = [...new Set(termsToHighlight)];
       if (uniqueTerms.length === 0) return text;
-
-      // Create a regex to find all terms
       const regex = new RegExp(`(${uniqueTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-      
       const parts = text.split(regex);
-
       return (
           <span>
               {parts.map((part, i) => {
@@ -114,6 +231,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
               })}
           </span>
       );
+  };
+
+  const formatDateTime = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: false,
+    });
   };
 
   if (!isOpen) {
@@ -129,36 +255,71 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 relative text-[var(--main-color)]">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-7">
-            <SearchIcon />
-          </span>
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Quick find... (use #tag, AND, OR)"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
-          />
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+            <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <SearchIcon />
+                </span>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Quick find... (use #tag, AND, OR)"
+                    value={query}
+                    onChange={handleQueryChange}
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
+                />
+                 {tagPopupState.isOpen && inputRef.current && (
+                    <TagPopup
+                        suggestions={tagPopupState.suggestions}
+                        selectedIndex={tagPopupState.selectedIndex}
+                        onSelect={handleTagSelection}
+                        position={{
+                            top: inputRef.current.offsetHeight + 4,
+                            left: 0
+                        }}
+                        containerRef={tagPopupRef}
+                    />
+                )}
+            </div>
+            <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
+                {(['search', 'edited', 'created'] as Tab[]).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 capitalize -mb-px border-b-2 transition-colors ${
+                            activeTab === tab 
+                                ? 'border-[var(--main-color)] text-[var(--main-color)]' 
+                                : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        {tab === 'edited' ? 'Recently modified' : (tab === 'created' ? 'Recently created' : 'Search')}
+                    </button>
+                ))}
+            </div>
         </div>
+
         <div className="overflow-y-auto">
-          {filteredBullets.length > 0 ? (
+          {listContent.length > 0 ? (
             <ul ref={listRef}>
-              {filteredBullets.map((bullet, index) => (
+              {listContent.map((bullet, index) => (
                 <li
                   key={bullet.id}
                   ref={index === selectedIndex ? selectedItemRef : null}
-                  className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'bg-[var(--main-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                   onClick={() => onNavigate(bullet.id)}
                 >
                   <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                    <div className={`text-sm font-medium truncate mb-1 ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
-                        {highlightMatch(bullet.text, query) || <em>Untitled</em>}
+                    <div className="flex justify-between items-start gap-4">
+                        <div className={`text-sm font-medium truncate mb-1 flex-grow ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
+                            {highlightMatch(bullet.text, query) || <em>Untitled</em>}
+                        </div>
+                        <div className={`text-xs flex-shrink-0 whitespace-nowrap ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                            {formatDateTime(activeTab === 'created' ? bullet.createdAt : bullet.updatedAt)}
+                        </div>
                     </div>
                     <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${
-                        index === selectedIndex ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                        index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
                     }`}>
                         {bullet.path.length > 0 ? (
                             bullet.path.map((segment, i) => (

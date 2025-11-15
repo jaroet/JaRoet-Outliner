@@ -74,6 +74,25 @@
     "text": "Changelog",
     "children": [
         {
+            "id": "cl-10",
+            "text": "2024-08-01: UI & Formatting Improvements",
+            "children": [
+                { "id": "cl-10-a", "text": "Renamed 'Recent Edits' and 'Recent Creations' tabs in Quick Find to 'Recently modified' and 'Recently created' for clarity.", "children": [], "isCollapsed": false },
+                { "id": "cl-10-b", "text": "Timestamps in Quick Find now include the time and are displayed for all search results.", "children": [], "isCollapsed": false },
+                { "id": "cl-10-c", "text": "All timestamps now use a 24-hour format.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "cl-9",
+            "text": "2024-07-31: Timestamps & Enhanced Search",
+            "children": [
+                { "id": "cl-9-a", "text": "Bullets now track their creation and last modification dates.", "children": [], "isCollapsed": false },
+                { "id": "cl-9-b", "text": "The 'Quick Find' window (Ctrl+Shift+K) now has tabs to view bullets sorted by 'Recent Edits' and 'Recent Creations'.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
             "id": "cl-8",
             "text": "2024-07-30: Advanced Search",
             "children": [

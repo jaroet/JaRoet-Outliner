@@ -2,6 +2,136 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons';
 import type { Bullet } from '../types';
 
+// --- Helper Functions for Rich Text Rendering ---
+
+/**
+ * A helper to wrap matched search query terms in a highlighting span.
+ */
+const highlightText = (text: string, highlight?: string) => {
+    if (!text) return text;
+    const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
+    const parts = highlight ? text.split(regex) : [text];
+    
+    return (
+      <React.Fragment>
+        {parts.map((part, i) => {
+            if (!part) return null;
+            const lines = part.split('\n');
+            const partWithBreaks = lines.map((line, j) => (
+                <React.Fragment key={j}>
+                    {line}
+                    {j < lines.length - 1 && <br />}
+                </React.Fragment>
+            ));
+
+            if (highlight && part.toLowerCase() === highlight.toLowerCase()) {
+                return (
+                    <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
+                        {partWithBreaks}
+                    </span>
+                );
+            }
+            return <React.Fragment key={i}>{partWithBreaks}</React.Fragment>;
+        })}
+      </React.Fragment>
+    );
+};
+
+/**
+ * A centralized function to render text with rich formatting (tags, links, etc.).
+ * It can be configured to render a full or simplified version.
+ */
+const renderRichTextContent = (
+    text: string, 
+    highlight: string | undefined, 
+    onLinkClick: (linkText: string) => void,
+    options: { renderTagsOnly?: boolean } = {}
+): React.ReactNode => {
+    const { renderTagsOnly = false } = options;
+    if (!text) return null;
+
+    if (renderTagsOnly) {
+        const tagRegex = /(#\w+)/g;
+        const parts = text.split(tagRegex);
+        return (
+            <React.Fragment>
+                {parts.map((part, index) => {
+                    if (part.startsWith('#') && /#\w+/.test(part)) {
+                        return (
+                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                                {part}
+                            </span>
+                        );
+                    }
+                    return <span key={index}>{part}</span>;
+                })}
+            </React.Fragment>
+        );
+    }
+    
+    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|\b(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|\bwww\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+    const parts = text.split(combinedRegex);
+    
+    return (
+      <React.Fragment>
+        {parts.map((part, index) => {
+            if (!part) return null;
+            
+            if (part.startsWith('#') && /#\w+/.test(part)) {
+                return (
+                    <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
+                         {highlightText(part, highlight)}
+                    </span>
+                );
+            }
+
+            if (part.startsWith('[[') && part.endsWith(']]')) {
+                const linkText = part.slice(2, -2);
+                return (
+                    <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
+                        {highlightText(linkText, highlight)}
+                    </button>
+                );
+            }
+            
+            const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (mdLinkMatch) {
+                const [, text, url] = mdLinkMatch;
+                let href = url.trim();
+                if (!/^(https?|ftp|mailto):/i.test(href)) {
+                   href = `https://${href}`;
+                }
+                return (
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                       {highlightText(text, highlight)}
+                    </a>
+                );
+            }
+
+            if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
+                const href = part.startsWith('www.') ? `https://${part}` : part;
+                return (
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                        {highlightText(part, highlight)}
+                    </a>
+                );
+            }
+
+            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
+                return (
+                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                        {highlightText(part, highlight)}
+                    </a>
+                );
+            }
+
+            return highlightText(part, highlight);
+        })}
+      </React.Fragment>
+    );
+};
+
+
 interface BulletItemProps {
     bullet: Bullet;
     level: number;
@@ -27,6 +157,12 @@ interface BulletItemProps {
     onLinkSelect: (callback: (selectedBullet: any) => void) => void;
     isLinkPopupOpen: boolean;
     linkPopupTargetId: string | null;
+    onTriggerTagPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => void;
+    onCloseTagPopup: () => void;
+    onTagNavigate: (direction: 'up' | 'down') => void;
+    onTagSelect: (callback: (selectedTag: string) => void) => void;
+    isTagPopupOpen: boolean;
+    tagPopupTargetId: string | null;
     isJournalRoot: boolean;
     onNavigateTo: (id: string) => void;
 }
@@ -56,6 +192,12 @@ export const BulletItem: React.FC<BulletItemProps> = ({
   onLinkSelect,
   isLinkPopupOpen,
   linkPopupTargetId,
+  onTriggerTagPopup,
+  onCloseTagPopup,
+  onTagNavigate,
+  onTagSelect,
+  isTagPopupOpen,
+  tagPopupTargetId,
   isJournalRoot,
   onNavigateTo,
 }) => {
@@ -70,8 +212,9 @@ export const BulletItem: React.FC<BulletItemProps> = ({
     } else {
       setIsEditing(false);
       onCloseLinkPopup();
+      onCloseTagPopup();
     }
-  }, [isFocused, onCloseLinkPopup]);
+  }, [isFocused, onCloseLinkPopup, onCloseTagPopup]);
 
   useEffect(() => {
     if (isEditing && textInputRef.current) {
@@ -116,6 +259,30 @@ export const BulletItem: React.FC<BulletItemProps> = ({
         }, 0);
     }
   }, [bullet.id, onUpdate, onCloseLinkPopup]);
+  
+  const handleTagSelection = useCallback((selectedTag: string) => {
+    const input = textInputRef.current;
+    if (!input) return;
+
+    const text = input.value;
+    const cursor = input.selectionStart ?? text.length;
+    
+    const textBeforeCursor = text.substring(0, cursor);
+    const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+
+    if (match) {
+        const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
+        const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
+        onUpdate(bullet.id, { text: newText });
+        onCloseTagPopup();
+
+        setTimeout(() => {
+            const newCursorPos = startIndex + selectedTag.length + 1; // +1 for the space
+            input.focus();
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    }
+  }, [bullet.id, onUpdate, onCloseTagPopup]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -123,21 +290,29 @@ export const BulletItem: React.FC<BulletItemProps> = ({
     onUpdate(bullet.id, { text });
 
     const textBeforeCursor = text.substring(0, cursor ?? 0);
-    const lastOpen = textBeforeCursor.lastIndexOf('[[');
-    if (lastOpen !== -1) {
-      const lastClose = textBeforeCursor.lastIndexOf(']]');
-      if (lastClose < lastOpen) {
-        const query = textBeforeCursor.substring(lastOpen + 2);
-        onTriggerLinkPopup(bullet.id, query, textInputRef, handleLinkSelection);
-        return;
-      }
+    
+    const lastOpenBracket = textBeforeCursor.lastIndexOf('[[');
+    if (lastOpenBracket !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpenBracket) {
+      const query = textBeforeCursor.substring(lastOpenBracket + 2);
+      onTriggerLinkPopup(bullet.id, query, textInputRef, handleLinkSelection);
+      return;
     }
+
+    const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+    if (tagMatch) {
+        const query = tagMatch[1];
+        onTriggerTagPopup(bullet.id, query, textInputRef, handleTagSelection);
+        return;
+    }
+
     onCloseLinkPopup();
+    onCloseTagPopup();
   };
 
   const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const input = e.target as HTMLTextAreaElement;
     const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
+    const isTagPopupActive = isTagPopupOpen && tagPopupTargetId === bullet.id;
     
     if (bullet.isReadOnly) {
         let handled = true;
@@ -180,6 +355,18 @@ export const BulletItem: React.FC<BulletItemProps> = ({
             e.preventDefault();
         }
         return;
+    }
+
+    if (isTagPopupActive) {
+        let handled = true;
+        switch (e.key) {
+            case 'ArrowUp': onTagNavigate('up'); break;
+            case 'ArrowDown': onTagNavigate('down'); break;
+            case 'Tab': onTagSelect(handleTagSelection); break;
+            case 'Escape': onCloseTagPopup(); break;
+            default: handled = false;
+        }
+        if (handled) { e.preventDefault(); return; }
     }
 
     if (isPopupActive) {
@@ -331,141 +518,12 @@ export const BulletItem: React.FC<BulletItemProps> = ({
       return textMatch || childrenMatch;
   };
 
-  const highlightText = (text: string, highlight?: string) => {
-    if (!text) return text;
-    const regex = highlight ? new RegExp(`(${highlight})`, 'gi') : null;
-    const parts = highlight ? text.split(regex) : [text];
-    
-    return (
-      <React.Fragment>
-        {parts.map((part, i) => {
-            if (!part) return null;
-            const lines = part.split('\n');
-            const partWithBreaks = lines.map((line, j) => (
-                <React.Fragment key={j}>
-                    {line}
-                    {j < lines.length - 1 && <br />}
-                </React.Fragment>
-            ));
-
-            if (highlight && part.toLowerCase() === highlight.toLowerCase()) {
-                return (
-                    <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
-                        {partWithBreaks}
-                    </span>
-                );
-            }
-            return <React.Fragment key={i}>{partWithBreaks}</React.Fragment>;
-        })}
-      </React.Fragment>
-    );
-  };
-
   const renderedRichText = useMemo(() => {
-    const text = bullet.text;
-    const highlight = searchQuery;
-    const options = { internalLinks: true, renderTagsOnly: false };
-    
-    if (options.renderTagsOnly) {
-        const tagRegex = /(#\w+)/g;
-        const parts = text.split(tagRegex);
-        return (
-            <React.Fragment>
-                {parts.map((part, index) => {
-                    if (part.startsWith('#') && /#\w+/.test(part)) {
-                        return (
-                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
-                                {part}
-                            </span>
-                        );
-                    }
-                    return <span key={index}>{part}</span>;
-                })}
-            </React.Fragment>
-        );
-    }
-
-    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|\b(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|\bwww\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-    const parts = text.split(combinedRegex);
-
-    return (
-      <React.Fragment>
-        {parts.map((part, index) => {
-            if (!part) return null;
-            
-            if (part.startsWith('#') && /#\w+/.test(part)) {
-                return (
-                    <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
-                         {highlightText(part, highlight)}
-                    </span>
-                );
-            }
-
-            if (options.internalLinks && part.startsWith('[[') && part.endsWith(']]')) {
-                const linkText = part.slice(2, -2);
-                return (
-                    <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
-                        {highlightText(linkText, highlight)}
-                    </button>
-                );
-            }
-            
-            const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-            if (mdLinkMatch) {
-                const [, text, url] = mdLinkMatch;
-                let href = url.trim();
-                if (!/^(https?|ftp|mailto):/i.test(href)) {
-                   href = `https://${href}`;
-                }
-                return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                       {highlightText(text, highlight)}
-                    </a>
-                );
-            }
-
-            if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
-                const href = part.startsWith('www.') ? `https://${part}` : part;
-                return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                        {highlightText(part, highlight)}
-                    </a>
-                );
-            }
-
-            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
-                return (
-                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                        {highlightText(part, highlight)}
-                    </a>
-                );
-            }
-
-            return highlightText(part, highlight);
-        })}
-      </React.Fragment>
-    );
+    return renderRichTextContent(bullet.text, searchQuery, onLinkClick);
   }, [bullet.text, searchQuery, onLinkClick]);
   
-  // For the hidden overlay to match textarea
   const renderedRichTextSimple = useMemo(() => {
-        const text = bullet.text;
-        const tagRegex = /(#\w+)/g;
-        const parts = text.split(tagRegex);
-        return (
-            <React.Fragment>
-                {parts.map((part, index) => {
-                    if (part.startsWith('#') && /#\w+/.test(part)) {
-                        return (
-                            <span key={index} className="bg-teal-400/20 text-teal-300 rounded-md px-1 py-0.5 mx-px text-sm">
-                                {part}
-                            </span>
-                        );
-                    }
-                    return <span key={index}>{part}</span>;
-                })}
-            </React.Fragment>
-        );
+    return renderRichTextContent(bullet.text, undefined, () => {}, { renderTagsOnly: true });
   }, [bullet.text]);
 
   if (searchQuery && !matchesSearch(bullet, searchQuery)) {
@@ -569,6 +627,12 @@ export const BulletItem: React.FC<BulletItemProps> = ({
                 onLinkSelect={onLinkSelect}
                 isLinkPopupOpen={isLinkPopupOpen}
                 linkPopupTargetId={linkPopupTargetId}
+                onTriggerTagPopup={onTriggerTagPopup}
+                onCloseTagPopup={onCloseTagPopup}
+                onTagNavigate={onTagNavigate}
+                onTagSelect={onTagSelect}
+                isTagPopupOpen={isTagPopupOpen}
+                tagPopupTargetId={tagPopupTargetId}
                 isJournalRoot={false}
                 onNavigateTo={onNavigateTo}
             />

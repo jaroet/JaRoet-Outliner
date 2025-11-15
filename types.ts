@@ -5,12 +5,16 @@ export interface Bullet {
   isCollapsed: boolean;
   isReadOnly?: boolean;
   originalId?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface FlatBullet {
   id: string;
   text: string;
   path: string[];
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface Settings {
@@ -19,3 +23,14 @@ export interface Settings {
   fontFamily: string;
   fontSize: number;
 }
+
+// A type representing the core data of a bullet, excluding UI state like 'isCollapsed' or 'isReadOnly'.
+// This ensures that only essential data is persisted.
+export type CoreBullet = {
+  id: string;
+  text: string;
+  children: CoreBullet[];
+  originalId?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};

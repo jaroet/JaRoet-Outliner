@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Bullet, FlatBullet, Settings } from './types';
+import type { Bullet, FlatBullet, Settings, CoreBullet } from './types';
 import { Toolbar } from './components/Toolbar';
 import { BulletItem } from './components/BulletItem';
 import { SearchModal } from './components/SearchModal';
 import { LinkPopup } from './components/LinkPopup';
+import { TagPopup } from './components/TagPopup';
 
 declare const Dexie: any;
 
@@ -48,12 +49,45 @@ const initialData: Bullet[] = [
   },
 ];
 
-const createNewBullet = (text = ''): Bullet => ({
-    id: crypto.randomUUID(),
-    text,
-    children: [],
-    isCollapsed: false,
-});
+const createNewBullet = (text = ''): Bullet => {
+    const now = Date.now();
+    return {
+        id: crypto.randomUUID(),
+        text,
+        children: [],
+        isCollapsed: false,
+        createdAt: now,
+        updatedAt: now,
+    };
+};
+
+const migrateBullets = (nodes: Bullet[]): Bullet[] => {
+    const now = Date.now();
+    return nodes.map(node => ({
+        ...node,
+        createdAt: node.createdAt || now,
+        updatedAt: node.updatedAt || now,
+        children: migrateBullets(node.children),
+    }));
+};
+
+/**
+ * A generic helper to calculate the next index for navigating a list of suggestions.
+ * This is used by both the link and tag popups to avoid code duplication.
+ */
+const navigateSuggestions = <T,>(
+    prevState: { suggestions: T[]; selectedIndex: number },
+    direction: 'up' | 'down'
+): number => {
+    const { suggestions, selectedIndex } = prevState;
+    const count = suggestions.length;
+    if (count === 0) return selectedIndex;
+    if (direction === 'down') {
+        return (selectedIndex + 1) % count;
+    } else { // 'up'
+        return (selectedIndex - 1 + count) % count;
+    }
+};
 
 
 // --- Settings Modal Component ---
@@ -135,12 +169,15 @@ export const App = () => {
     const [focusOptions, setFocusOptions] = useState<{ id: string | null; position: 'start' | 'end' }>({ id: null, position: 'end' });
     const isInitialFocusSet = useRef(false);
     const linkPopupRef = useRef(null);
+    const tagPopupRef = useRef(null);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [linkSelectionHandler, setLinkSelectionHandler] = useState<{ handler: ((bullet: FlatBullet) => void) | null }>({ handler: null });
+    const [tagSelectionHandler, setTagSelectionHandler] = useState<{ handler: ((tag: string) => void) | null }>({ handler: null });
     const prevFocusId = useRef<string | null>(null);
     const dataLoadedRef = useRef(false);
     const prevCoreDataRef = useRef<string | null>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    const focusBeforeModalRef = useRef<string | null>(null);
     
     const [settings, setSettings] = useState<Settings>({
         mainColor: '#60a5fa',
@@ -153,6 +190,10 @@ export const App = () => {
     const [linkPopupState, setLinkPopupState] = useState({
         isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as FlatBullet[], selectedIndex: 0
     });
+    const [tagPopupState, setTagPopupState] = useState({
+        isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as string[], selectedIndex: 0
+    });
+
 
     const currentFocusId = focusOptions.id;
     const focusPosition = focusOptions.position;
@@ -162,14 +203,14 @@ export const App = () => {
     }, []);
 
     const getCoreDataString = useCallback((nodes: Bullet[]) => {
-        const removeUiState = (b: Bullet): Omit<Bullet, 'isCollapsed'> => {
-            const { isCollapsed, ...coreBullet } = b;
+        const removeUiState = (b: Bullet): CoreBullet => {
             return {
-                ...coreBullet,
-                // FIX: The recursive call to removeUiState creates a type mismatch because the Omit
-                // utility type is not recursive. `Omit<Bullet, 'isCollapsed'>[]` is not assignable
-                // to `Bullet[]`. Casting to `any` is a pragmatic solution for this serialization helper.
-                children: coreBullet.children.map(removeUiState) as any,
+                id: b.id,
+                text: b.text,
+                children: b.children.map(removeUiState),
+                originalId: b.originalId,
+                createdAt: b.createdAt,
+                updatedAt: b.updatedAt,
             };
         };
         const coreBullets = nodes.map(removeUiState);
@@ -228,7 +269,8 @@ export const App = () => {
             }
             
             let initialLoadData = localBullets || initialData;
-            
+            initialLoadData = migrateBullets(initialLoadData);
+
             setBullets(initialLoadData);
             prevCoreDataRef.current = getCoreDataString(initialLoadData);
     
@@ -272,6 +314,8 @@ export const App = () => {
                     id: node.id,
                     text: node.text,
                     path: currentPath,
+                    createdAt: node.createdAt,
+                    updatedAt: node.updatedAt,
                 });
                 if (node.children && node.children.length > 0) {
                     traverse(node.children, [...currentPath, node.text || 'Untitled']);
@@ -281,6 +325,19 @@ export const App = () => {
         traverse(bullets, []);
         return results;
     }, [bullets]);
+    
+    const allTags = useMemo(() => {
+        const tagSet = new Set<string>();
+        const tagRegex = /#\w+/g;
+        for (const bullet of flatBullets) {
+            const matches = bullet.text.match(tagRegex);
+            if (matches) {
+                matches.forEach(tag => tagSet.add(tag));
+            }
+        }
+        return Array.from(tagSet).sort();
+    }, [flatBullets]);
+
 
     const findBulletAndParent = useCallback((
         id: string,
@@ -398,6 +455,7 @@ export const App = () => {
             if (found) {
                 found.node.children.push(newBullet);
                 found.node.isCollapsed = false;
+                found.node.updatedAt = Date.now();
                 setBullets(newBullets);
                 setZoomedBulletId(id);
                 setTimeout(() => {
@@ -521,7 +579,7 @@ export const App = () => {
 
         setBullets(prevBullets =>
             mapBullets(prevBullets, bullet =>
-                bullet.id === id ? { ...bullet, ...updates } : bullet
+                bullet.id === id ? { ...bullet, ...updates, updatedAt: Date.now() } : bullet
             )
         );
     }, [bullets, findBulletAndParent]);
@@ -530,7 +588,7 @@ export const App = () => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
-                setIsSearchModalOpen(prev => !prev);
+                handleOpenSearch();
             }
             else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
                 e.preventDefault();
@@ -559,23 +617,20 @@ export const App = () => {
     }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange]);
 
     const handleAddSibling = useCallback((id: string, text = '') => {
-        const foundTarget = findBulletAndParent(id, bullets);
-        if (foundTarget?.node.isReadOnly) return;
-
         const newBullet = createNewBullet(text);
         const newBullets = structuredClone(bullets);
-        let baseNodes = newBullets;
-        if(zoomedBulletId){
-            const zoomed = findBulletAndParent(zoomedBulletId, newBullets);
-            if(zoomed) baseNodes = zoomed.node.children;
-        }
-        const found = findBulletAndParent(id, baseNodes);
+        const found = findBulletAndParent(id, newBullets);
+
         if (found) {
+            if (found.node.isReadOnly) return;
             found.siblings.splice(found.index + 1, 0, newBullet);
+            if (found.parent) {
+                found.parent.updatedAt = Date.now();
+            }
             setBullets(newBullets);
             handleFocusChange(newBullet.id);
         }
-    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
+    }, [bullets, handleFocusChange, findBulletAndParent]);
 
     const handleDelete = useCallback((id: string) => {
         const foundTarget = findBulletAndParent(id, bullets);
@@ -585,6 +640,9 @@ export const App = () => {
         const found = findBulletAndParent(id, newBullets);
         if (found) {
             const prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id;
+            if (found.parent) {
+                found.parent.updatedAt = Date.now();
+            }
             found.siblings.splice(found.index, 1);
             setBullets(newBullets);
             handleFocusChange(prevSiblingId || null);
@@ -601,6 +659,7 @@ export const App = () => {
             const prevSibling = found.siblings[found.index - 1];
              if (prevSibling.isReadOnly) return;
             const [movedNode] = found.siblings.splice(found.index, 1);
+            movedNode.updatedAt = Date.now();
             prevSibling.children.push(movedNode);
             prevSibling.isCollapsed = false;
             setBullets(newBullets);
@@ -618,6 +677,7 @@ export const App = () => {
             const parentInfo = findBulletAndParent(found.parent.id, newBullets);
             if(parentInfo && !parentInfo.node.isReadOnly){
                 const [movedNode] = found.siblings.splice(found.index, 1);
+                movedNode.updatedAt = Date.now();
                 const subsequentSiblings = found.siblings.splice(found.index);
                 movedNode.children.push(...subsequentSiblings);
 
@@ -672,6 +732,7 @@ export const App = () => {
         if (!found) return;
     
         const { siblings, index } = found;
+        found.node.updatedAt = Date.now();
     
         if (direction === 'up') {
             if (index > 0) {
@@ -727,7 +788,8 @@ export const App = () => {
     };
 
     const handleImport = (data: Bullet[]) => {
-        setBullets(data);
+        const migratedData = migrateBullets(data);
+        setBullets(migratedData);
         setZoomedBulletId(null);
         setSearchQuery('');
     };
@@ -740,6 +802,7 @@ export const App = () => {
             if (found && !found.node.isReadOnly) {
                 found.node.children.push(newBullet);
                 found.node.isCollapsed = false;
+                found.node.updatedAt = Date.now();
                 setBullets(newBullets);
                 handleFocusChange(newBullet.id);
             }
@@ -772,8 +835,21 @@ export const App = () => {
         }
     }, [currentFocusId, visibleBulletIds, handleFocusChange]);
 
+    const handleOpenSearch = () => {
+        focusBeforeModalRef.current = currentFocusId;
+        setIsSearchModalOpen(true);
+    };
 
-    // --- Link Popup Logic ---
+    const handleCloseSearch = () => {
+        setIsSearchModalOpen(false);
+        if (focusBeforeModalRef.current) {
+            handleFocusChange(focusBeforeModalRef.current);
+            focusBeforeModalRef.current = null;
+        }
+    };
+
+
+    // --- Link & Tag Popup Logic ---
     const handleTriggerLinkPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: FlatBullet) => void) => {
         if (!inputRef.current) return;
         const rect = inputRef.current.getBoundingClientRect();
@@ -829,16 +905,10 @@ export const App = () => {
 
     const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
         if (!linkPopupState.isOpen) return;
-        setLinkPopupState(prev => {
-            const { suggestions, selectedIndex } = prev;
-            let nextIndex = selectedIndex;
-            if (direction === 'down') {
-                nextIndex = (selectedIndex + 1) % suggestions.length;
-            } else {
-                nextIndex = (selectedIndex - 1 + suggestions.length) % suggestions.length;
-            }
-            return { ...prev, selectedIndex: nextIndex };
-        });
+        setLinkPopupState(prev => ({
+            ...prev,
+            selectedIndex: navigateSuggestions(prev, direction),
+        }));
     }, [linkPopupState.isOpen]);
     
     const handleLinkSelect = useCallback((callback: (selectedBullet: FlatBullet) => void) => {
@@ -884,6 +954,51 @@ export const App = () => {
         }
     }, [bullets, handleFocusChange]);
 
+    const handleTriggerTagPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => {
+        if (!inputRef.current) return;
+        const rect = inputRef.current.getBoundingClientRect();
+        setTagSelectionHandler({ handler: selectionHandler });
+
+        const POPUP_MAX_WIDTH_PX = 768;
+        const VIEWPORT_PADDING_PX = 16;
+        let left = rect.left + window.scrollX;
+        
+        if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) {
+            left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX;
+        }
+        left = Math.max(VIEWPORT_PADDING_PX, left);
+        
+        const lowerCaseQuery = query.toLowerCase();
+        const suggestions = allTags.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
+
+        setTagPopupState({
+            isOpen: true,
+            targetId: bulletId,
+            query: query,
+            position: { top: rect.bottom + window.scrollY, left: left },
+            suggestions: suggestions.slice(0, 100),
+            selectedIndex: 0,
+        });
+    }, [allTags]);
+
+    const handleCloseTagPopup = useCallback(() => {
+        setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev);
+        setTagSelectionHandler({ handler: null });
+    }, []);
+    
+    const handleTagNavigate = useCallback((direction: 'up' | 'down') => {
+        if (!tagPopupState.isOpen) return;
+        setTagPopupState(prev => ({
+            ...prev,
+            selectedIndex: navigateSuggestions(prev, direction),
+        }));
+    }, [tagPopupState.isOpen]);
+
+    const handleTagSelect = useCallback((callback: (selectedTag: string) => void) => {
+        if (!tagPopupState.isOpen || tagPopupState.suggestions.length === 0) return;
+        const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
+        callback(selectedTag);
+    }, [tagPopupState]);
 
     return (
         <div className="h-screen w-screen flex flex-col">
@@ -897,7 +1012,7 @@ export const App = () => {
                 onGoToToday={handleGoToJournal}
                 theme={theme}
                 onThemeToggle={handleThemeToggle}
-                onOpenSearch={() => setIsSearchModalOpen(true)}
+                onOpenSearch={handleOpenSearch}
             />
             <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none">
                 {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
@@ -927,6 +1042,12 @@ export const App = () => {
                             onLinkSelect={handleLinkSelect}
                             isLinkPopupOpen={linkPopupState.isOpen}
                             linkPopupTargetId={linkPopupState.targetId}
+                            onTriggerTagPopup={handleTriggerTagPopup}
+                            onCloseTagPopup={handleCloseTagPopup}
+                            onTagNavigate={handleTagNavigate}
+                            onTagSelect={handleTagSelect}
+                            isTagPopupOpen={tagPopupState.isOpen}
+                            tagPopupTargetId={tagPopupState.targetId}
                             isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null}
                             onNavigateTo={handleNavigate}
                         />
@@ -951,12 +1072,26 @@ export const App = () => {
                         containerRef={linkPopupRef}
                     />
                 )}
+                {tagPopupState.isOpen && (
+                    <TagPopup
+                        suggestions={tagPopupState.suggestions}
+                        selectedIndex={tagPopupState.selectedIndex}
+                        onSelect={(tag) => {
+                            if (tagSelectionHandler.handler) {
+                                tagSelectionHandler.handler(tag);
+                            }
+                        }}
+                        position={tagPopupState.position}
+                        containerRef={tagPopupRef}
+                    />
+                )}
             </main>
              <SearchModal
                 isOpen={isSearchModalOpen}
-                onClose={() => setIsSearchModalOpen(false)}
+                onClose={handleCloseSearch}
                 bullets={flatBullets}
                 onNavigate={handleNavigate}
+                allTags={allTags}
             />
             <SettingsModal 
                 isOpen={isSettingsModalOpen}
