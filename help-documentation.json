@@ -1,4 +1,3 @@
-
 [
   {
     "id": "doc-root",
@@ -78,6 +77,24 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-24",
+                "text": "2024-11-02: Stability Fixes",
+                "children": [
+                    { "id": "cl-24-a", "text": "Fixed a startup error related to secure context requirements for ID generation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-24-b", "text": "Updated application version to 0.1.13.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-23",
+                "text": "2024-11-01: Backspace Merge",
+                "children": [
+                    { "id": "cl-23-a", "text": "Pressing Backspace at the start of an item now merges it with the previous item's content.", "children": [], "isCollapsed": false },
+                    { "id": "cl-23-b", "text": "Updated application version to 0.1.12.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-21",
                 "text": "2024-10-27: Performance & UX",

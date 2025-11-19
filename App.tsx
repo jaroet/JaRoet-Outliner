@@ -212,7 +212,7 @@ export const App = () => {
     const [bullets, setBullets] = useState<Bullet[]>(initialData);
     const [zoomedBulletId, setZoomedBulletId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [focusOptions, setFocusOptions] = useState<{ id: string | null; position: 'start' | 'end' }>({ id: null, position: 'end' });
+    const [focusOptions, setFocusOptions] = useState<{ id: string | null; position: 'start' | 'end' | number }>({ id: null, position: 'end' });
     const isInitialFocusSet = useRef(false);
     const linkPopupRef = useRef(null);
     const tagPopupRef = useRef(null);
@@ -251,7 +251,7 @@ export const App = () => {
     const currentFocusId = focusOptions.id;
     const focusPosition = focusOptions.position;
 
-    const handleFocusChange = useCallback((id: string | null, position: 'start' | 'end' = 'end') => {
+    const handleFocusChange = useCallback((id: string | null, position: 'start' | 'end' | number = 'end') => {
         setFocusOptions({ id, position });
     }, []);
 
@@ -750,7 +750,64 @@ export const App = () => {
         });
         setTimeout(() => handleFocusChange(prevSiblingId), 0);
     }, [handleFocusChange, findBulletAndParent]);
-    
+
+    const handleMerge = useCallback((id: string) => {
+        setBullets(prevBullets => {
+            const foundTarget = findBulletAndParent(id, prevBullets);
+            // Guard clause: if not found or readonly
+            if (!foundTarget || foundTarget.node.isReadOnly) return prevBullets;
+
+            if (foundTarget.index > 0) {
+                const newBullets = structuredClone(prevBullets);
+                const found = findBulletAndParent(id, newBullets)!;
+                const prevSibling = found.siblings[found.index - 1];
+                
+                if (prevSibling.isReadOnly) return prevBullets;
+
+                // Calculate cursor position before appending text
+                const cursorPosition = prevSibling.text.length;
+                
+                // Merge text
+                prevSibling.text += found.node.text;
+                
+                // Merge children
+                prevSibling.children = [...prevSibling.children, ...found.node.children];
+                
+                // Update timestamp
+                prevSibling.updatedAt = Date.now();
+                
+                // Ensure expanded if it acquired children
+                if (found.node.children.length > 0) {
+                    prevSibling.isCollapsed = false;
+                }
+                
+                // Remove the merged node
+                found.siblings.splice(found.index, 1);
+                if (found.parent) found.parent.updatedAt = Date.now();
+
+                // Set focus to previous sibling at the merge point
+                setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0);
+                return newBullets;
+            } else {
+                // Index 0 handling (No previous sibling)
+                // If empty, we delete it (standard "delete empty bullet" behavior)
+                if (foundTarget.node.text === '') {
+                        const newBullets = structuredClone(prevBullets);
+                        const found = findBulletAndParent(id, newBullets)!;
+                        const parentId = found.parent?.id || null;
+                        
+                        found.siblings.splice(found.index, 1);
+                        if (found.parent) found.parent.updatedAt = Date.now();
+
+                        setTimeout(() => handleFocusChange(parentId, 'end'), 0);
+                        return newBullets;
+                }
+            }
+            
+            return prevBullets;
+        });
+    }, [findBulletAndParent, handleFocusChange]);
+
     const handleIndent = useCallback((id: string) => {
         setBullets(prevBullets => {
             const foundTarget = findBulletAndParent(id, prevBullets);
@@ -997,7 +1054,7 @@ export const App = () => {
         setTimeout(() => handleFocusChange(newBullet.id), 0);
     }, [handleFocusChange, findBulletAndParent]);
 
-    const handleFocusMove = useCallback((direction: 'up' | 'down', position: 'start' | 'end' = 'end') => {
+    const handleFocusMove = useCallback((direction: 'up' | 'down', position: 'start' | 'end' | number = 'end') => {
         const currentFocusId = focusOptionsRef.current.id;
         const visibleIds = visibleBulletIdsRef.current;
 
@@ -1301,6 +1358,7 @@ export const App = () => {
                             tagPopupTargetId={tagPopupState.targetId}
                             isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null}
                             onNavigateTo={handleNavigate}
+                            onMerge={handleMerge}
                         />
                     </div>
                 )) : (

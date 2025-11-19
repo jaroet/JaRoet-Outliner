@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="./icon.png" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2360a5fa' /></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JaRoet Outliner</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -115,79 +114,69 @@
     <div id="root"></div>
     
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-      import ReactDOM from 'react-dom/client';
+      import * as React from 'react';
+      import * as ReactDOM from 'react-dom/client';
+      
+      const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-      // --- HELPERS & CONSTANTS ---
-      const DAILY_LOG_ROOT_TEXT = 'Daily Log';
-
-      const createNewBullet = (text = '') => {
-          const now = Date.now();
-          return {
-              id: crypto.randomUUID(),
-              text,
-              children: [],
-              isCollapsed: false,
-              createdAt: now,
-              updatedAt: now,
-          };
-      };
-
-      const migrateBullets = (nodes) => {
-          if (!Array.isArray(nodes)) return [];
-          const now = Date.now();
-          return nodes.map(node => ({
-              ...node,
-              createdAt: node.createdAt || now,
-              updatedAt: node.updatedAt || now,
-              children: migrateBullets(node.children || []),
-          }));
-      };
-
-      const regenerateIds = (nodes) => {
-          if (!Array.isArray(nodes)) return [];
-          return nodes.map(node => ({
-              ...node,
-              id: crypto.randomUUID(),
-              children: regenerateIds(node.children || []),
-          }));
-      };
-
-      // Optimized mapBullets with structural sharing
-      const mapBullets = (
-          nodes,
-          callback
-      ) => {
-          let changed = false;
-          const newNodes = nodes.map(node => {
-              const newNode = callback(node);
-              const newChildren = mapBullets(newNode.children, callback);
-              
-              if (newNode === node && newChildren === node.children) {
-                  return node;
-              }
-              
-              changed = true;
-              return {
-                  ...newNode,
-                  children: newChildren,
-              };
-          });
-          return changed ? newNodes : nodes;
-      };
-
-      const navigateSuggestions = (prevState, direction) => {
-          const { suggestions, selectedIndex } = prevState;
-          const count = suggestions.length;
-          if (count === 0) return selectedIndex;
-          if (direction === 'down') {
-              return (selectedIndex + 1) % count;
-          } else { // 'up'
-              return (selectedIndex - 1 + count) % count;
+      // Polyfill for crypto.randomUUID if not available (e.g. insecure context)
+      if (!crypto.randomUUID) {
+        crypto.randomUUID = () => {
+          if (crypto.getRandomValues) {
+             return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+               (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+             );
+          } else {
+             // Fallback for environments without crypto.getRandomValues
+             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+             });
           }
+        };
+      }
+
+      // ----------------------
+      // types.ts
+      // ----------------------
+      interface Bullet {
+        id: string;
+        text: string;
+        children: Bullet[];
+        isCollapsed: boolean;
+        isReadOnly?: boolean;
+        originalId?: string;
+        createdAt?: number;
+        updatedAt?: number;
+      }
+
+      interface FlatBullet {
+        id: string;
+        text: string;
+        path: string[];
+        createdAt?: number;
+        updatedAt?: number;
+      }
+
+      interface Settings {
+        mainColor: string;
+        fileName: string;
+        fontFamily: string;
+        fontSize: number;
+      }
+
+      type CoreBullet = {
+        id: string;
+        text: string;
+        children: CoreBullet[];
+        originalId?: string;
+        createdAt?: number;
+        updatedAt?: number;
       };
 
-      // --- COMPONENTS: ICONS ---
+      // ----------------------
+      // components/Icons.tsx
+      // ----------------------
       const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -239,7 +228,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -255,18 +244,26 @@
               <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25c0 5.385 4.365 9.75 9.75 9.75 2.806 0 5.347-1.257 7.141-3.248a9.753 9.753 0 0 1 1.861-3.75Z" />
           </svg>
       );
-      
+
       const TrashIcon = ({ className = 'w-5 h-5' }) => (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-        </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
       );
 
-      // --- COMPONENTS: TOAST ---
-      const useToast = () => {
-          const [toasts, setToasts] = useState([]);
+      // ----------------------
+      // components/Toast.tsx
+      // ----------------------
+      interface Toast {
+          id: string;
+          message: string;
+          type: 'success' | 'error' | 'info';
+      }
 
-          const addToast = useCallback((message, type = 'info') => {
+      const useToast = () => {
+          const [toasts, setToasts] = useState<Toast[]>([]);
+
+          const addToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
               const id = crypto.randomUUID();
               setToasts(prev => [...prev, { id, message, type }]);
               setTimeout(() => {
@@ -274,14 +271,19 @@
               }, 3000);
           }, []);
 
-          const removeToast = useCallback((id) => {
+          const removeToast = useCallback((id: string) => {
               setToasts(prev => prev.filter(t => t.id !== id));
           }, []);
 
           return { toasts, addToast, removeToast };
       };
 
-      const ToastContainer = ({ toasts, removeToast }) => {
+      interface ToastContainerProps {
+          toasts: Toast[];
+          removeToast: (id: string) => void;
+      }
+
+      const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, removeToast }) => {
           return (
               <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none">
                   {toasts.map(toast => (
@@ -301,9 +303,19 @@
           );
       };
 
-      // --- COMPONENTS: POPUPS ---
-      const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const selectedItemRef = useRef(null);
+      // ----------------------
+      // components/LinkPopup.tsx
+      // ----------------------
+      interface LinkPopupProps {
+          suggestions: FlatBullet[];
+          selectedIndex: number;
+          onSelect: (bullet: FlatBullet) => void;
+          position: { top: number; left: number };
+          containerRef: React.RefObject<HTMLUListElement>;
+      }
+
+      const LinkPopup: React.FC<LinkPopupProps> = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+        const selectedItemRef = useRef<HTMLLIElement>(null);
         
         useEffect(() => {
           if (selectedItemRef.current) {
@@ -344,8 +356,19 @@
         );
       };
 
-      const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const selectedItemRef = useRef(null);
+      // ----------------------
+      // components/TagPopup.tsx
+      // ----------------------
+      interface TagPopupProps {
+          suggestions: string[];
+          selectedIndex: number;
+          onSelect: (tag: string) => void;
+          position: { top: number; left: number };
+          containerRef: React.RefObject<HTMLUListElement>;
+      }
+
+      const TagPopup: React.FC<TagPopupProps> = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+        const selectedItemRef = useRef<HTMLLIElement>(null);
         
         useEffect(() => {
           if (selectedItemRef.current) {
@@ -381,182 +404,201 @@
         );
       };
 
-      // --- COMPONENT: IMPORT SELECTION MODAL ---
-      const ImportSelectionModal = ({ isOpen, onClose, onConfirm, bullets }) => {
-        const [searchQuery, setSearchQuery] = useState('');
-        const [selectedId, setSelectedId] = useState(null);
-        const searchInputRef = useRef(null);
+      // ----------------------
+      // components/ImportSelectionModal.tsx
+      // ----------------------
+      interface ImportSelectionModalProps {
+          isOpen: boolean;
+          onClose: () => void;
+          onConfirm: (targetId: string | null) => void;
+          bullets: Bullet[];
+      }
 
-        useEffect(() => {
-            if (isOpen) {
-                setSearchQuery('');
-                setSelectedId(null); // Default to Root
-                // Slightly delay focus so the modal renders first
-                setTimeout(() => {
-                    searchInputRef.current?.focus();
-                }, 50);
-            }
-        }, [isOpen]);
+      const ImportSelectionModal: React.FC<ImportSelectionModalProps> = ({ isOpen, onClose, onConfirm, bullets }) => {
+          const [searchQuery, setSearchQuery] = useState('');
+          const [selectedId, setSelectedId] = useState<string | null>(null);
+          const searchInputRef = useRef<HTMLInputElement>(null);
 
-        // Optimization: Calculate flat list inside the modal only when open
-        const flatBullets = useMemo(() => {
-            if (!isOpen) return [];
-            
-            const results = [];
-            const traverse = (nodes, currentPath) => {
-                for (const node of nodes) {
-                    results.push({
-                        id: node.id,
-                        text: node.text,
-                        path: currentPath,
-                        createdAt: node.createdAt,
-                        updatedAt: node.updatedAt,
-                    });
-                    if (node.children && node.children.length > 0) {
-                        traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                    }
-                }
-            };
-            traverse(bullets, []);
-            return results;
-        }, [bullets, isOpen]);
+          useEffect(() => {
+              if (isOpen) {
+                  setSearchQuery('');
+                  setSelectedId(null); // Default to Root
+                  // Slightly delay focus so the modal renders first
+                  setTimeout(() => {
+                      searchInputRef.current?.focus();
+                  }, 50);
+              }
+          }, [isOpen]);
 
-        const filteredBullets = useMemo(() => {
-            if (!searchQuery.trim()) return [];
-            const lowerQuery = searchQuery.toLowerCase();
-            return flatBullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
-        }, [flatBullets, searchQuery]);
+          // Optimization: Calculate flat list inside the modal only when open
+          const flatBullets: FlatBullet[] = useMemo(() => {
+              if (!isOpen) return [];
+              
+              const results: FlatBullet[] = [];
+              const traverse = (nodes: Bullet[], currentPath: string[]) => {
+                  for (const node of nodes) {
+                      results.push({
+                          id: node.id,
+                          text: node.text,
+                          path: currentPath,
+                          createdAt: node.createdAt,
+                          updatedAt: node.updatedAt,
+                      });
+                      if (node.children && node.children.length > 0) {
+                          traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                      }
+                  }
+              };
+              traverse(bullets, []);
+              return results;
+          }, [bullets, isOpen]);
 
-        const handleConfirm = () => {
-            onConfirm(selectedId);
-        };
+          const filteredBullets = useMemo(() => {
+              if (!searchQuery.trim()) return [];
+              const lowerQuery = searchQuery.toLowerCase();
+              return flatBullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
+          }, [flatBullets, searchQuery]);
 
-        if (!isOpen) return null;
+          const handleConfirm = () => {
+              onConfirm(selectedId);
+          };
 
-        return (
-            <div 
-                className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center"
-                onClick={onClose}
-            >
-                <div 
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
-                    onClick={e => e.stopPropagation()}
-                >
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Import Content</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Where do you want to place the imported items?
-                        </p>
-                    </div>
+          if (!isOpen) return null;
 
-                    <div className="p-4 overflow-y-auto flex-grow">
-                        {/* Root Option */}
-                        <div 
-                            onClick={() => setSelectedId(null)}
-                            className={`p-3 rounded-md cursor-pointer border transition-colors flex items-center gap-3 mb-4 ${
-                                selectedId === null 
-                                    ? 'bg-[var(--main-color)]/10 border-[var(--main-color)]' 
-                                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                            }`}
-                        >
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                selectedId === null 
-                                    ? 'border-[var(--main-color)]' 
-                                    : 'border-gray-400'
-                            }`}>
-                                {selectedId === null && <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />}
-                            </div>
-                            <div>
-                                <span className="block font-medium text-gray-800 dark:text-gray-200">Root (Top Level)</span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Add as new items at the bottom of your outline</span>
-                            </div>
-                        </div>
+          return (
+              <div 
+                  className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center"
+                  onClick={onClose}
+              >
+                  <div 
+                      className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
+                      onClick={e => e.stopPropagation()}
+                  >
+                      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Import Content</h2>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Where do you want to place the imported items?
+                          </p>
+                      </div>
 
-                        <div className="relative">
-                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or select a specific item:</div>
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                placeholder="Search for an item..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"
-                            />
-                            
-                            <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
-                                {filteredBullets.length > 0 ? (
-                                    <ul>
-                                        {filteredBullets.map(bullet => (
-                                            <li 
-                                                key={bullet.id}
-                                                onClick={() => setSelectedId(bullet.id)}
-                                                className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${
-                                                    selectedId === bullet.id 
-                                                        ? 'selected-item-bg text-white' 
-                                                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
-                                                }`}
-                                            >
-                                                <CircleIcon className="w-1.5 h-1.5 flex-shrink-0" />
-                                                <span className="truncate">{bullet.text || <em>Untitled</em>}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                                        {searchQuery ? 'No items found' : 'Type to search...'}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        
-                        {selectedId && (
-                            <div className="mt-4 p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm rounded border border-blue-100 dark:border-blue-800">
-                                Items will be added as children of the selected item.
-                            </div>
-                        )}
-                    </div>
+                      <div className="p-4 overflow-y-auto flex-grow">
+                          {/* Root Option */}
+                          <div 
+                              onClick={() => setSelectedId(null)}
+                              className={`p-3 rounded-md cursor-pointer border transition-colors flex items-center gap-3 mb-4 ${
+                                  selectedId === null 
+                                      ? 'bg-[var(--main-color)]/10 border-[var(--main-color)]' 
+                                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                              }`}
+                          >
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  selectedId === null 
+                                      ? 'border-[var(--main-color)]' 
+                                      : 'border-gray-400'
+                              }`}>
+                                  {selectedId === null && <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />}
+                              </div>
+                              <div>
+                                  <span className="block font-medium text-gray-800 dark:text-gray-200">Root (Top Level)</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">Add as new items at the bottom of your outline</span>
+                              </div>
+                          </div>
 
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                        <button 
-                            onClick={onClose}
-                            className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleConfirm}
-                            className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90"
-                        >
-                            Import
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+                          <div className="relative">
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or select a specific item:</div>
+                              <input
+                                  ref={searchInputRef}
+                                  type="text"
+                                  placeholder="Search for an item..."
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                                  className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"
+                              />
+                              
+                              <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
+                                  {filteredBullets.length > 0 ? (
+                                      <ul>
+                                          {filteredBullets.map(bullet => (
+                                              <li 
+                                                  key={bullet.id}
+                                                  onClick={() => setSelectedId(bullet.id)}
+                                                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${
+                                                      selectedId === bullet.id 
+                                                          ? 'selected-item-bg text-white' 
+                                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
+                                                  }`}
+                                              >
+                                                  <CircleIcon className="w-1.5 h-1.5 flex-shrink-0" />
+                                                  <span className="truncate">{bullet.text || <em>Untitled</em>}</span>
+                                              </li>
+                                          ))}
+                                      </ul>
+                                  ) : (
+                                      <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                                          {searchQuery ? 'No items found' : 'Type to search...'}
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                          
+                          {selectedId && (
+                              <div className="mt-4 p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm rounded border border-blue-100 dark:border-blue-800">
+                                  Items will be added as children of the selected item.
+                              </div>
+                          )}
+                      </div>
+
+                      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+                          <button 
+                              onClick={onClose}
+                              className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              onClick={handleConfirm}
+                              className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90"
+                          >
+                              Import
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          );
       };
 
-      // --- COMPONENT: SEARCH MODAL ---
-      const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
+      // ----------------------
+      // components/SearchModal.tsx
+      // ----------------------
+      interface SearchModalProps {
+          isOpen: boolean;
+          onClose: () => void;
+          bullets: Bullet[];
+          onNavigate: (id: string) => void;
+      }
+
+      type Tab = 'search' | 'edited' | 'created';
+
+      const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate }) => {
         const [query, setQuery] = useState('');
         const [selectedIndex, setSelectedIndex] = useState(0);
-        const [activeTab, setActiveTab] = useState('search');
-        const inputRef = useRef(null);
-        const listRef = useRef(null);
-        const selectedItemRef = useRef(null);
-        const tagPopupRef = useRef(null);
+        const [activeTab, setActiveTab] = useState<Tab>('search');
+        const inputRef = useRef<HTMLInputElement>(null);
+        const listRef = useRef<HTMLUListElement>(null);
+        const selectedItemRef = useRef<HTMLLIElement>(null);
+        const tagPopupRef = useRef<HTMLUListElement>(null);
 
         const [tagPopupState, setTagPopupState] = useState({
           isOpen: false,
-          suggestions: [],
+          suggestions: [] as string[],
           selectedIndex: 0,
         });
-        
-        // Optimization: Only calculate flat list when modal is open
-        const flatBullets = useMemo(() => {
+
+        const flatBullets: FlatBullet[] = useMemo(() => {
             if (!isOpen) return [];
             
-            const results = [];
-            const traverse = (nodes, currentPath) => {
+            const results: FlatBullet[] = [];
+            const traverse = (nodes: Bullet[], currentPath: string[]) => {
                 for (const node of nodes) {
                     results.push({
                         id: node.id,
@@ -576,7 +618,7 @@
 
         const allTags = useMemo(() => {
             if (!isOpen) return [];
-            const tagSet = new Set();
+            const tagSet = new Set<string>();
             const tagRegex = /#\w+/g;
             for (const bullet of flatBullets) {
                 const matches = bullet.text.match(tagRegex);
@@ -602,7 +644,7 @@
         }, [query, activeTab]);
 
         const listContent = useMemo(() => {
-          let sourceList;
+          let sourceList: FlatBullet[];
           
           if (activeTab === 'edited') {
               sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
@@ -641,7 +683,7 @@
           setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
         }, []);
 
-        const handleTagSelection = useCallback((selectedTag) => {
+        const handleTagSelection = useCallback((selectedTag: string) => {
           const input = inputRef.current;
           if (!input) return;
 
@@ -665,7 +707,7 @@
           }
         }, [handleCloseTagPopup]);
 
-        const handleQueryChange = (e) => {
+        const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           const text = e.target.value;
           const cursor = e.target.selectionStart;
           setQuery(text);
@@ -697,7 +739,7 @@
           }
         };
 
-        const handleKeyDown = (e) => {
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
           if (tagPopupState.isOpen && tagPopupState.suggestions.length > 0) {
               let handled = true;
               switch (e.key) {
@@ -730,7 +772,7 @@
           }
 
           if (e.ctrlKey) {
-              const tabs = ['search', 'edited', 'created'];
+              const tabs: Tab[] = ['search', 'edited', 'created'];
               const currentIndex = tabs.indexOf(activeTab);
               let handled = true;
 
@@ -772,7 +814,7 @@
           }
         };
 
-        const highlightMatch = (text, q) => {
+        const highlightMatch = (text: string, q: string) => {
             const trimmedQuery = q.trim();
             if (!trimmedQuery || !text) return text;
             const termsToHighlight = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
@@ -792,7 +834,7 @@
             );
         };
 
-        const formatDateTime = (timestamp) => {
+        const formatDateTime = (timestamp?: number) => {
           if (!timestamp) return '';
           const date = new Date(timestamp);
           return date.toLocaleString(undefined, {
@@ -842,7 +884,7 @@
                       )}
                   </div>
                   <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
-                      {['search', 'edited', 'created'].map(tab => (
+                      {(['search', 'edited', 'created'] as Tab[]).map(tab => (
                           <button
                               key={tab}
                               onClick={() => setActiveTab(tab)}
@@ -906,8 +948,28 @@
         );
       };
 
-      // --- COMPONENT: TOOLBAR ---
-      const Toolbar = React.memo(({
+      // ----------------------
+      // components/Toolbar.tsx
+      // ----------------------
+      interface Breadcrumb {
+          id: string;
+          text: string;
+      }
+
+      interface ToolbarProps {
+        onImport: (data: any) => void;
+        onExport: () => void;
+        breadcrumbs: Breadcrumb[];
+        onBreadcrumbClick: (id: string | null) => void;
+        fileName: string;
+        onOpenSettings: () => void;
+        onGoToToday: () => void;
+        theme: 'light' | 'dark';
+        onThemeToggle: () => void;
+        onOpenSearch: () => void;
+      }
+
+      const Toolbar: React.FC<ToolbarProps> = React.memo(({
         onImport,
         onExport,
         breadcrumbs,
@@ -919,19 +981,19 @@
         onThemeToggle,
         onOpenSearch,
       }) => {
-        const fileInputRef = useRef(null);
+        const fileInputRef = useRef<HTMLInputElement>(null);
 
         const handleImportClick = () => {
           fileInputRef.current?.click();
         };
 
-        const handleFileChange = (event) => {
+        const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
           const file = event.target.files?.[0];
           if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
               try {
-                const content = e.target?.result;
+                const content = e.target?.result as string;
                 const data = JSON.parse(content);
                 if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
                   onImport(data);
@@ -1004,8 +1066,10 @@
         );
       });
 
-      // --- COMPONENT: BULLET ITEM ---
-      const highlightText = (text, highlight) => {
+      // ----------------------
+      // components/BulletItem.tsx
+      // ----------------------
+      const highlightText = (text: string, highlight?: string) => {
           if (!text) return text;
           const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
           const parts = highlight ? text.split(regex) : [text];
@@ -1036,11 +1100,11 @@
       };
 
       const renderRichTextContent = (
-          text, 
-          highlight, 
-          onLinkClick,
-          options = {}
-      ) => {
+          text: string, 
+          highlight: string | undefined, 
+          onLinkClick: (linkText: string) => void,
+          options: { renderTagsOnly?: boolean } = {}
+      ): React.ReactNode => {
           const { renderTagsOnly = false } = options;
           if (!text) return null;
 
@@ -1125,7 +1189,43 @@
           );
       };
 
-      const BulletItemImpl = ({
+      interface BulletItemProps {
+          bullet: Bullet;
+          level: number;
+          onUpdate: (id: string, updates: Partial<Bullet>) => void;
+          onAddSibling: (id: string, text?: string) => void;
+          onDelete: (id: string) => void;
+          onIndent: (id: string) => void;
+          onOutdent: (id: string) => void;
+          onFocusChange: (id: string, position?: 'start' | 'end' | number) => void;
+          onZoom: (id: string) => void;
+          onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end') => void;
+          onFocusParent: (id: string) => void;
+          onFocusChild: (id: string) => void;
+          onFoldAll: (id: string, collapse: boolean) => void;
+          onMoveBullet: (id: string, direction: 'up' | 'down') => void;
+          currentFocusId: string | null;
+          focusPosition: 'start' | 'end' | number;
+          searchQuery: string;
+          onLinkClick: (linkText: string) => void;
+          onTriggerLinkPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => void;
+          onCloseLinkPopup: () => void;
+          onLinkNavigate: (direction: 'up' | 'down') => void;
+          onLinkSelect: (callback: (selectedBullet: any) => void) => void;
+          isLinkPopupOpen: boolean;
+          linkPopupTargetId: string | null;
+          onTriggerTagPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => void;
+          onCloseTagPopup: () => void;
+          onTagNavigate: (direction: 'up' | 'down') => void;
+          onTagSelect: (callback: (selectedTag: string) => void) => void;
+          isTagPopupOpen: boolean;
+          tagPopupTargetId: string | null;
+          isJournalRoot: boolean;
+          onNavigateTo: (id: string) => void;
+          onMerge: (id: string) => void;
+      }
+
+      const BulletItemImpl: React.FC<BulletItemProps> = ({
         bullet,
         level,
         onUpdate,
@@ -1158,9 +1258,10 @@
         tagPopupTargetId,
         isJournalRoot,
         onNavigateTo,
+        onMerge,
       }) => {
         const [isEditing, setIsEditing] = useState(false);
-        const textInputRef = useRef(null);
+        const textInputRef = useRef<HTMLTextAreaElement>(null);
 
         const isFocused = currentFocusId === bullet.id;
         
@@ -1179,9 +1280,11 @@
               textInputRef.current.focus();
               if (focusPosition === 'start') {
                   textInputRef.current.setSelectionRange(0, 0);
-              } else { // 'end'
+              } else if (focusPosition === 'end') {
                   const len = textInputRef.current.value.length;
                   textInputRef.current.setSelectionRange(len, len);
+              } else if (typeof focusPosition === 'number') {
+                  textInputRef.current.setSelectionRange(focusPosition, focusPosition);
               }
           }
         }, [isEditing, focusPosition]);
@@ -1195,7 +1298,7 @@
 
         const hasChildren = bullet.children.length > 0;
 
-        const handleLinkSelection = useCallback((selectedBullet) => {
+        const handleLinkSelection = useCallback((selectedBullet: any) => {
           const input = textInputRef.current;
           if (!input) return;
 
@@ -1218,7 +1321,7 @@
           }
         }, [bullet.id, onUpdate, onCloseLinkPopup]);
         
-        const handleTagSelection = useCallback((selectedTag) => {
+        const handleTagSelection = useCallback((selectedTag: string) => {
           const input = textInputRef.current;
           if (!input) return;
 
@@ -1242,7 +1345,7 @@
           }
         }, [bullet.id, onUpdate, onCloseTagPopup]);
 
-        const handleTextChange = (e) => {
+        const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
           const text = e.target.value;
           const cursor = e.target.selectionStart;
           onUpdate(bullet.id, { text });
@@ -1267,8 +1370,8 @@
           onCloseTagPopup();
         };
 
-        const handleTextKeyDown = (e) => {
-          const input = e.target;
+        const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+          const input = e.target as HTMLTextAreaElement;
           const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
           const isTagPopupActive = isTagPopupOpen && tagPopupTargetId === bullet.id;
           
@@ -1446,9 +1549,9 @@
               else onIndent(bullet.id);
               break;
             case 'Backspace':
-              if (bullet.text === '') {
+              if (input.selectionStart === 0 && input.selectionEnd === 0) {
                 e.preventDefault();
-                onDelete(bullet.id);
+                onMerge(bullet.id);
               }
               break;
             case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
@@ -1468,7 +1571,7 @@
           }
         };
 
-        const matchesSearch = (b, q) => {
+        const matchesSearch = (b: Bullet, q: string): boolean => {
             if (!q) return true;
             const query = q.toLowerCase();
             const textMatch = b.text.toLowerCase().includes(query);
@@ -1593,6 +1696,7 @@
                       tagPopupTargetId={tagPopupTargetId}
                       isJournalRoot={false}
                       onNavigateTo={onNavigateTo}
+                      onMerge={onMerge}
                   />
                 ))}
               </div>
@@ -1603,7 +1707,96 @@
 
       const BulletItem = React.memo(BulletItemImpl);
 
-      // --- COMPONENT: SETTINGS ---
+      // ----------------------
+      // App.tsx (Main)
+      // ----------------------
+      
+      class JaroetDatabase extends Dexie {
+          constructor() {
+              super("JaroetOutlinerDB");
+              this.version(1).stores({
+                  keyValuePairs: 'key', 
+              });
+              this.keyValuePairs = this.table('keyValuePairs');
+          }
+      }
+
+      const db = new JaroetDatabase();
+
+      const DAILY_LOG_ROOT_TEXT = 'Daily Log';
+
+      const initialData = [
+        {
+          id: 'journal-root',
+          text: DAILY_LOG_ROOT_TEXT,
+          children: [],
+          isCollapsed: true,
+        },
+        {
+          id: 'help-info',
+          text: 'For help and documentation, import the help-documentation.json file.',
+          children: [],
+          isCollapsed: false,
+        }
+      ];
+
+      const createNewBullet = (text = '') => {
+          const now = Date.now();
+          return {
+              id: crypto.randomUUID(),
+              text,
+              children: [],
+              isCollapsed: false,
+              createdAt: now,
+              updatedAt: now,
+          };
+      };
+
+      const migrateBullets = (nodes) => {
+          if (!Array.isArray(nodes)) return [];
+          const now = Date.now();
+          return nodes.map(node => ({
+              ...node,
+              createdAt: node.createdAt || now,
+              updatedAt: node.updatedAt || now,
+              children: migrateBullets(node.children || []),
+          }));
+      };
+
+      const regenerateIds = (nodes) => {
+          if (!Array.isArray(nodes)) return [];
+          return nodes.map(node => ({
+              ...node,
+              id: crypto.randomUUID(),
+              children: regenerateIds(node.children || []),
+          }));
+      };
+
+      const mapBullets = (nodes, callback) => {
+          let changed = false;
+          const newNodes = nodes.map(node => {
+              const newNode = callback(node);
+              const newChildren = mapBullets(newNode.children, callback);
+              if (newNode === node && newChildren === node.children) {
+                  return node;
+              }
+              changed = true;
+              return { ...newNode, children: newChildren };
+          });
+          return changed ? newNodes : nodes;
+      };
+
+      const navigateSuggestions = (prevState, direction) => {
+          const { suggestions, selectedIndex } = prevState;
+          const count = suggestions.length;
+          if (count === 0) return selectedIndex;
+          if (direction === 'down') {
+              return (selectedIndex + 1) % count;
+          } else {
+              return (selectedIndex - 1 + count) % count;
+          }
+      };
+
       const FONT_LIST = [
         'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 
         'Times New Roman', 'Georgia', 'Garamond', 
@@ -1659,8 +1852,8 @@
 
                           {/* Danger Zone */}
                           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                              <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Data Management</h3>
-                              <button 
+                               <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Data Management</h3>
+                               <button 
                                   onClick={onClearData}
                                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors w-full justify-center"
                               >
@@ -1681,35 +1874,6 @@
           );
       }
 
-      // --- DB SETUP ---
-      class JaroetDatabase extends Dexie {
-          constructor() {
-              super("JaroetOutlinerDB");
-              this.version(1).stores({
-                  keyValuePairs: 'key', 
-              });
-              this.keyValuePairs = this.table('keyValuePairs');
-          }
-      }
-
-      const db = new JaroetDatabase();
-
-      // --- APP COMPONENT ---
-      const initialData = [
-        {
-          id: 'journal-root',
-          text: DAILY_LOG_ROOT_TEXT,
-          children: [],
-          isCollapsed: true,
-        },
-        {
-          id: 'help-info',
-          text: 'For help and documentation, import the help-documentation.json file.',
-          children: [],
-          isCollapsed: false,
-        }
-      ];
-
       const App = () => {
           const [bullets, setBullets] = useState(initialData);
           const [zoomedBulletId, setZoomedBulletId] = useState(null);
@@ -1727,8 +1891,9 @@
           const [theme, setTheme] = useState('dark');
           const focusBeforeModalRef = useRef(null);
           
+          // Toast Hook
           const { toasts, addToast, removeToast } = useToast();
-
+          
           const [settings, setSettings] = useState({
               mainColor: '#60a5fa',
               fileName: 'My Outline',
@@ -1747,6 +1912,7 @@
           const [tagPopupState, setTagPopupState] = useState({
               isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
           });
+
 
           const currentFocusId = focusOptions.id;
           const focusPosition = focusOptions.position;
@@ -1837,7 +2003,7 @@
               if (!dataLoadedRef.current) return;
               db.keyValuePairs.put({ key: 'settings', value: settings });
               
-              document.title = `${settings.fileName || 'Untitled'} - Jaroet Outliner`;
+              document.title = `${settings.fileName || 'Untitled'} - JaRoet Outliner`;
               
               const root = document.documentElement;
               root.style.setProperty('--main-color', settings.mainColor);
@@ -1852,7 +2018,6 @@
               }
 
           }, [settings, bullets, getCoreDataString]);
-          
           
           const findBulletAndParent = useCallback((
               id,
@@ -1960,8 +2125,7 @@
               };
               return getVisibleIds(displayedBullets);
           }, [displayedBullets]);
-
-          // --- Refs for Stabilization ---
+          
           const bulletsRef = useRef(bullets);
           const visibleBulletIdsRef = useRef(visibleBulletIds);
           const zoomedBulletIdRef = useRef(zoomedBulletId);
@@ -1973,14 +2137,14 @@
           useEffect(() => { zoomedBulletIdRef.current = zoomedBulletId; }, [zoomedBulletId]);
           useEffect(() => { focusOptionsRef.current = focusOptions; }, [focusOptions]);
           useEffect(() => { breadcrumbsRef.current = breadcrumbs; }, [breadcrumbs]);
-          
+
           useEffect(() => {
               if (!isInitialFocusSet.current && visibleBulletIds.length > 0) {
                   handleFocusChange(visibleBulletIds[0], 'end');
                   isInitialFocusSet.current = true;
               }
           }, [visibleBulletIds, handleFocusChange]);
-
+          
           const handleZoom = useCallback((id) => {
               const currentBullets = bulletsRef.current;
               const oldZoomedBulletId = zoomedBulletIdRef.current;
@@ -2011,7 +2175,7 @@
                   }
                   return;
               }
-          
+
               const find = (nodes) => {
                   for(const node of nodes) {
                       if (node.id === id) return node;
@@ -2020,6 +2184,7 @@
                   }
                   return null;
               };
+              
               const bulletToZoom = find(currentBullets);
           
               if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
@@ -2069,8 +2234,8 @@
               const dayText = `${year}-${month}-${day}`;
 
               setBullets(prevBullets => {
-                   const newBullets = structuredClone(prevBullets);
-                   let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+                  const newBullets = structuredClone(prevBullets);
+                  let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
                   if (!journalNode) {
                       journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
                       newBullets.unshift(journalNode);
@@ -2093,16 +2258,44 @@
                       dayNode = createNewBullet(dayText);
                       monthNode.children.push(dayNode);
                   }
-                  
-                  // Side effects are scheduled
-                  setTimeout(() => {
-                      setZoomedBulletId(monthNode.id);
-                      setTimeout(() => handleFocusChange(dayNode.id), 0);
-                  }, 0);
-
                   return newBullets;
               });
+              
+              const ensureJournalPath = (currentNodes) => {
+                  const newBullets = structuredClone(currentNodes);
+                  let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+                  if (!journalNode) {
+                      journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
+                      newBullets.unshift(journalNode);
+                  }
+                  let yearNode = journalNode.children.find((b) => b.text === year);
+                  if (!yearNode) {
+                      yearNode = createNewBullet(year);
+                      journalNode.children.push(yearNode);
+                  }
+                  let monthNode = yearNode.children.find((b) => b.text === month);
+                  if (!monthNode) {
+                      monthNode = createNewBullet(month);
+                      yearNode.children.push(monthNode);
+                  }
+                  let dayNode = monthNode.children.find((b) => b.text === dayText);
+                  if (!dayNode) {
+                      dayNode = createNewBullet(dayText);
+                      monthNode.children.push(dayNode);
+                  }
+                  return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
+              };
+
+              setBullets(prev => {
+                  const result = ensureJournalPath(prev);
+                  setTimeout(() => {
+                      setZoomedBulletId(result.monthId);
+                      setTimeout(() => handleFocusChange(result.dayId), 0);
+                  }, 0);
+                  return result.nodes;
+              });
               addToast('Opened Daily Log', 'success');
+
           }, [handleFocusChange, addToast]);
 
           const handleUpdate = useCallback((id, updates) => {
@@ -2132,7 +2325,6 @@
                       e.preventDefault();
                       handleZoom(null);
                       setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
-                      // Focus root item
                       setTimeout(() => {
                           const currentBullets = bulletsRef.current;
                           if (currentBullets.length > 0) {
@@ -2156,7 +2348,7 @@
                   else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
                       const currentFocusId = focusOptionsRef.current.id;
                       const visibleIds = visibleBulletIdsRef.current;
-
+                      
                       if (!currentFocusId && visibleIds.length > 0) {
                           const target = e.target;
                           if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
@@ -2188,6 +2380,7 @@
                   }
                   return prevBullets;
               });
+              // Side effect: focus new bullet
               setTimeout(() => handleFocusChange(newBullet.id), 0);
           }, [handleFocusChange, findBulletAndParent]);
 
@@ -2200,7 +2393,7 @@
                   const newBullets = structuredClone(prevBullets);
                   const found = findBulletAndParent(id, newBullets);
                   if (found) {
-                      prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id;
+                      prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null;
                       if (found.parent) {
                           found.parent.updatedAt = Date.now();
                       }
@@ -2211,7 +2404,68 @@
               });
               setTimeout(() => handleFocusChange(prevSiblingId), 0);
           }, [handleFocusChange, findBulletAndParent]);
-          
+
+          const handleMerge = useCallback((id) => {
+              setBullets(prevBullets => {
+                  const foundTarget = findBulletAndParent(id, prevBullets);
+                  if (!foundTarget || foundTarget.node.isReadOnly) return prevBullets;
+
+                  if (foundTarget.index > 0) {
+                      const newBullets = structuredClone(prevBullets);
+                      const found = findBulletAndParent(id, newBullets);
+                      
+                      if (!found) return prevBullets;
+
+                      const prevSibling = found.siblings[found.index - 1];
+                      
+                      if (prevSibling.isReadOnly) return prevBullets;
+
+                      // Calculate cursor position before appending text
+                      const cursorPosition = prevSibling.text.length;
+                      
+                      // Merge text
+                      prevSibling.text += found.node.text;
+                      
+                      // Merge children
+                      prevSibling.children = [...prevSibling.children, ...found.node.children];
+                      
+                      // Update timestamp
+                      prevSibling.updatedAt = Date.now();
+                      
+                      // Ensure expanded if it acquired children
+                      if (found.node.children.length > 0) {
+                          prevSibling.isCollapsed = false;
+                      }
+                      
+                      // Remove the merged node
+                      found.siblings.splice(found.index, 1);
+                      if (found.parent) found.parent.updatedAt = Date.now();
+
+                      // Set focus to previous sibling at the merge point
+                      setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0);
+                      return newBullets;
+                  } else {
+                      // Index 0 handling
+                      if (foundTarget.node.text === '') {
+                              const newBullets = structuredClone(prevBullets);
+                              const found = findBulletAndParent(id, newBullets);
+                              
+                              if (!found) return prevBullets;
+
+                              const parentId = found.parent?.id || null;
+                              
+                              found.siblings.splice(found.index, 1);
+                              if (found.parent) found.parent.updatedAt = Date.now();
+
+                              setTimeout(() => handleFocusChange(parentId, 'end'), 0);
+                              return newBullets;
+                      }
+                  }
+                  
+                  return prevBullets;
+              });
+          }, [findBulletAndParent, handleFocusChange]);
+
           const handleIndent = useCallback((id) => {
               setBullets(prevBullets => {
                   const foundTarget = findBulletAndParent(id, prevBullets);
@@ -2309,7 +2563,7 @@
                           [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]];
                           return newBullets;
                       }
-                  } else { // 'down'
+                  } else {
                       if (index < siblings.length - 1) {
                           [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
                           return newBullets;
@@ -2371,6 +2625,7 @@
                    return null;
               };
               const foundNode = find(currentBullets);
+              
               if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) {
                   handleFocusChange(foundNode.children[0].id, 'start');
               }
@@ -2392,7 +2647,7 @@
               
               const sanitizedFileName = settings.fileName.replace(/[<>:"/\\|?*]/g, '_');
               const exportFileDefaultName = `${sanitizedFileName}_bck_${timestamp}.json`;
-
+              
               const linkElement = document.createElement('a');
               linkElement.setAttribute('href', dataUri);
               linkElement.setAttribute('download', exportFileDefaultName);
@@ -2401,7 +2656,6 @@
           };
 
           const handleImport = (data) => {
-              // Instead of overriding immediately, we open the selection modal
               setPendingImportData(data);
               setIsImportModalOpen(true);
           };
@@ -2409,15 +2663,12 @@
           const handleConfirmImport = (targetId) => {
               if (!pendingImportData) return;
               
-              // Ensure imported data matches current schema and has fresh IDs to avoid collisions
               let nodesToImport = migrateBullets(pendingImportData);
               nodesToImport = regenerateIds(nodesToImport);
 
               if (targetId === null) {
-                  // Add to root
                   setBullets(prev => [...prev, ...nodesToImport]);
               } else {
-                  // Add to specific bullet
                   const newBullets = structuredClone(bullets);
                   const found = findBulletAndParent(targetId, newBullets);
                   if (found && !found.node.isReadOnly) {
@@ -2428,7 +2679,6 @@
                   }
               }
               
-              // Cleanup
               setIsImportModalOpen(false);
               setPendingImportData(null);
               addToast('Items imported successfully', 'success');
@@ -2437,7 +2687,7 @@
           const handleAddItemToCurrentView = useCallback(() => {
               const newBullet = createNewBullet();
               const zoomedId = zoomedBulletIdRef.current;
-
+              
               if (zoomedId) {
                   setBullets(prevBullets => {
                       const newBullets = structuredClone(prevBullets);
@@ -2462,7 +2712,7 @@
 
               if (!currentFocusId) {
                   if (visibleIds.length > 0) {
-                      handleFocusChange(visibleIds[0], position);
+                       handleFocusChange(visibleIds[0], position);
                   }
                   return;
               }
@@ -2474,7 +2724,7 @@
                   if (nextIndex < visibleIds.length) {
                       handleFocusChange(visibleIds[nextIndex], position);
                   }
-              } else { // 'up'
+              } else {
                   nextIndex = currentIndex - 1;
                   if (nextIndex >= 0) {
                       handleFocusChange(visibleIds[nextIndex], position);
@@ -2499,13 +2749,13 @@
               }
           };
 
-          // --- Link & Tag Popup Logic ---
+
           const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
               if (!inputRef.current) return;
               const rect = inputRef.current.getBoundingClientRect();
               setLinkSelectionHandler({ handler: selectionHandler });
 
-              const POPUP_MAX_WIDTH_PX = 768; // Corresponds to Tailwind's max-w-2xl
+              const POPUP_MAX_WIDTH_PX = 768;
               const VIEWPORT_PADDING_PX = 16;
               
               let left = rect.left + window.scrollX;
@@ -2515,7 +2765,7 @@
               }
 
               left = Math.max(VIEWPORT_PADDING_PX, left);
-              
+
               const currentBullets = bulletsRef.current;
               const results = [];
               const traverse = (nodes, currentPath) => {
@@ -2533,7 +2783,7 @@
                   }
               };
               traverse(currentBullets, []);
-
+              
               const suggestions = !query 
                   ? results.slice(0, 50) 
                   : results.map(bullet => {
@@ -2572,19 +2822,19 @@
           }, []);
 
           const handleLinkNavigate = useCallback((direction) => {
-              if (!linkPopupState.isOpen) return;
+              if (!linkPopupState.isOpen) return; 
               setLinkPopupState(prev => ({
                   ...prev,
                   selectedIndex: navigateSuggestions(prev, direction),
               }));
-          }, [linkPopupState.isOpen]);
+          }, [linkPopupState.isOpen]); 
           
           const handleLinkSelect = useCallback((callback) => {
               setLinkPopupState(prev => {
-                  if (!prev.isOpen || prev.suggestions.length === 0) return prev;
-                  const selectedBullet = prev.suggestions[prev.selectedIndex];
-                  callback(selectedBullet);
-                  return prev;
+                   if (!prev.isOpen || prev.suggestions.length === 0) return prev;
+                   const selectedBullet = prev.suggestions[prev.selectedIndex];
+                   callback(selectedBullet);
+                   return prev;
               });
           }, []);
 
@@ -2758,6 +3008,7 @@
                                   tagPopupTargetId={tagPopupState.targetId}
                                   isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null}
                                   onNavigateTo={handleNavigate}
+                                  onMerge={handleMerge}
                               />
                           </div>
                       )) : (
@@ -2767,7 +3018,7 @@
                               </button>
                           </div>
                       )}
-                      {linkPopupState.isOpen && (
+                       {linkPopupState.isOpen && (
                           <LinkPopup
                               suggestions={linkPopupState.suggestions}
                               selectedIndex={linkPopupState.selectedIndex}
@@ -2796,9 +3047,9 @@
                   </main>
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                       <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                      <span>Version 0.1.11</span>
+                      <span>Version 0.1.13</span>
                   </footer>
-                  <SearchModal
+                   <SearchModal
                       isOpen={isSearchModalOpen}
                       onClose={handleCloseSearch}
                       bullets={bullets}
@@ -2825,15 +3076,18 @@
           );
       };
 
-      // --- INDEX ---
+      // ----------------------
+      // index.tsx
+      // ----------------------
       const rootElement = document.getElementById('root');
       if (!rootElement) {
         throw new Error("Could not find root element to mount to");
       }
 
       const root = ReactDOM.createRoot(rootElement);
-      root.render(<App />);
-
+      root.render(
+          <App />
+      );
     </script>
   </body>
 </html>

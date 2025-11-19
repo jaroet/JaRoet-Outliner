@@ -149,7 +149,7 @@ interface BulletItemProps {
     onFoldAll: (id: string, collapse: boolean) => void;
     onMoveBullet: (id: string, direction: 'up' | 'down') => void;
     currentFocusId: string | null;
-    focusPosition: 'start' | 'end';
+    focusPosition: 'start' | 'end' | number;
     searchQuery: string;
     onLinkClick: (linkText: string) => void;
     onTriggerLinkPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => void;
@@ -166,6 +166,7 @@ interface BulletItemProps {
     tagPopupTargetId: string | null;
     isJournalRoot: boolean;
     onNavigateTo: (id: string) => void;
+    onMerge: (id: string) => void;
 }
 
 const BulletItemImpl: React.FC<BulletItemProps> = ({
@@ -201,6 +202,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
   tagPopupTargetId,
   isJournalRoot,
   onNavigateTo,
+  onMerge,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
@@ -222,9 +224,11 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
         textInputRef.current.focus();
         if (focusPosition === 'start') {
             textInputRef.current.setSelectionRange(0, 0);
-        } else { // 'end'
+        } else if (focusPosition === 'end') {
             const len = textInputRef.current.value.length;
             textInputRef.current.setSelectionRange(len, len);
+        } else if (typeof focusPosition === 'number') {
+            textInputRef.current.setSelectionRange(focusPosition, focusPosition);
         }
     }
   }, [isEditing, focusPosition]);
@@ -489,9 +493,9 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
         else onIndent(bullet.id);
         break;
       case 'Backspace':
-        if (bullet.text === '') {
+        if (input.selectionStart === 0 && input.selectionEnd === 0) {
           e.preventDefault();
-          onDelete(bullet.id);
+          onMerge(bullet.id);
         }
         break;
       case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
@@ -636,6 +640,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                 tagPopupTargetId={tagPopupTargetId}
                 isJournalRoot={false}
                 onNavigateTo={onNavigateTo}
+                onMerge={onMerge}
             />
           ))}
         </div>
