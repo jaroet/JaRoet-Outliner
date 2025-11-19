@@ -20,7 +20,7 @@ Files in the ZiP file:
 
 Only the **index.html** file is needed to run. The other 2 files are JSON files that you can import in the application using the import JSON button at the top right.
 
-The **help-documentation.json** file contains a small outline that showcases the use of the outline and documents the hotkeys and the way the application works. Might be nice to import it and read it once. It will take you only a few minutes. 
+The **help-documentation.json** file contains a small outline that showcases the use of the application and documents the hotkeys and the way the application works. Might be nice to import it and read it once. It will take you only a few minutes. 
 
 The **demo.json** file contains an example outline to show how the application can be used. 
 
