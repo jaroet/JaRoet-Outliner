@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -11,80 +12,7 @@
         darkMode: 'class',
       }
     </script>
-    <style>
-      :root {
-        --main-color: #60a5fa;
-        --font-family: sans-serif;
-        --font-size: 16px;
-      }
-      body {
-        font-family: var(--font-family);
-        font-size: var(--font-size);
-        overflow: hidden; /* Prevent body scroll when resizing */
-      }
-      /* Simple scrollbar styling for a more modern look */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      /* Light theme */
-      ::-webkit-scrollbar-track {
-        background: #f1f5f9; /* cool-gray-100 */
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1; /* cool-gray-300 */
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; /* cool-gray-400 */
-      }
-      /* Dark theme */
-      .dark ::-webkit-scrollbar-track {
-        background: #1e293b; /* slate-800 */
-      }
-      .dark ::-webkit-scrollbar-thumb {
-        background: #475569; /* slate-600 */
-      }
-      .dark ::-webkit-scrollbar-thumb:hover {
-        background: #64748b; /* slate-500 */
-      }
-      .focus-outline {
-        outline: 2px solid var(--main-color);
-        outline-offset: -1px;
-        border-radius: 4px;
-      }
-      .selected-item-bg {
-        /* Mix with 20% black to darken the main color, ensuring good contrast with white text */
-        background-color: color-mix(in srgb, var(--main-color) 80%, black);
-      }
-      .tag-span {
-        background-color: color-mix(in srgb, var(--main-color) 20%, transparent);
-        color: color-mix(in srgb, var(--main-color) 70%, black);
-        border-radius: 0.375rem; /* rounded-md */
-        padding: 0.125rem 0.25rem; /* py-0.5 px-1 */
-        margin: 0 0.0625rem; /* mx-px */
-        font-size: 0.875rem; /* text-sm */
-      }
-
-      .dark .tag-span {
-        color: var(--main-color);
-      }
-      
-      @keyframes fadeInUp {
-          from {
-              opacity: 0;
-              transform: translate3d(0, 100%, 0);
-          }
-          to {
-              opacity: 1;
-              transform: translate3d(0, 0, 0);
-          }
-      }
-
-      .animate-fade-in-up {
-          animation: fadeInUp 0.3s ease-out;
-      }
-    </style>
+    <link rel="stylesheet" href="./index.css" />
     <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Add Dexie.js for IndexedDB -->
@@ -102,8 +30,9 @@
   <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
   }
@@ -113,13 +42,8 @@
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-200">
     <div id="root"></div>
     
-    <script type="text/babel" data-type="module">
-      import * as React from 'react';
-      import * as ReactDOM from 'react-dom/client';
-      
-      const { useState, useEffect, useCallback, useMemo, useRef } = React;
-
-      // Polyfill for crypto.randomUUID if not available (e.g. insecure context)
+    <script>
+      // Polyfill for crypto.randomUUID if not available
       if (!crypto.randomUUID) {
         crypto.randomUUID = () => {
           if (crypto.getRandomValues) {
@@ -127,7 +51,6 @@
                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
              );
           } else {
-             // Fallback for environments without crypto.getRandomValues
              return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
@@ -135,48 +58,12 @@
           }
         };
       }
+    </script>
+    <script type="text/babel" data-type="module">
+      import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+      import { createRoot } from 'react-dom/client';
 
-      // ----------------------
-      // types.ts
-      // ----------------------
-      interface Bullet {
-        id: string;
-        text: string;
-        children: Bullet[];
-        isCollapsed: boolean;
-        isReadOnly?: boolean;
-        originalId?: string;
-        createdAt?: number;
-        updatedAt?: number;
-      }
-
-      interface FlatBullet {
-        id: string;
-        text: string;
-        path: string[];
-        createdAt?: number;
-        updatedAt?: number;
-      }
-
-      interface Settings {
-        mainColor: string;
-        fileName: string;
-        fontFamily: string;
-        fontSize: number;
-      }
-
-      type CoreBullet = {
-        id: string;
-        text: string;
-        children: CoreBullet[];
-        originalId?: string;
-        createdAt?: number;
-        updatedAt?: number;
-      };
-
-      // ----------------------
-      // components/Icons.tsx
-      // ----------------------
+      // --- Icons ---
       const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -228,7 +115,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -251,39 +138,23 @@
           </svg>
       );
 
-      // ----------------------
-      // components/Toast.tsx
-      // ----------------------
-      interface Toast {
-          id: string;
-          message: string;
-          type: 'success' | 'error' | 'info';
-      }
-
+      // --- Toast ---
       const useToast = () => {
-          const [toasts, setToasts] = useState<Toast[]>([]);
-
-          const addToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+          const [toasts, setToasts] = useState([]);
+          const addToast = useCallback((message, type = 'info') => {
               const id = crypto.randomUUID();
               setToasts(prev => [...prev, { id, message, type }]);
               setTimeout(() => {
-                  removeToast(id);
+                  setToasts(prev => prev.filter(t => t.id !== id));
               }, 3000);
           }, []);
-
-          const removeToast = useCallback((id: string) => {
+          const removeToast = useCallback((id) => {
               setToasts(prev => prev.filter(t => t.id !== id));
           }, []);
-
           return { toasts, addToast, removeToast };
       };
 
-      interface ToastContainerProps {
-          toasts: Toast[];
-          removeToast: (id: string) => void;
-      }
-
-      const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, removeToast }) => {
+      const ToastContainer = ({ toasts, removeToast }) => {
           return (
               <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none">
                   {toasts.map(toast => (
@@ -303,29 +174,51 @@
           );
       };
 
-      // ----------------------
-      // components/LinkPopup.tsx
-      // ----------------------
-      interface LinkPopupProps {
-          suggestions: FlatBullet[];
-          selectedIndex: number;
-          onSelect: (bullet: FlatBullet) => void;
-          position: { top: number; left: number };
-          containerRef: React.RefObject<HTMLUListElement>;
-      }
-
-      const LinkPopup: React.FC<LinkPopupProps> = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const selectedItemRef = useRef<HTMLLIElement>(null);
-        
+      // --- Tag Popup ---
+      const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+        const selectedItemRef = useRef(null);
         useEffect(() => {
           if (selectedItemRef.current) {
               selectedItemRef.current.scrollIntoView({ block: 'nearest' });
           }
         }, [selectedIndex]);
 
-        if (suggestions.length === 0) {
-          return null;
-        }
+        if (suggestions.length === 0) return null;
+
+        return (
+          <div
+            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-auto min-w-[150px]"
+            style={{ top: position.top, left: position.left }}
+          >
+            <ul ref={containerRef}>
+              {suggestions.map((tag, index) => (
+                <li key={tag} ref={index === selectedIndex ? selectedItemRef : null}>
+                  <button
+                    onClick={() => onSelect(tag)}
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                     title={tag}
+                  >
+                    <span className="truncate block">{tag}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      };
+
+      // --- Link Popup ---
+      const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+        const selectedItemRef = useRef(null);
+        useEffect(() => {
+          if (selectedItemRef.current) {
+              selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+          }
+        }, [selectedIndex]);
+
+        if (suggestions.length === 0) return null;
 
         return (
           <div
@@ -340,7 +233,7 @@
                     className={`w-full text-left px-3 py-2 text-sm ${
                       index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                    title={bullet.text}
+                     title={bullet.text}
                   >
                     <span className="truncate block">{bullet.text || <em>Untitled</em>}</span>
                     {bullet.path.length > 0 && (
@@ -356,86 +249,26 @@
         );
       };
 
-      // ----------------------
-      // components/TagPopup.tsx
-      // ----------------------
-      interface TagPopupProps {
-          suggestions: string[];
-          selectedIndex: number;
-          onSelect: (tag: string) => void;
-          position: { top: number; left: number };
-          containerRef: React.RefObject<HTMLUListElement>;
-      }
-
-      const TagPopup: React.FC<TagPopupProps> = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const selectedItemRef = useRef<HTMLLIElement>(null);
-        
-        useEffect(() => {
-          if (selectedItemRef.current) {
-              selectedItemRef.current.scrollIntoView({ block: 'nearest' });
-          }
-        }, [selectedIndex]);
-
-        if (suggestions.length === 0) {
-          return null;
-        }
-
-        return (
-          <div
-            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-auto min-w-[150px]"
-            style={{ top: position.top, left: position.left }}
-          >
-            <ul ref={containerRef}>
-              {suggestions.map((tag, index) => (
-                <li key={tag} ref={index === selectedIndex ? selectedItemRef : null}>
-                  <button
-                    onClick={() => onSelect(tag)}
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    title={tag}
-                  >
-                    <span className="truncate block">{tag}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      };
-
-      // ----------------------
-      // components/ImportSelectionModal.tsx
-      // ----------------------
-      interface ImportSelectionModalProps {
-          isOpen: boolean;
-          onClose: () => void;
-          onConfirm: (targetId: string | null) => void;
-          bullets: Bullet[];
-      }
-
-      const ImportSelectionModal: React.FC<ImportSelectionModalProps> = ({ isOpen, onClose, onConfirm, bullets }) => {
+      // --- Import Selection Modal ---
+      const ImportSelectionModal = ({ isOpen, onClose, onConfirm, bullets }) => {
           const [searchQuery, setSearchQuery] = useState('');
-          const [selectedId, setSelectedId] = useState<string | null>(null);
-          const searchInputRef = useRef<HTMLInputElement>(null);
+          const [selectedId, setSelectedId] = useState(null);
+          const searchInputRef = useRef(null);
 
           useEffect(() => {
               if (isOpen) {
                   setSearchQuery('');
-                  setSelectedId(null); // Default to Root
-                  // Slightly delay focus so the modal renders first
+                  setSelectedId(null);
                   setTimeout(() => {
                       searchInputRef.current?.focus();
                   }, 50);
               }
           }, [isOpen]);
 
-          // Optimization: Calculate flat list inside the modal only when open
-          const flatBullets: FlatBullet[] = useMemo(() => {
+          const flatBullets = useMemo(() => {
               if (!isOpen) return [];
-              
-              const results: FlatBullet[] = [];
-              const traverse = (nodes: Bullet[], currentPath: string[]) => {
+              const results = [];
+              const traverse = (nodes, currentPath) => {
                   for (const node of nodes) {
                       results.push({
                           id: node.id,
@@ -459,30 +292,16 @@
               return flatBullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
           }, [flatBullets, searchQuery]);
 
-          const handleConfirm = () => {
-              onConfirm(selectedId);
-          };
-
           if (!isOpen) return null;
 
           return (
-              <div 
-                  className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center"
-                  onClick={onClose}
-              >
-                  <div 
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
-                      onClick={e => e.stopPropagation()}
-                  >
+              <div className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center" onClick={onClose}>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
                       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Import Content</h2>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              Where do you want to place the imported items?
-                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Where do you want to place the imported items?</p>
                       </div>
-
                       <div className="p-4 overflow-y-auto flex-grow">
-                          {/* Root Option */}
                           <div 
                               onClick={() => setSelectedId(null)}
                               className={`p-3 rounded-md cursor-pointer border transition-colors flex items-center gap-3 mb-4 ${
@@ -491,11 +310,7 @@
                                       : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                           >
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                  selectedId === null 
-                                      ? 'border-[var(--main-color)]' 
-                                      : 'border-gray-400'
-                              }`}>
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedId === null ? 'border-[var(--main-color)]' : 'border-gray-400'}`}>
                                   {selectedId === null && <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />}
                               </div>
                               <div>
@@ -503,922 +318,408 @@
                                   <span className="text-xs text-gray-500 dark:text-gray-400">Add as new items at the bottom of your outline</span>
                               </div>
                           </div>
-
                           <div className="relative">
                               <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or select a specific item:</div>
-                              <input
-                                  ref={searchInputRef}
-                                  type="text"
-                                  placeholder="Search for an item..."
-                                  value={searchQuery}
-                                  onChange={(e) => setSearchQuery(e.target.value)}
-                                  className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"
-                              />
-                              
+                              <input ref={searchInputRef} type="text" placeholder="Search for an item..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"/>
                               <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                                   {filteredBullets.length > 0 ? (
                                       <ul>
                                           {filteredBullets.map(bullet => (
-                                              <li 
-                                                  key={bullet.id}
-                                                  onClick={() => setSelectedId(bullet.id)}
-                                                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${
-                                                      selectedId === bullet.id 
-                                                          ? 'selected-item-bg text-white' 
-                                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
-                                                  }`}
-                                              >
+                                              <li key={bullet.id} onClick={() => setSelectedId(bullet.id)} className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${selectedId === bullet.id ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
                                                   <CircleIcon className="w-1.5 h-1.5 flex-shrink-0" />
                                                   <span className="truncate">{bullet.text || <em>Untitled</em>}</span>
                                               </li>
                                           ))}
                                       </ul>
                                   ) : (
-                                      <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                                          {searchQuery ? 'No items found' : 'Type to search...'}
-                                      </div>
+                                      <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">{searchQuery ? 'No items found' : 'Type to search...'}</div>
                                   )}
                               </div>
                           </div>
-                          
-                          {selectedId && (
-                              <div className="mt-4 p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm rounded border border-blue-100 dark:border-blue-800">
-                                  Items will be added as children of the selected item.
-                              </div>
-                          )}
                       </div>
-
                       <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                          <button 
-                              onClick={onClose}
-                              className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
-                          >
-                              Cancel
-                          </button>
-                          <button 
-                              onClick={handleConfirm}
-                              className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90"
-                          >
-                              Import
-                          </button>
+                          <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
+                          <button onClick={() => onConfirm(selectedId)} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Import</button>
                       </div>
                   </div>
               </div>
           );
       };
 
-      // ----------------------
-      // components/SearchModal.tsx
-      // ----------------------
-      interface SearchModalProps {
-          isOpen: boolean;
-          onClose: () => void;
-          bullets: Bullet[];
-          onNavigate: (id: string) => void;
-      }
-
-      type Tab = 'search' | 'edited' | 'created';
-
-      const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate }) => {
-        const [query, setQuery] = useState('');
-        const [selectedIndex, setSelectedIndex] = useState(0);
-        const [activeTab, setActiveTab] = useState<Tab>('search');
-        const inputRef = useRef<HTMLInputElement>(null);
-        const listRef = useRef<HTMLUListElement>(null);
-        const selectedItemRef = useRef<HTMLLIElement>(null);
-        const tagPopupRef = useRef<HTMLUListElement>(null);
-
-        const [tagPopupState, setTagPopupState] = useState({
-          isOpen: false,
-          suggestions: [] as string[],
-          selectedIndex: 0,
-        });
-
-        const flatBullets: FlatBullet[] = useMemo(() => {
-            if (!isOpen) return [];
-            
-            const results: FlatBullet[] = [];
-            const traverse = (nodes: Bullet[], currentPath: string[]) => {
-                for (const node of nodes) {
-                    results.push({
-                        id: node.id,
-                        text: node.text,
-                        path: currentPath,
-                        createdAt: node.createdAt,
-                        updatedAt: node.updatedAt,
-                    });
-                    if (node.children && node.children.length > 0) {
-                        traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                    }
-                }
-            };
-            traverse(bullets, []);
-            return results;
-        }, [bullets, isOpen]);
-
-        const allTags = useMemo(() => {
-            if (!isOpen) return [];
-            const tagSet = new Set<string>();
-            const tagRegex = /#\w+/g;
-            for (const bullet of flatBullets) {
-                const matches = bullet.text.match(tagRegex);
-                if (matches) {
-                    matches.forEach(tag => tagSet.add(tag));
-                }
-            }
-            return Array.from(tagSet).sort();
-        }, [flatBullets, isOpen]);
-
-        useEffect(() => {
-          if (isOpen) {
-            inputRef.current?.focus();
-            setQuery('');
-            setSelectedIndex(0);
-            setActiveTab('search');
-            handleCloseTagPopup();
-          }
-        }, [isOpen]);
-        
-        useEffect(() => {
-          setSelectedIndex(0);
-        }, [query, activeTab]);
-
-        const listContent = useMemo(() => {
-          let sourceList: FlatBullet[];
-          
-          if (activeTab === 'edited') {
-              sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-          } else if (activeTab === 'created') {
-              sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          } else {
-              sourceList = flatBullets;
-          }
-
-          const trimmedQuery = query.trim();
-          if (!trimmedQuery) {
-            return sourceList;
-          }
-
-          const lowerCaseQuery = trimmedQuery.toLowerCase();
-          const orClauses = lowerCaseQuery.split(/\s+or\s+/i);
-          const searchConditionGroups = orClauses.map(clause => 
-              clause.split(/\s+/).filter(term => term)
-          );
-
-          return sourceList.filter(bullet => {
-              const lowerCaseText = bullet.text.toLowerCase();
-              return searchConditionGroups.some(andTerms => {
-                  return andTerms.every(term => lowerCaseText.includes(term));
-              });
+      // --- Search Modal ---
+      const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
+          const [query, setQuery] = useState('');
+          const [selectedIndex, setSelectedIndex] = useState(0);
+          const [activeTab, setActiveTab] = useState('search');
+          const inputRef = useRef(null);
+          const listRef = useRef(null);
+          const selectedItemRef = useRef(null);
+          const tagPopupRef = useRef(null);
+          const [tagPopupState, setTagPopupState] = useState({
+            isOpen: false,
+            suggestions: [],
+            selectedIndex: 0,
           });
-        }, [query, flatBullets, activeTab]);
 
-        useEffect(() => {
-          if (selectedItemRef.current) {
-            selectedItemRef.current.scrollIntoView({ block: 'nearest' });
-          }
-        }, [selectedIndex]);
+          const flatBullets = useMemo(() => {
+              if (!isOpen) return [];
+              const results = [];
+              const traverse = (nodes, currentPath) => {
+                  for (const node of nodes) {
+                      results.push({
+                          id: node.id,
+                          text: node.text,
+                          path: currentPath,
+                          createdAt: node.createdAt,
+                          updatedAt: node.updatedAt,
+                      });
+                      if (node.children && node.children.length > 0) {
+                          traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                      }
+                  }
+              };
+              traverse(bullets, []);
+              return results;
+          }, [bullets, isOpen]);
 
-        const handleCloseTagPopup = useCallback(() => {
-          setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
-        }, []);
-
-        const handleTagSelection = useCallback((selectedTag: string) => {
-          const input = inputRef.current;
-          if (!input) return;
-
-          const text = input.value;
-          const cursor = input.selectionStart ?? text.length;
-
-          const textBeforeCursor = text.substring(0, cursor);
-          const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-
-          if (match) {
-              const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
-              const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
-              setQuery(newText);
-              handleCloseTagPopup();
-
-              setTimeout(() => {
-                  const newCursorPos = startIndex + selectedTag.length + 1;
-                  input.focus();
-                  input.setSelectionRange(newCursorPos, newCursorPos);
-              }, 0);
-          }
-        }, [handleCloseTagPopup]);
-
-        const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const text = e.target.value;
-          const cursor = e.target.selectionStart;
-          setQuery(text);
-
-          if (cursor === null) {
-            handleCloseTagPopup();
-            return;
-          }
-
-          const textBeforeCursor = text.substring(0, cursor);
-          const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-          
-          if (tagMatch) {
-              const query = tagMatch[1];
-              const lowerCaseQuery = query.toLowerCase();
-              const suggestions = allTags.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
-
-              if (suggestions.length > 0) {
-                  setTagPopupState({
-                      isOpen: true,
-                      suggestions: suggestions.slice(0, 100),
-                      selectedIndex: 0,
-                  });
-              } else {
-                  handleCloseTagPopup();
+          const allTags = useMemo(() => {
+              if (!isOpen) return [];
+              const tagSet = new Set();
+              const tagRegex = /#\w+/g;
+              for (const bullet of flatBullets) {
+                  const matches = bullet.text.match(tagRegex);
+                  if (matches) {
+                      matches.forEach(tag => tagSet.add(tag));
+                  }
               }
-          } else {
-              handleCloseTagPopup();
-          }
-        };
+              return Array.from(tagSet).sort();
+          }, [flatBullets, isOpen]);
 
-        const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-          if (tagPopupState.isOpen && tagPopupState.suggestions.length > 0) {
-              let handled = true;
-              switch (e.key) {
-                  case 'ArrowUp':
-                      setTagPopupState(prev => ({
-                          ...prev,
-                          selectedIndex: (prev.selectedIndex - 1 + prev.suggestions.length) % prev.suggestions.length,
-                      }));
-                      break;
-                  case 'ArrowDown':
-                      setTagPopupState(prev => ({
-                          ...prev,
-                          selectedIndex: (prev.selectedIndex + 1) % prev.suggestions.length,
-                      }));
-                      break;
-                  case 'Tab':
-                      const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
-                      handleTagSelection(selectedTag);
-                      break;
-                  case 'Escape':
-                      handleCloseTagPopup();
-                      break;
-                  default:
-                      handled = false;
-              }
-              if (handled) {
-                  e.preventDefault();
-                  return;
-              }
-          }
-
-          if (e.ctrlKey) {
-              const tabs: Tab[] = ['search', 'edited', 'created'];
-              const currentIndex = tabs.indexOf(activeTab);
-              let handled = true;
-
-              if (e.key === 'ArrowRight') {
-                  const nextIndex = (currentIndex + 1) % tabs.length;
-                  setActiveTab(tabs[nextIndex]);
-              } else if (e.key === 'ArrowLeft') {
-                  const nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-                  setActiveTab(tabs[nextIndex]);
-              } else {
-                  handled = false;
-              }
-
-              if (handled) {
-                  e.preventDefault();
-                  return;
-              }
-          }
-
-          const count = listContent.length;
-          if (e.key === 'Escape') {
-            onClose();
-            return;
-          }
-
-          if (count === 0 && e.key !== 'Enter') return;
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setSelectedIndex(prev => (prev + 1) % count);
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setSelectedIndex(prev => (prev - 1 + count) % count);
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (listContent.length > 0 && listContent[selectedIndex]) {
-              onNavigate(listContent[selectedIndex].id);
+          useEffect(() => {
+            if (isOpen) {
+              inputRef.current?.focus();
+              setQuery('');
+              setSelectedIndex(0);
+              setActiveTab('search');
+              setTagPopupState(prev => ({...prev, isOpen: false}));
             }
-          }
-        };
+          }, [isOpen]);
 
-        const highlightMatch = (text: string, q: string) => {
-            const trimmedQuery = q.trim();
-            if (!trimmedQuery || !text) return text;
-            const termsToHighlight = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
-            const uniqueTerms = [...new Set(termsToHighlight)];
-            if (uniqueTerms.length === 0) return text;
-            const regex = new RegExp(`(${uniqueTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
-            const parts = text.split(regex);
-            return (
-                <span>
-                    {parts.map((part, i) => {
-                        if (part && uniqueTerms.some(term => term === part.toLowerCase())) {
-                            return <span key={i} className="bg-yellow-400/40 dark:bg-yellow-600/40 rounded-sm">{part}</span>;
-                        }
-                        return part;
-                    })}
-                </span>
-            );
-        };
+          useEffect(() => { setSelectedIndex(0); }, [query, activeTab]);
 
-        const formatDateTime = (timestamp?: number) => {
-          if (!timestamp) return '';
-          const date = new Date(timestamp);
-          return date.toLocaleString(undefined, {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', hour12: false,
-          });
-        };
+          const listContent = useMemo(() => {
+            let sourceList;
+            if (activeTab === 'edited') sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            else if (activeTab === 'created') sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            else sourceList = flatBullets;
 
-        if (!isOpen) {
-          return null;
-        }
+            const trimmedQuery = query.trim();
+            if (!trimmedQuery) return sourceList;
 
-        return (
-          <div
-            className="fixed inset-0 bg-black/40 dark:bg-black/60 z-30 flex justify-center items-start pt-20"
-            onClick={onClose}
-          >
-            <div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
-                  <div className="relative">
-                      <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                          <SearchIcon />
-                      </span>
-                      <input
-                          ref={inputRef}
-                          type="text"
-                          placeholder="Quick find... (use #tag, AND, OR)"
-                          value={query}
-                          onChange={handleQueryChange}
-                          onKeyDown={handleKeyDown}
-                          className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
-                      />
-                      {tagPopupState.isOpen && inputRef.current && (
-                          <TagPopup
-                              suggestions={tagPopupState.suggestions}
-                              selectedIndex={tagPopupState.selectedIndex}
-                              onSelect={handleTagSelection}
-                              position={{
-                                  top: inputRef.current.offsetHeight + 4,
-                                  left: 0
-                              }}
-                              containerRef={tagPopupRef}
-                          />
-                      )}
-                  </div>
-                  <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
-                      {(['search', 'edited', 'created'] as Tab[]).map(tab => (
-                          <button
-                              key={tab}
-                              onClick={() => setActiveTab(tab)}
-                              className={`px-4 py-2 capitalize -mb-px border-b-2 transition-colors ${
-                                  activeTab === tab 
-                                      ? 'border-[var(--main-color)] text-[var(--main-color)]' 
-                                      : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-                              }`}
-                          >
-                              {tab === 'edited' ? 'Recently modified' : (tab === 'created' ? 'Recently created' : 'Search')}
-                          </button>
+            const lowerCaseQuery = trimmedQuery.toLowerCase();
+            const orClauses = lowerCaseQuery.split(/\s+or\s+/i);
+            const searchConditionGroups = orClauses.map(clause => clause.split(/\s+/).filter(term => term));
+
+            return sourceList.filter(bullet => {
+                const lowerCaseText = bullet.text.toLowerCase();
+                return searchConditionGroups.some(andTerms => andTerms.every(term => lowerCaseText.includes(term)));
+            });
+          }, [query, flatBullets, activeTab]);
+
+          useEffect(() => { selectedItemRef.current?.scrollIntoView({ block: 'nearest' }); }, [selectedIndex]);
+
+          const handleCloseTagPopup = useCallback(() => {
+            setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+          }, []);
+
+          const handleTagSelection = useCallback((selectedTag) => {
+            const input = inputRef.current;
+            if (!input) return;
+            const text = input.value;
+            const cursor = input.selectionStart ?? text.length;
+            const textBeforeCursor = text.substring(0, cursor);
+            const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+            if (match) {
+                const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
+                const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
+                setQuery(newText);
+                handleCloseTagPopup();
+                setTimeout(() => {
+                    const newCursorPos = startIndex + selectedTag.length + 1;
+                    input.focus();
+                    input.setSelectionRange(newCursorPos, newCursorPos);
+                }, 0);
+            }
+          }, [handleCloseTagPopup]);
+
+          const handleQueryChange = (e) => {
+            const text = e.target.value;
+            const cursor = e.target.selectionStart;
+            setQuery(text);
+            if (cursor === null) { handleCloseTagPopup(); return; }
+            const textBeforeCursor = text.substring(0, cursor);
+            const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+            if (tagMatch) {
+                const query = tagMatch[1];
+                const suggestions = allTags.filter(tag => tag.toLowerCase().includes(query.toLowerCase()));
+                if (suggestions.length > 0) setTagPopupState({ isOpen: true, suggestions: suggestions.slice(0, 100), selectedIndex: 0 });
+                else handleCloseTagPopup();
+            } else handleCloseTagPopup();
+          };
+
+          const handleKeyDown = (e) => {
+            if (tagPopupState.isOpen && tagPopupState.suggestions.length > 0) {
+                let handled = true;
+                switch (e.key) {
+                    case 'ArrowUp': setTagPopupState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + prev.suggestions.length) % prev.suggestions.length })); break;
+                    case 'ArrowDown': setTagPopupState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % prev.suggestions.length })); break;
+                    case 'Tab': handleTagSelection(tagPopupState.suggestions[tagPopupState.selectedIndex]); break;
+                    case 'Escape': handleCloseTagPopup(); break;
+                    default: handled = false;
+                }
+                if (handled) { e.preventDefault(); return; }
+            }
+            if (e.ctrlKey) {
+                const tabs = ['search', 'edited', 'created'];
+                const currentIndex = tabs.indexOf(activeTab);
+                let handled = true;
+                if (e.key === 'ArrowRight') setActiveTab(tabs[(currentIndex + 1) % tabs.length]);
+                else if (e.key === 'ArrowLeft') setActiveTab(tabs[(currentIndex - 1 + tabs.length) % tabs.length]);
+                else handled = false;
+                if (handled) { e.preventDefault(); return; }
+            }
+            const count = listContent.length;
+            if (e.key === 'Escape') { onClose(); return; }
+            if (count === 0 && e.key !== 'Enter') return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(prev => (prev + 1) % count); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(prev => (prev - 1 + count) % count); }
+            else if (e.key === 'Enter') { e.preventDefault(); if (listContent.length > 0 && listContent[selectedIndex]) onNavigate(listContent[selectedIndex].id); }
+          };
+
+          const highlightMatch = (text, q) => {
+              const trimmedQuery = q.trim();
+              if (!trimmedQuery || !text) return text;
+              const terms = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
+              const uniqueTerms = [...new Set(terms)];
+              if (uniqueTerms.length === 0) return text;
+              const regex = new RegExp(`(${uniqueTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+              const parts = text.split(regex);
+              return (<span>{parts.map((part, i) => (part && uniqueTerms.some(term => term === part.toLowerCase())) ? <span key={i} className="bg-yellow-400/40 dark:bg-yellow-600/40 rounded-sm">{part}</span> : part)}</span>);
+          };
+          const formatDateTime = (ts) => ts ? new Date(ts).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: false }) : '';
+
+          if (!isOpen) return null;
+
+          return (
+            <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-30 flex justify-center items-start pt-20" onClick={onClose}>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><SearchIcon /></span>
+                        <input ref={inputRef} type="text" placeholder="Quick find... (use #tag, AND, OR)" value={query} onChange={handleQueryChange} onKeyDown={handleKeyDown} className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]" />
+                         {tagPopupState.isOpen && inputRef.current && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={handleTagSelection} position={{ top: inputRef.current.offsetHeight + 4, left: 0 }} containerRef={tagPopupRef} />}
+                    </div>
+                    <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
+                        {['search', 'edited', 'created'].map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 capitalize -mb-px border-b-2 transition-colors ${activeTab === tab ? 'border-[var(--main-color)] text-[var(--main-color)]' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'}`}>{tab === 'edited' ? 'Recently modified' : (tab === 'created' ? 'Recently created' : 'Search')}</button>
+                        ))}
+                    </div>
+                </div>
+                <div className="overflow-y-auto">
+                  {listContent.length > 0 ? (
+                    <ul ref={listRef}>
+                      {listContent.map((bullet, index) => (
+                        <li key={bullet.id} ref={index === selectedIndex ? selectedItemRef : null} className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`} onClick={() => onNavigate(bullet.id)}>
+                          <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+                            <div className="flex justify-between items-start gap-4">
+                                <div className={`text-sm font-medium truncate mb-1 flex-grow ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>{highlightMatch(bullet.text, query) || <em>Untitled</em>}</div>
+                                <div className={`text-xs flex-shrink-0 whitespace-nowrap ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{formatDateTime(activeTab === 'created' ? bullet.createdAt : bullet.updatedAt)}</div>
+                            </div>
+                            <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                                {bullet.path.length > 0 ? bullet.path.map((segment, i) => <React.Fragment key={i}><span className="truncate max-w-[200px]" title={segment}>{segment}</span>{i < bullet.path.length - 1 && <span className="opacity-50 flex-shrink-0">/</span>}</React.Fragment>) : <span className="italic opacity-50">Top level</span>}
+                            </div>
+                          </div>
+                        </li>
                       ))}
-                  </div>
-              </div>
-
-              <div className="overflow-y-auto">
-                {listContent.length > 0 ? (
-                  <ul ref={listRef}>
-                    {listContent.map((bullet, index) => (
-                      <li
-                        key={bullet.id}
-                        ref={index === selectedIndex ? selectedItemRef : null}
-                        className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                        onClick={() => onNavigate(bullet.id)}
-                      >
-                        <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                          <div className="flex justify-between items-start gap-4">
-                              <div className={`text-sm font-medium truncate mb-1 flex-grow ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
-                                  {highlightMatch(bullet.text, query) || <em>Untitled</em>}
-                              </div>
-                              <div className={`text-xs flex-shrink-0 whitespace-nowrap ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                                  {formatDateTime(activeTab === 'created' ? bullet.createdAt : bullet.updatedAt)}
-                              </div>
-                          </div>
-                          <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${
-                              index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
-                          }`}>
-                              {bullet.path.length > 0 ? (
-                                  bullet.path.map((segment, i) => (
-                                      <React.Fragment key={i}>
-                                          <span className="truncate max-w-[200px]" title={segment}>{segment}</span>
-                                          {i < bullet.path.length - 1 && (
-                                              <span className="opacity-50 flex-shrink-0">/</span>
-                                          )}
-                                      </React.Fragment>
-                                  ))
-                              ) : (
-                                  <span className="italic opacity-50">Top level</span>
-                              )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-400 dark:text-gray-500 p-4 text-center">No results found.</p>
-                )}
+                    </ul>
+                  ) : <p className="text-gray-400 dark:text-gray-500 p-4 text-center">No results found.</p>}
+                </div>
               </div>
             </div>
-          </div>
-        );
+          );
       };
 
-      // ----------------------
-      // components/Toolbar.tsx
-      // ----------------------
-      interface Breadcrumb {
-          id: string;
-          text: string;
-      }
-
-      interface ToolbarProps {
-        onImport: (data: any) => void;
-        onExport: () => void;
-        breadcrumbs: Breadcrumb[];
-        onBreadcrumbClick: (id: string | null) => void;
-        fileName: string;
-        onOpenSettings: () => void;
-        onGoToToday: () => void;
-        theme: 'light' | 'dark';
-        onThemeToggle: () => void;
-        onOpenSearch: () => void;
-      }
-
-      const Toolbar: React.FC<ToolbarProps> = React.memo(({
-        onImport,
-        onExport,
-        breadcrumbs,
-        onBreadcrumbClick,
-        fileName,
-        onOpenSettings,
-        onGoToToday,
-        theme,
-        onThemeToggle,
-        onOpenSearch,
-      }) => {
-        const fileInputRef = useRef<HTMLInputElement>(null);
-
-        const handleImportClick = () => {
-          fileInputRef.current?.click();
-        };
-
-        const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-          const file = event.target.files?.[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              try {
-                const content = e.target?.result as string;
-                const data = JSON.parse(content);
-                if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
-                  onImport(data);
-                } else {
-                  alert('Invalid JSON file format.');
-                }
-              } catch (error) {
-                alert('Error parsing JSON file.');
-                console.error(error);
+      // --- Toolbar ---
+      const Toolbar = React.memo(({ onImport, onExport, breadcrumbs, onBreadcrumbClick, fileName, onOpenSettings, onGoToToday, theme, onThemeToggle, onOpenSearch }) => {
+          const fileInputRef = useRef(null);
+          const handleImportClick = () => fileInputRef.current?.click();
+          const handleFileChange = (event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                      try {
+                          const data = JSON.parse(e.target.result);
+                          if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) onImport(data);
+                          else alert('Invalid JSON file format.');
+                      } catch (error) { alert('Error parsing JSON file.'); }
+                  };
+                  reader.readAsText(file);
               }
-            };
-            reader.readAsText(file);
-          }
-          if(event.target) {
-              event.target.value = '';
-          }
-        };
-
-        return (
-          <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
-              <div className="flex-grow flex items-center gap-2 overflow-hidden">
-                  <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <HomeIcon />
-                  </button>
-                  {breadcrumbs.map((crumb, index) => (
-                      <React.Fragment key={crumb.id}>
-                      <span className="text-gray-400 dark:text-gray-500">/</span>
-                      <button
-                          onClick={() => onBreadcrumbClick(crumb.id)}
-                          className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate"
-                          title={crumb.text}
-                      >
-                          {crumb.text || <em>Untitled</em>}
-                      </button>
-                      </React.Fragment>
-                  ))}
-              </div>
-
-            <div className="flex items-center gap-2">
-              <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <SearchIcon />
-              </button>
-              <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <AppointmentIcon className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-1">
-                  <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept=".json"
-                      onChange={handleFileChange}
-                  />
-                  <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <UploadIcon />
-                  </button>
-                  <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <DownloadIcon />
-                  </button>
-                  <button onClick={onThemeToggle} title="Toggle Theme" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-                  </button>
-                  <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <SettingsIcon />
-                  </button>
+              if(event.target) event.target.value = '';
+          };
+          return (
+            <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+                <div className="flex-grow flex items-center gap-2 overflow-hidden">
+                    <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><HomeIcon /></button>
+                    {breadcrumbs.map((crumb, index) => (
+                        <React.Fragment key={crumb.id}><span className="text-gray-400 dark:text-gray-500">/</span><button onClick={() => onBreadcrumbClick(crumb.id)} className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate" title={crumb.text}>{crumb.text || <em>Untitled</em>}</button></React.Fragment>
+                    ))}
+                </div>
+              <div className="flex items-center gap-2">
+                 <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SearchIcon /></button>
+                <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><AppointmentIcon className="w-5 h-5" /></button>
+                <div className="flex items-center gap-1">
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
+                    <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><UploadIcon /></button>
+                    <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><DownloadIcon /></button>
+                    <button onClick={onThemeToggle} title="Toggle Theme" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">{theme === 'dark' ? <SunIcon /> : <MoonIcon />}</button>
+                    <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SettingsIcon /></button>
+                </div>
               </div>
             </div>
-          </div>
-        );
+          );
       });
 
-      // ----------------------
-      // components/BulletItem.tsx
-      // ----------------------
-      const highlightText = (text: string, highlight?: string) => {
+      // --- BulletItem ---
+      const highlightText = (text, highlight) => {
           if (!text) return text;
           const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
           const parts = highlight ? text.split(regex) : [text];
-          
           return (
             <React.Fragment>
               {parts.map((part, i) => {
                   if (!part) return null;
                   const lines = part.split('\n');
-                  const partWithBreaks = lines.map((line, j) => (
-                      <React.Fragment key={j}>
-                          {line}
-                          {j < lines.length - 1 && <br />}
-                      </React.Fragment>
-                  ));
-
-                  if (highlight && part.toLowerCase() === highlight.toLowerCase()) {
-                      return (
-                          <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
-                              {partWithBreaks}
-                          </span>
-                      );
-                  }
+                  const partWithBreaks = lines.map((line, j) => <React.Fragment key={j}>{line}{j < lines.length - 1 && <br />}</React.Fragment>);
+                  if (highlight && part.toLowerCase() === highlight.toLowerCase()) return <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">{partWithBreaks}</span>;
                   return <React.Fragment key={i}>{partWithBreaks}</React.Fragment>;
               })}
             </React.Fragment>
           );
       };
 
-      const renderRichTextContent = (
-          text: string, 
-          highlight: string | undefined, 
-          onLinkClick: (linkText: string) => void,
-          options: { renderTagsOnly?: boolean } = {}
-      ): React.ReactNode => {
+      const renderRichTextContent = (text, highlight, onLinkClick, options = {}) => {
           const { renderTagsOnly = false } = options;
           if (!text) return null;
-
           if (renderTagsOnly) {
               const tagRegex = /(#\w+)/g;
               const parts = text.split(tagRegex);
-              return (
-                  <React.Fragment>
-                      {parts.map((part, index) => {
-                          if (part.startsWith('#') && /#\w+/.test(part)) {
-                              return (
-                                  <span key={index} className="tag-span">
-                                      {part}
-                                  </span>
-                              );
-                          }
-                          return <span key={index}>{part}</span>;
-                      })}
-                  </React.Fragment>
-              );
+              return <React.Fragment>{parts.map((part, index) => (part.startsWith('#') && /#\w+/.test(part) ? <span key={index} className="tag-span">{part}</span> : <span key={index}>{part}</span>))}</React.Fragment>;
           }
-          
           const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|\b(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|\bwww\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
           const parts = text.split(combinedRegex);
-          
           return (
             <React.Fragment>
               {parts.map((part, index) => {
                   if (!part) return null;
-                  
-                  if (part.startsWith('#') && /#\w+/.test(part)) {
-                      return (
-                          <span key={index} className="tag-span">
-                              {highlightText(part, highlight)}
-                          </span>
-                      );
-                  }
-
-                  if (part.startsWith('[[') && part.endsWith(']]')) {
-                      const linkText = part.slice(2, -2);
-                      return (
-                          <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
-                              {highlightText(linkText, highlight)}
-                          </button>
-                      );
-                  }
-                  
+                  if (part.startsWith('#') && /#\w+/.test(part)) return <span key={index} className="tag-span">{highlightText(part, highlight)}</span>;
+                  if (part.startsWith('[[') && part.endsWith(']]')) { const linkText = part.slice(2, -2); return <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>{highlightText(linkText, highlight)}</button>; }
                   const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-                  if (mdLinkMatch) {
-                      const [, text, url] = mdLinkMatch;
-                      let href = url.trim();
-                      if (!/^(https?|ftp|mailto):/i.test(href)) {
-                        href = `https://${href}`;
-                      }
-                      return (
-                          <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                            {highlightText(text, highlight)}
-                          </a>
-                      );
-                  }
-
-                  if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
-                      const href = part.startsWith('www.') ? `https://${part}` : part;
-                      return (
-                          <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                              {highlightText(part, highlight)}
-                          </a>
-                      );
-                  }
-
-                  if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
-                      return (
-                          <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                              {highlightText(part, highlight)}
-                          </a>
-                      );
-                  }
-
+                  if (mdLinkMatch) { const [, text, url] = mdLinkMatch; let href = url.trim(); if (!/^(https?|ftp|mailto):/i.test(href)) href = `https://${href}`; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(text, highlight)}</a>; }
+                  if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) { const href = part.startsWith('www.') ? `https://${part}` : part; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>; }
+                  if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) return <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>;
                   return highlightText(part, highlight);
               })}
             </React.Fragment>
           );
       };
 
-      interface BulletItemProps {
-          bullet: Bullet;
-          level: number;
-          onUpdate: (id: string, updates: Partial<Bullet>) => void;
-          onAddSibling: (id: string, text?: string) => void;
-          onDelete: (id: string) => void;
-          onIndent: (id: string) => void;
-          onOutdent: (id: string) => void;
-          onFocusChange: (id: string, position?: 'start' | 'end' | number) => void;
-          onZoom: (id: string) => void;
-          onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end') => void;
-          onFocusParent: (id: string) => void;
-          onFocusChild: (id: string) => void;
-          onFoldAll: (id: string, collapse: boolean) => void;
-          onMoveBullet: (id: string, direction: 'up' | 'down') => void;
-          currentFocusId: string | null;
-          focusPosition: 'start' | 'end' | number;
-          searchQuery: string;
-          onLinkClick: (linkText: string) => void;
-          onTriggerLinkPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => void;
-          onCloseLinkPopup: () => void;
-          onLinkNavigate: (direction: 'up' | 'down') => void;
-          onLinkSelect: (callback: (selectedBullet: any) => void) => void;
-          isLinkPopupOpen: boolean;
-          linkPopupTargetId: string | null;
-          onTriggerTagPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => void;
-          onCloseTagPopup: () => void;
-          onTagNavigate: (direction: 'up' | 'down') => void;
-          onTagSelect: (callback: (selectedTag: string) => void) => void;
-          isTagPopupOpen: boolean;
-          tagPopupTargetId: string | null;
-          isJournalRoot: boolean;
-          onNavigateTo: (id: string) => void;
-          onMerge: (id: string) => void;
-      }
-
-      const BulletItemImpl: React.FC<BulletItemProps> = ({
-        bullet,
-        level,
-        onUpdate,
-        onAddSibling,
-        onDelete,
-        onIndent,
-        onOutdent,
-        onFocusChange,
-        onZoom,
-        onFocusMove,
-        onFocusParent,
-        onFocusChild,
-        onFoldAll,
-        onMoveBullet,
-        currentFocusId,
-        focusPosition,
-        searchQuery,
-        onLinkClick,
-        onTriggerLinkPopup,
-        onCloseLinkPopup,
-        onLinkNavigate,
-        onLinkSelect,
-        isLinkPopupOpen,
-        linkPopupTargetId,
-        onTriggerTagPopup,
-        onCloseTagPopup,
-        onTagNavigate,
-        onTagSelect,
-        isTagPopupOpen,
-        tagPopupTargetId,
-        isJournalRoot,
-        onNavigateTo,
-        onMerge,
-      }) => {
+      const BulletItemImpl = ({ bullet, level, onUpdate, onAddSibling, onDelete, onIndent, onOutdent, onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFoldAll, onMoveBullet, currentFocusId, focusPosition, searchQuery, onLinkClick, onTriggerLinkPopup, onCloseLinkPopup, onLinkNavigate, onLinkSelect, isLinkPopupOpen, linkPopupTargetId, onTriggerTagPopup, onCloseTagPopup, onTagNavigate, onTagSelect, isTagPopupOpen, tagPopupTargetId, isJournalRoot, onNavigateTo, onMerge }) => {
         const [isEditing, setIsEditing] = useState(false);
-        const textInputRef = useRef<HTMLTextAreaElement>(null);
-
+        const textInputRef = useRef(null);
         const isFocused = currentFocusId === bullet.id;
-        
-        useEffect(() => {
-          if (isFocused) {
-            setIsEditing(true);
-          } else {
-            setIsEditing(false);
-            onCloseLinkPopup();
-            onCloseTagPopup();
-          }
-        }, [isFocused, onCloseLinkPopup, onCloseTagPopup]);
-
+        useEffect(() => { if (isFocused) setIsEditing(true); else { setIsEditing(false); onCloseLinkPopup(); onCloseTagPopup(); } }, [isFocused, onCloseLinkPopup, onCloseTagPopup]);
         useEffect(() => {
           if (isEditing && textInputRef.current) {
               textInputRef.current.focus();
-              if (focusPosition === 'start') {
-                  textInputRef.current.setSelectionRange(0, 0);
-              } else if (focusPosition === 'end') {
-                  const len = textInputRef.current.value.length;
-                  textInputRef.current.setSelectionRange(len, len);
-              } else if (typeof focusPosition === 'number') {
-                  textInputRef.current.setSelectionRange(focusPosition, focusPosition);
-              }
+              if (focusPosition === 'start') textInputRef.current.setSelectionRange(0, 0);
+              else if (focusPosition === 'end') { const len = textInputRef.current.value.length; textInputRef.current.setSelectionRange(len, len); }
+              else if (typeof focusPosition === 'number') textInputRef.current.setSelectionRange(focusPosition, focusPosition);
           }
         }, [isEditing, focusPosition]);
-          
-        useEffect(() => {
-          if (isEditing && textInputRef.current) {
-            textInputRef.current.style.height = 'auto';
-            textInputRef.current.style.height = `${textInputRef.current.scrollHeight}px`;
-          }
-        }, [isEditing, bullet.text]);
+        useEffect(() => { if (isEditing && textInputRef.current) { textInputRef.current.style.height = 'auto'; textInputRef.current.style.height = `${textInputRef.current.scrollHeight}px`; } }, [isEditing, bullet.text]);
 
         const hasChildren = bullet.children.length > 0;
-
-        const handleLinkSelection = useCallback((selectedBullet: any) => {
+        const handleLinkSelection = useCallback((selectedBullet) => {
           const input = textInputRef.current;
           if (!input) return;
-
           const text = input.value;
           const cursor = input.selectionStart ?? text.length;
-          
           const textBeforeCursor = text.substring(0, cursor);
           const lastOpen = textBeforeCursor.lastIndexOf('[[');
-
           if (lastOpen !== -1) {
               const newText = text.substring(0, lastOpen) + `[[${selectedBullet.text}]]` + text.substring(cursor);
               onUpdate(bullet.id, { text: newText });
               onCloseLinkPopup();
-
-              setTimeout(() => {
-                  const newCursorPos = (text.substring(0, lastOpen) + `[[${selectedBullet.text}]]`).length;
-                  input.focus();
-                  input.setSelectionRange(newCursorPos, newCursorPos);
-              }, 0);
+              setTimeout(() => { const newCursorPos = (text.substring(0, lastOpen) + `[[${selectedBullet.text}]]`).length; input.focus(); input.setSelectionRange(newCursorPos, newCursorPos); }, 0);
           }
         }, [bullet.id, onUpdate, onCloseLinkPopup]);
-        
-        const handleTagSelection = useCallback((selectedTag: string) => {
+        const handleTagSelection = useCallback((selectedTag) => {
           const input = textInputRef.current;
           if (!input) return;
-
           const text = input.value;
           const cursor = input.selectionStart ?? text.length;
-          
           const textBeforeCursor = text.substring(0, cursor);
           const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-
           if (match) {
               const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
               const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
               onUpdate(bullet.id, { text: newText });
               onCloseTagPopup();
-
-              setTimeout(() => {
-                  const newCursorPos = startIndex + selectedTag.length + 1; // +1 for the space
-                  input.focus();
-                  input.setSelectionRange(newCursorPos, newCursorPos);
-              }, 0);
+              setTimeout(() => { const newCursorPos = startIndex + selectedTag.length + 1; input.focus(); input.setSelectionRange(newCursorPos, newCursorPos); }, 0);
           }
         }, [bullet.id, onUpdate, onCloseTagPopup]);
-
-        const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const handleTextChange = (e) => {
           const text = e.target.value;
           const cursor = e.target.selectionStart;
           onUpdate(bullet.id, { text });
-
           const textBeforeCursor = text.substring(0, cursor ?? 0);
-          
           const lastOpenBracket = textBeforeCursor.lastIndexOf('[[');
           if (lastOpenBracket !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpenBracket) {
             const query = textBeforeCursor.substring(lastOpenBracket + 2);
             onTriggerLinkPopup(bullet.id, query, textInputRef, handleLinkSelection);
             return;
           }
-
           const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-          if (tagMatch) {
-              const query = tagMatch[1];
-              onTriggerTagPopup(bullet.id, query, textInputRef, handleTagSelection);
-              return;
-          }
-
-          onCloseLinkPopup();
-          onCloseTagPopup();
+          if (tagMatch) { onTriggerTagPopup(bullet.id, tagMatch[1], textInputRef, handleTagSelection); return; }
+          onCloseLinkPopup(); onCloseTagPopup();
         };
-
-        const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-          const input = e.target as HTMLTextAreaElement;
-          const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
-          const isTagPopupActive = isTagPopupOpen && tagPopupTargetId === bullet.id;
-          
+        const handleTextKeyDown = (e) => {
+          const input = e.target;
           if (bullet.isReadOnly) {
               let handled = true;
               if (e.ctrlKey) {
                   switch (e.key) {
-                      case 'ArrowLeft':
-                          if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
-                          else if (level > 0) onFocusParent(bullet.id);
-                          break;
-                      case 'ArrowRight':
-                          if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
-                          break;
-                      case 'ArrowDown':
-                          onZoom(bullet.id);
-                          break;
-                      default:
-                          handled = false;
+                      case 'ArrowLeft': if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }); else if (level > 0) onFocusParent(bullet.id); break;
+                      case 'ArrowRight': if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }); break;
+                      case 'ArrowDown': onZoom(bullet.id); break;
+                      default: handled = false;
                   }
               } else {
                   switch(e.key) {
-                      case 'Enter':
-                          if (bullet.originalId) {
-                              onNavigateTo(bullet.originalId);
-                          } else if (hasChildren) {
-                              onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
-                          }
-                          break;
+                      case 'Enter': if (bullet.originalId) onNavigateTo(bullet.originalId); else if (hasChildren) onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }); break;
                       case 'ArrowUp': onFocusMove('up'); break;
                       case 'ArrowDown': onFocusMove('down'); break;
                       case 'ArrowLeft': onFocusParent(bullet.id); break;
-                      case 'ArrowRight': 
-                          if(hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
-                          else onFocusMove('down', 'start'); 
-                          break;
+                      case 'ArrowRight': if(hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id); else onFocusMove('down', 'start'); break;
                       default: handled = false;
                   }
               }
-
-              if (handled) {
-                  e.preventDefault();
-              }
+              if (handled) e.preventDefault();
               return;
           }
-
-          if (isTagPopupActive) {
+          if (isTagPopupOpen && tagPopupTargetId === bullet.id) {
               let handled = true;
               switch (e.key) {
                   case 'ArrowUp': onTagNavigate('up'); break;
@@ -1429,226 +730,79 @@
               }
               if (handled) { e.preventDefault(); return; }
           }
-
-          if (isPopupActive) {
+          if (isLinkPopupOpen && linkPopupTargetId === bullet.id) {
               let handled = true;
               switch (e.key) {
                   case 'ArrowUp': onLinkNavigate('up'); break;
                   case 'ArrowDown': onLinkNavigate('down'); break;
                   case 'Enter': onLinkSelect(handleLinkSelection); break;
                   case 'Tab': onLinkSelect(handleLinkSelection); break;
-                  case 'Escape': {
-                      onCloseLinkPopup();
-                      const text = input.value;
-                      const cursor = input.selectionStart ?? text.length;
-                      const textBeforeCursor = text.substring(0, cursor);
-                      const lastOpen = textBeforeCursor.lastIndexOf('[[');
-                      if (lastOpen !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpen) {
-                          const newText = text.substring(0, lastOpen) + text.substring(cursor);
-                          onUpdate(bullet.id, { text: newText });
-                          setTimeout(() => {
-                              if(textInputRef.current) {
-                                  textInputRef.current.focus();
-                                  textInputRef.current.setSelectionRange(lastOpen, lastOpen);
-                              }
-                          }, 0);
-                      }
-                      break;
-                  }
+                  case 'Escape': { onCloseLinkPopup(); const text = input.value; const cursor = input.selectionStart ?? text.length; const textBeforeCursor = text.substring(0, cursor); const lastOpen = textBeforeCursor.lastIndexOf('[['); if (lastOpen !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpen) { const newText = text.substring(0, lastOpen) + text.substring(cursor); onUpdate(bullet.id, { text: newText }); setTimeout(() => { if(textInputRef.current) { textInputRef.current.focus(); textInputRef.current.setSelectionRange(lastOpen, lastOpen); } }, 0); } break; }
                   default: handled = false;
               }
               if (handled) { e.preventDefault(); return; }
           }
-
           if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
               e.preventDefault();
-              const start = input.selectionStart;
-              const end = input.selectionEnd;
-              const text = input.value;
-              const selectedText = text.substring(start, end);
-
-              let newText;
-              let newCursorPosStart;
-              let newCursorPosEnd;
-
-              if (selectedText) {
-                  newText = `${text.substring(0, start)}[${selectedText}]()${text.substring(end)}`;
-                  newCursorPosStart = newCursorPosEnd = start + selectedText.length + 3;
-              } else {
-                  newText = `${text.substring(0, start)}[link text]()${text.substring(end)}`;
-                  newCursorPosStart = start + 1;
-                  newCursorPosEnd = start + 1 + 'link text'.length;
-              }
-
+              const start = input.selectionStart; const end = input.selectionEnd; const text = input.value; const selectedText = text.substring(start, end);
+              let newText, newCursorPosStart, newCursorPosEnd;
+              if (selectedText) { newText = `${text.substring(0, start)}[${selectedText}]()${text.substring(end)}`; newCursorPosStart = newCursorPosEnd = start + selectedText.length + 3; }
+              else { newText = `${text.substring(0, start)}[link text]()${text.substring(end)}`; newCursorPosStart = start + 1; newCursorPosEnd = start + 1 + 'link text'.length; }
               onUpdate(bullet.id, { text: newText });
-
-              setTimeout(() => {
-                  if (textInputRef.current) {
-                      textInputRef.current.focus();
-                      textInputRef.current.setSelectionRange(newCursorPosStart, newCursorPosEnd);
-                  }
-              }, 0);
+              setTimeout(() => { if (textInputRef.current) { textInputRef.current.focus(); textInputRef.current.setSelectionRange(newCursorPosStart, newCursorPosEnd); } }, 0);
               return;
           }
-
-
           if (e.altKey) {
               if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
               if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
           }
-
           if (e.ctrlKey && e.shiftKey) {
               if (e.key === 'ArrowLeft') { e.preventDefault(); onFoldAll(bullet.id, true); return; }
               if (e.key === 'ArrowRight') { e.preventDefault(); onFoldAll(bullet.id, false); return; }
           }
-
           if (e.ctrlKey) {
               let handled = true;
               switch (e.key) {
-                  case 'ArrowLeft':
-                      if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
-                      else if (level > 0) onFocusParent(bullet.id);
-                      break;
-                  case 'ArrowRight':
-                      if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
-                      else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
-                      break;
+                  case 'ArrowLeft': if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }); else if (level > 0) onFocusParent(bullet.id); break;
+                  case 'ArrowRight': if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }); else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id); break;
                   case 'ArrowDown': onZoom(bullet.id); break;
                   default: handled = false;
               }
               if (handled) { e.preventDefault(); return; }
           }
-
           switch (e.key) {
-            case 'Enter':
-              e.preventDefault();
-              if (e.shiftKey) {
-                  const { value, selectionStart, selectionEnd } = input;
-                  const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd);
-                  onUpdate(bullet.id, { text: newValue });
-
-                  setTimeout(() => {
-                      if (textInputRef.current) {
-                          const newCursorPos = selectionStart + 1;
-                          textInputRef.current.focus();
-                          textInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
-                      }
-                  }, 0);
-              } else {
-                  const { value, selectionStart } = input;
-                  const textBeforeCursor = value.substring(0, selectionStart);
-                  const textAfterCursor = value.substring(selectionStart);
-                  
-                  onUpdate(bullet.id, { text: textBeforeCursor });
-                  onAddSibling(bullet.id, textAfterCursor);
-              }
-              break;
-            case 'Tab':
-              e.preventDefault();
-              if (e.shiftKey) onOutdent(bullet.id);
-              else onIndent(bullet.id);
-              break;
-            case 'Backspace':
-              if (input.selectionStart === 0 && input.selectionEnd === 0) {
-                e.preventDefault();
-                onMerge(bullet.id);
-              }
-              break;
+            case 'Enter': e.preventDefault(); if (e.shiftKey) { const { value, selectionStart, selectionEnd } = input; const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd); onUpdate(bullet.id, { text: newValue }); setTimeout(() => { if (textInputRef.current) { const newCursorPos = selectionStart + 1; textInputRef.current.focus(); textInputRef.current.setSelectionRange(newCursorPos, newCursorPos); } }, 0); } else { const { value, selectionStart } = input; const textBeforeCursor = value.substring(0, selectionStart); const textAfterCursor = value.substring(selectionStart); onUpdate(bullet.id, { text: textBeforeCursor }); onAddSibling(bullet.id, textAfterCursor); } break;
+            case 'Tab': e.preventDefault(); if (e.shiftKey) onOutdent(bullet.id); else onIndent(bullet.id); break;
+            case 'Backspace': if (input.selectionStart === 0 && input.selectionEnd === 0) { e.preventDefault(); onMerge(bullet.id); } break;
             case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
             case 'ArrowDown': e.preventDefault(); onFocusMove('down'); break;
-            case 'ArrowLeft':
-              if (input.selectionStart === 0) { e.preventDefault(); onFocusParent(bullet.id); }
-              break;
-            case 'ArrowRight':
-              if (input.selectionStart === input.value.length) { e.preventDefault(); onFocusMove('down', 'start'); }
-              break;
+            case 'ArrowLeft': if (input.selectionStart === 0) { e.preventDefault(); onFocusParent(bullet.id); } break;
+            case 'ArrowRight': if (input.selectionStart === input.value.length) { e.preventDefault(); onFocusMove('down', 'start'); } break;
           }
         };
-
-        const toggleCollapse = () => {
-          if (hasChildren) {
-            onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
-          }
-        };
-
-        const matchesSearch = (b: Bullet, q: string): boolean => {
-            if (!q) return true;
-            const query = q.toLowerCase();
-            const textMatch = b.text.toLowerCase().includes(query);
-            const childrenMatch = b.children.some(child => matchesSearch(child, q));
-            return textMatch || childrenMatch;
-        };
-
-        const renderedRichText = useMemo(() => {
-          return renderRichTextContent(bullet.text, searchQuery, onLinkClick);
-        }, [bullet.text, searchQuery, onLinkClick]);
-        
-        const renderedRichTextSimple = useMemo(() => {
-          return renderRichTextContent(bullet.text, undefined, () => {}, { renderTagsOnly: true });
-        }, [bullet.text]);
-
-        if (searchQuery && !matchesSearch(bullet, searchQuery)) {
-            return null;
-        }
-
-        const circleColor = 'var(--main-color)';
-        
-        const handleTextClick = () => {
-          if (bullet.isReadOnly) {
-              if (bullet.originalId) {
-                  onNavigateTo(bullet.originalId);
-              } else {
-                  onFocusChange(bullet.id);
-              }
-          } else {
-              onFocusChange(bullet.id);
-          }
-        };
-
-        const renderBulletIcon = () => {
-          if (isJournalRoot) return <AppointmentIcon className="w-4 h-4" />;
-          return <CircleIcon className="w-2 h-2" color={circleColor} />;
-        }
-
+        const toggleCollapse = () => { if (hasChildren) onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }); };
+        const matchesSearch = (b, q) => { if (!q) return true; const query = q.toLowerCase(); const textMatch = b.text.toLowerCase().includes(query); const childrenMatch = b.children.some(child => matchesSearch(child, q)); return textMatch || childrenMatch; };
+        const renderedRichText = useMemo(() => renderRichTextContent(bullet.text, searchQuery, onLinkClick), [bullet.text, searchQuery, onLinkClick]);
+        const renderedRichTextSimple = useMemo(() => renderRichTextContent(bullet.text, undefined, () => {}, { renderTagsOnly: true }), [bullet.text]);
+        if (searchQuery && !matchesSearch(bullet, searchQuery)) return null;
+        const handleTextClick = () => { if (bullet.isReadOnly) { if (bullet.originalId) onNavigateTo(bullet.originalId); else onFocusChange(bullet.id); } else onFocusChange(bullet.id); };
+        const renderBulletIcon = () => isJournalRoot ? <AppointmentIcon className="w-4 h-4" /> : <CircleIcon className="w-2 h-2" color='var(--main-color)' />;
         return (
           <div className="flex flex-col group">
               <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
-                  <div
-                      style={{ marginLeft: `${level * 1.5}rem` }}
-                      className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]"
-                  >
-                      <button
-                          onClick={toggleCollapse}
-                          className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
-                          aria-label={bullet.isCollapsed ? 'Expand' : 'Collapse'}
-                      >
+                  <div style={{ marginLeft: `${level * 1.5}rem` }} className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]">
+                      <button onClick={toggleCollapse} className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`} aria-label={bullet.isCollapsed ? 'Expand' : 'Collapse'}>
                           {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                       </button>
-                      <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors" aria-label="Zoom in">
-                          {renderBulletIcon()}
-                      </button>
+                      <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors" aria-label="Zoom in">{renderBulletIcon()}</button>
                   </div>
                   <div className="flex-grow ml-2">
                       <div className="flex items-center">
                           <div className="flex-grow">
                               {isEditing ? (
                                   <div className="relative">
-                                      <div
-                                          className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words"
-                                          aria-hidden="true"
-                                      >
-                                          {renderedRichTextSimple}
-                                      </div>
-                                      <textarea
-                                          ref={textInputRef}
-                                          value={bullet.text}
-                                          onChange={handleTextChange}
-                                          onKeyDown={handleTextKeyDown}
-                                          readOnly={bullet.isReadOnly}
-                                          className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6"
-                                          rows={1}
-                                          aria-label="Edit item"
-                                      />
+                                      <div className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words" aria-hidden="true">{renderedRichTextSimple}</div>
+                                      <textarea ref={textInputRef} value={bullet.text} onChange={handleTextChange} onKeyDown={handleTextKeyDown} readOnly={bullet.isReadOnly} className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6" rows={1} aria-label="Edit item" />
                                   </div>
                               ) : (
                                   <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
@@ -1662,207 +816,72 @@
             {!bullet.isCollapsed && hasChildren && (
               <div className="border-l border-gray-300 dark:border-gray-700/50">
                 {bullet.children.map((child) => (
-                  <BulletItem
-                      key={child.id}
-                      bullet={child}
-                      level={level + 1}
-                      onUpdate={onUpdate}
-                      onAddSibling={onAddSibling}
-                      onDelete={onDelete}
-                      onIndent={onIndent}
-                      onOutdent={onOutdent}
-                      onFocusChange={onFocusChange}
-                      onZoom={onZoom}
-                      onFocusMove={onFocusMove}
-                      onFocusParent={onFocusParent}
-                      onFocusChild={onFocusChild}
-                      onFoldAll={onFoldAll}
-                      onMoveBullet={onMoveBullet}
-                      currentFocusId={currentFocusId}
-                      focusPosition={focusPosition}
-                      searchQuery={searchQuery}
-                      onLinkClick={onLinkClick}
-                      onTriggerLinkPopup={onTriggerLinkPopup}
-                      onCloseLinkPopup={onCloseLinkPopup}
-                      onLinkNavigate={onLinkNavigate}
-                      onLinkSelect={onLinkSelect}
-                      isLinkPopupOpen={isLinkPopupOpen}
-                      linkPopupTargetId={linkPopupTargetId}
-                      onTriggerTagPopup={onTriggerTagPopup}
-                      onCloseTagPopup={onCloseTagPopup}
-                      onTagNavigate={onTagNavigate}
-                      onTagSelect={onTagSelect}
-                      isTagPopupOpen={isTagPopupOpen}
-                      tagPopupTargetId={tagPopupTargetId}
-                      isJournalRoot={false}
-                      onNavigateTo={onNavigateTo}
-                      onMerge={onMerge}
-                  />
+                  <BulletItem key={child.id} bullet={child} level={level + 1} onUpdate={onUpdate} onAddSibling={onAddSibling} onDelete={onDelete} onIndent={onIndent} onOutdent={onOutdent} onFocusChange={onFocusChange} onZoom={onZoom} onFocusMove={onFocusMove} onFocusParent={onFocusParent} onFocusChild={onFocusChild} onFoldAll={onFoldAll} onMoveBullet={onMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={onLinkClick} onTriggerLinkPopup={onTriggerLinkPopup} onCloseLinkPopup={onCloseLinkPopup} onLinkNavigate={onLinkNavigate} onLinkSelect={onLinkSelect} isLinkPopupOpen={isLinkPopupOpen} linkPopupTargetId={linkPopupTargetId} onTriggerTagPopup={onTriggerTagPopup} onCloseTagPopup={onCloseTagPopup} onTagNavigate={onTagNavigate} onTagSelect={onTagSelect} isTagPopupOpen={isTagPopupOpen} tagPopupTargetId={tagPopupTargetId} isJournalRoot={false} onNavigateTo={onNavigateTo} onMerge={onMerge} />
                 ))}
               </div>
             )}
           </div>
         );
       };
-
       const BulletItem = React.memo(BulletItemImpl);
 
-      // ----------------------
-      // App.tsx (Main)
-      // ----------------------
-      
+      // --- App ---
+      // DB Setup
       class JaroetDatabase extends Dexie {
           constructor() {
               super("JaroetOutlinerDB");
-              this.version(1).stores({
-                  keyValuePairs: 'key', 
-              });
+              this.version(1).stores({ keyValuePairs: 'key' });
               this.keyValuePairs = this.table('keyValuePairs');
           }
       }
-
       const db = new JaroetDatabase();
 
       const DAILY_LOG_ROOT_TEXT = 'Daily Log';
-
       const initialData = [
-        {
-          id: 'journal-root',
-          text: DAILY_LOG_ROOT_TEXT,
-          children: [],
-          isCollapsed: true,
-        },
-        {
-          id: 'help-info',
-          text: 'For help and documentation, import the help-documentation.json file.',
-          children: [],
-          isCollapsed: false,
-        }
+        { id: 'journal-root', text: DAILY_LOG_ROOT_TEXT, children: [], isCollapsed: true },
+        { id: 'help-info', text: 'For help and documentation, import the help-documentation.json file.', children: [], isCollapsed: false }
       ];
 
-      const createNewBullet = (text = '') => {
-          const now = Date.now();
-          return {
-              id: crypto.randomUUID(),
-              text,
-              children: [],
-              isCollapsed: false,
-              createdAt: now,
-              updatedAt: now,
-          };
-      };
-
-      const migrateBullets = (nodes) => {
-          if (!Array.isArray(nodes)) return [];
-          const now = Date.now();
-          return nodes.map(node => ({
-              ...node,
-              createdAt: node.createdAt || now,
-              updatedAt: node.updatedAt || now,
-              children: migrateBullets(node.children || []),
-          }));
-      };
-
-      const regenerateIds = (nodes) => {
-          if (!Array.isArray(nodes)) return [];
-          return nodes.map(node => ({
-              ...node,
-              id: crypto.randomUUID(),
-              children: regenerateIds(node.children || []),
-          }));
-      };
-
+      const createNewBullet = (text = '') => { const now = Date.now(); return { id: crypto.randomUUID(), text, children: [], isCollapsed: false, createdAt: now, updatedAt: now }; };
+      const migrateBullets = (nodes) => { if (!Array.isArray(nodes)) return []; const now = Date.now(); return nodes.map(node => ({ ...node, createdAt: node.createdAt || now, updatedAt: node.updatedAt || now, children: migrateBullets(node.children || []) })); };
+      const regenerateIds = (nodes) => { if (!Array.isArray(nodes)) return []; return nodes.map(node => ({ ...node, id: crypto.randomUUID(), children: regenerateIds(node.children || []) })); };
       const mapBullets = (nodes, callback) => {
           let changed = false;
           const newNodes = nodes.map(node => {
               const newNode = callback(node);
               const newChildren = mapBullets(newNode.children, callback);
-              if (newNode === node && newChildren === node.children) {
-                  return node;
-              }
+              if (newNode === node && newChildren === node.children) return node;
               changed = true;
               return { ...newNode, children: newChildren };
           });
           return changed ? newNodes : nodes;
       };
-
       const navigateSuggestions = (prevState, direction) => {
-          const { suggestions, selectedIndex } = prevState;
-          const count = suggestions.length;
-          if (count === 0) return selectedIndex;
-          if (direction === 'down') {
-              return (selectedIndex + 1) % count;
-          } else {
-              return (selectedIndex - 1 + count) % count;
-          }
+          const { suggestions, selectedIndex } = prevState; const count = suggestions.length; if (count === 0) return selectedIndex;
+          if (direction === 'down') return (selectedIndex + 1) % count; else return (selectedIndex - 1 + count) % count;
       };
 
-      const FONT_LIST = [
-        'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 
-        'Times New Roman', 'Georgia', 'Garamond', 
-        'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'
-      ];
-
+      const FONT_LIST = ['Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 'Times New Roman', 'Georgia', 'Garamond', 'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'];
       const SettingsModal = ({ isOpen, onClose, onSave, currentSettings, onClearData }) => {
           const [settings, setSettings] = useState(currentSettings);
-
-          useEffect(() => {
-              setSettings(currentSettings);
-          }, [isOpen, currentSettings]);
-
-          const handleSave = () => {
-              onSave(settings);
-              onClose();
-          };
-          
-          const handleInputChange = (e) => {
-              const { name, value } = e.target;
-              setSettings(prev => ({...prev, [name]: value }));
-          };
-
-          const handleFontSizeChange = (e) => {
-              setSettings(prev => ({...prev, fontSize: parseInt(e.target.value, 10) }));
-          }
-
+          useEffect(() => setSettings(currentSettings), [isOpen, currentSettings]);
+          const handleSave = () => { onSave(settings); onClose(); };
+          const handleInputChange = (e) => { const { name, value } = e.target; setSettings(prev => ({...prev, [name]: value })); };
+          const handleFontSizeChange = (e) => setSettings(prev => ({...prev, fontSize: parseInt(e.target.value, 10) }));
           if (!isOpen) return null;
-
           return (
               <div className="fixed inset-0 bg-black/60 z-30 flex justify-center items-center" onClick={onClose}>
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
                       <h2 className="p-4 text-lg font-semibold border-b border-gray-200 dark:border-gray-700">Settings</h2>
                       <div className="p-4 space-y-4">
-                          <div>
-                              <label htmlFor="fileName" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">File Name</label>
-                              <input type="text" id="fileName" name="fileName" value={settings.fileName} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"/>
-                          </div>
-                          <div>
-                              <label htmlFor="mainColor" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Main Color</label>
-                              <input type="color" id="mainColor" name="mainColor" value={settings.mainColor} onChange={handleInputChange} className="w-full h-10 p-1 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer"/>
-                          </div>
-                          <div>
-                              <label htmlFor="fontFamily" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font</label>
-                              <select id="fontFamily" name="fontFamily" value={settings.fontFamily} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]">
-                                  {FONT_LIST.map(font => <option key={font} value={font}>{font}</option>)}
-                              </select>
-                          </div>
-                          <div>
-                              <label htmlFor="fontSize" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
-                              <input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/>
-                          </div>
-
-                          {/* Danger Zone */}
+                          <div><label htmlFor="fileName" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">File Name</label><input type="text" id="fileName" name="fileName" value={settings.fileName} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"/></div>
+                          <div><label htmlFor="mainColor" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Main Color</label><input type="color" id="mainColor" name="mainColor" value={settings.mainColor} onChange={handleInputChange} className="w-full h-10 p-1 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer"/></div>
+                          <div><label htmlFor="fontFamily" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font</label><select id="fontFamily" name="fontFamily" value={settings.fontFamily} onChange={handleInputChange} className="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]">{FONT_LIST.map(font => <option key={font} value={font}>{font}</option>)}</select></div>
+                          <div><label htmlFor="fontSize" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label><input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/></div>
                           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                                <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Data Management</h3>
-                               <button 
-                                  onClick={onClearData}
-                                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors w-full justify-center"
-                              >
-                                  <TrashIcon className="w-4 h-4" />
-                                  Reset Application Data
-                              </button>
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
-                                  Deletes all local data and restores the default template.
-                              </p>
+                               <button onClick={onClearData} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors w-full justify-center"><TrashIcon className="w-4 h-4" />Reset Application Data</button>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">Deletes all local data and restores the default template.</p>
                           </div>
                       </div>
                       <div className="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
@@ -1872,7 +891,7 @@
                   </div>
               </div>
           );
-      }
+      };
 
       const App = () => {
           const [bullets, setBullets] = useState(initialData);
@@ -1890,48 +909,20 @@
           const prevCoreDataRef = useRef(null);
           const [theme, setTheme] = useState('dark');
           const focusBeforeModalRef = useRef(null);
-          
-          // Toast Hook
           const { toasts, addToast, removeToast } = useToast();
-          
-          const [settings, setSettings] = useState({
-              mainColor: '#60a5fa',
-              fileName: 'My Outline',
-              fontFamily: 'sans-serif',
-              fontSize: 16,
-          });
+          const [settings, setSettings] = useState({ mainColor: '#60a5fa', fileName: 'My Outline', fontFamily: 'sans-serif', fontSize: 16 });
           const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
-          // Import Modal State
           const [pendingImportData, setPendingImportData] = useState(null);
           const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
-          const [linkPopupState, setLinkPopupState] = useState({
-              isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
-          });
-          const [tagPopupState, setTagPopupState] = useState({
-              isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
-          });
-
+          const [linkPopupState, setLinkPopupState] = useState({ isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0 });
+          const [tagPopupState, setTagPopupState] = useState({ isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0 });
 
           const currentFocusId = focusOptions.id;
           const focusPosition = focusOptions.position;
-
-          const handleFocusChange = useCallback((id, position = 'end') => {
-              setFocusOptions({ id, position });
-          }, []);
+          const handleFocusChange = useCallback((id, position = 'end') => setFocusOptions({ id, position }), []);
 
           const getCoreDataString = useCallback((nodes) => {
-              const removeUiState = (b) => {
-                  return {
-                      id: b.id,
-                      text: b.text,
-                      children: b.children.map(removeUiState),
-                      originalId: b.originalId,
-                      createdAt: b.createdAt,
-                      updatedAt: b.updatedAt,
-                  };
-              };
+              const removeUiState = (b) => ({ id: b.id, text: b.text, children: b.children.map(removeUiState), originalId: b.originalId, createdAt: b.createdAt, updatedAt: b.updatedAt });
               const coreBullets = nodes.map(removeUiState);
               return JSON.stringify(coreBullets);
           }, []);
@@ -1943,117 +934,74 @@
               addToast(`Switched to ${newTheme} mode`, 'info');
           }, [theme, addToast]);
 
-          useEffect(() => {
-              const root = window.document.documentElement;
-              const isDark = theme === 'dark';
-              root.classList.toggle('dark', isDark);
-          }, [theme]);
+          useEffect(() => { window.document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
 
           useEffect(() => {
               const loadData = async () => {
                   const savedThemeEntry = await db.keyValuePairs.get('theme');
                   const savedTheme = savedThemeEntry?.value;
-                  if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-                      setTheme(savedTheme);
-                  }
+                  if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) setTheme(savedTheme);
                   
                   let loadedSettings;
-                  const defaultSettings = {
-                      mainColor: '#60a5fa',
-                      fileName: 'My Outline',
-                      fontFamily: 'sans-serif',
-                      fontSize: 16,
-                  };
+                  const defaultSettings = { mainColor: '#60a5fa', fileName: 'My Outline', fontFamily: 'sans-serif', fontSize: 16 };
                   try {
                       const savedSettingsEntry = await db.keyValuePairs.get('settings');
-                      const savedSettings = savedSettingsEntry?.value;
-                      loadedSettings = { ...defaultSettings, ...(savedSettings || {}) };
+                      loadedSettings = { ...defaultSettings, ...(savedSettingsEntry?.value || {}) };
                       setSettings(loadedSettings);
-                  } catch (error) {
-                      console.error("Failed to load settings from IndexedDB", error);
-                      loadedSettings = defaultSettings;
-                  }
+                  } catch (error) { loadedSettings = defaultSettings; }
 
                   let localBullets = null;
                   try {
                       const savedDataEntry = await db.keyValuePairs.get('bullets');
-                      const savedData = savedDataEntry?.value;
-                      if (savedData && Array.isArray(savedData)) {
-                        localBullets = savedData;
-                      }
-                  } catch(e) {
-                    console.error("Failed to parse local data from IndexedDB", e);
-                  }
+                      if (savedDataEntry?.value && Array.isArray(savedDataEntry.value)) localBullets = savedDataEntry.value;
+                  } catch(e) { console.error("Failed to parse local data", e); }
                   
                   let initialLoadData = localBullets || initialData;
                   initialLoadData = migrateBullets(initialLoadData);
-
                   setBullets(initialLoadData);
                   prevCoreDataRef.current = getCoreDataString(initialLoadData);
-          
                   setZoomedBulletId(null);
                   isInitialFocusSet.current = false;
                   dataLoadedRef.current = true;
               };
-
               loadData();
           }, [getCoreDataString]);
 
           useEffect(() => {
               if (!dataLoadedRef.current) return;
               db.keyValuePairs.put({ key: 'settings', value: settings });
-              
               document.title = `${settings.fileName || 'Untitled'} - JaRoet Outliner`;
-              
               const root = document.documentElement;
               root.style.setProperty('--main-color', settings.mainColor);
               root.style.setProperty('--font-family', settings.fontFamily);
               root.style.setProperty('--font-size', `${settings.fontSize}px`);
-              
               db.keyValuePairs.put({ key: 'bullets', value: bullets });
-              
               const currentCoreData = getCoreDataString(bullets);
-              if (currentCoreData !== prevCoreDataRef.current) {
-                  prevCoreDataRef.current = currentCoreData;
-              }
-
+              if (currentCoreData !== prevCoreDataRef.current) prevCoreDataRef.current = currentCoreData;
           }, [settings, bullets, getCoreDataString]);
-          
-          const findBulletAndParent = useCallback((
-              id,
-              nodes,
-              parent = null
-            ) => {
-              for (let i = 0; i < nodes.length; i++) {
-                const node = nodes[i];
-                if (node.id === id) {
-                  return { node, parent, siblings: nodes, index: i };
-                }
-                const found = findBulletAndParent(id, node.children, node);
-                if (found) return found;
-              }
-              return null;
+
+          const findBulletAndParent = useCallback((id, nodes, parent = null) => {
+            for (let i = 0; i < nodes.length; i++) {
+              const node = nodes[i];
+              if (node.id === id) return { node, parent, siblings: nodes, index: i };
+              const found = findBulletAndParent(id, node.children, node);
+              if (found) return found;
+            }
+            return null;
           }, []);
 
           useEffect(() => {
-              const currentId = focusOptions.id;
-              const prevId = prevFocusId.current;
-
+              const currentId = focusOptions.id; const prevId = prevFocusId.current;
               if (prevId && prevId !== currentId) {
                   const found = findBulletAndParent(prevId, bullets);
                   if (found && !found.node.isReadOnly && found.node.text === '' && found.node.children.length === 0) {
                       const newBullets = structuredClone(bullets);
                       const foundAgain = findBulletAndParent(prevId, newBullets);
-                      if (foundAgain) {
-                          foundAgain.siblings.splice(foundAgain.index, 1);
-                          setBullets(newBullets);
-                      }
+                      if (foundAgain) { foundAgain.siblings.splice(foundAgain.index, 1); setBullets(newBullets); }
                   }
               }
-
               prevFocusId.current = currentId;
           }, [focusOptions.id, bullets, findBulletAndParent]);
-
 
           const breadcrumbs = useMemo(() => {
               if (!zoomedBulletId) return [];
@@ -2061,10 +1009,7 @@
               const findPath = (nodes, currentPath) => {
                   for (const node of nodes) {
                       const newPath = [...currentPath, node];
-                      if (node.id === zoomedBulletId) {
-                          path.push(...newPath);
-                          return true;
-                      }
+                      if (node.id === zoomedBulletId) { path.push(...newPath); return true; }
                       if (findPath(node.children, newPath)) return true;
                   }
                   return false;
@@ -2072,1022 +1017,220 @@
               findPath(bullets, []);
               return path;
           }, [bullets, zoomedBulletId]);
-          
+
           const handleNavigate = useCallback((bulletId) => {
               const path = [];
               const findPath = (nodes, currentPath) => {
                   for (const node of nodes) {
                       const newPath = [...currentPath, node];
-                      if (node.id === bulletId) {
-                          path.push(...newPath);
-                          return true;
-                      }
+                      if (node.id === bulletId) { path.push(...newPath); return true; }
                       if (findPath(node.children, newPath)) return true;
                   }
                   return false;
               };
               findPath(bullets, []);
-          
               if (path.length > 0) {
                   const parent = path.length > 1 ? path[path.length - 2] : null;
                   setZoomedBulletId(parent ? parent.id : null);
                   setIsSearchModalOpen(false);
-                  setTimeout(() => {
-                      handleFocusChange(bulletId, 'end');
-                  }, 0);
+                  setTimeout(() => handleFocusChange(bulletId, 'end'), 0);
               }
           }, [bullets, handleFocusChange]);
 
           const displayedBullets = useMemo(() => {
               if (!zoomedBulletId) return bullets;
-              const findZoomed = (nodes) => {
-                  for (const node of nodes) {
-                      if (node.id === zoomedBulletId) return node;
-                      const found = findZoomed(node.children);
-                      if (found) return found;
-                  }
-                  return null;
-              }
+              const findZoomed = (nodes) => { for (const node of nodes) { if (node.id === zoomedBulletId) return node; const found = findZoomed(node.children); if (found) return found; } return null; }
               const zoomedNode = findZoomed(bullets);
               return zoomedNode ? zoomedNode.children : [];
           }, [bullets, zoomedBulletId]);
 
           const visibleBulletIds = useMemo(() => {
-              const getVisibleIds = (nodes) => {
-                  let ids = [];
-                  for (const node of nodes) {
-                      ids.push(node.id);
-                      if (!node.isCollapsed && node.children.length > 0) {
-                          ids = ids.concat(getVisibleIds(node.children));
-                      }
-                  }
-                  return ids;
-              };
+              const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; };
               return getVisibleIds(displayedBullets);
           }, [displayedBullets]);
-          
-          const bulletsRef = useRef(bullets);
-          const visibleBulletIdsRef = useRef(visibleBulletIds);
-          const zoomedBulletIdRef = useRef(zoomedBulletId);
-          const focusOptionsRef = useRef(focusOptions);
-          const breadcrumbsRef = useRef(breadcrumbs);
 
-          useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
-          useEffect(() => { visibleBulletIdsRef.current = visibleBulletIds; }, [visibleBulletIds]);
-          useEffect(() => { zoomedBulletIdRef.current = zoomedBulletId; }, [zoomedBulletId]);
-          useEffect(() => { focusOptionsRef.current = focusOptions; }, [focusOptions]);
-          useEffect(() => { breadcrumbsRef.current = breadcrumbs; }, [breadcrumbs]);
+          const bulletsRef = useRef(bullets); const visibleBulletIdsRef = useRef(visibleBulletIds); const zoomedBulletIdRef = useRef(zoomedBulletId); const focusOptionsRef = useRef(focusOptions); const breadcrumbsRef = useRef(breadcrumbs);
+          useEffect(() => { bulletsRef.current = bullets; }, [bullets]); useEffect(() => { visibleBulletIdsRef.current = visibleBulletIds; }, [visibleBulletIds]); useEffect(() => { zoomedBulletIdRef.current = zoomedBulletId; }, [zoomedBulletId]); useEffect(() => { focusOptionsRef.current = focusOptions; }, [focusOptions]); useEffect(() => { breadcrumbsRef.current = breadcrumbs; }, [breadcrumbs]);
 
-          useEffect(() => {
-              if (!isInitialFocusSet.current && visibleBulletIds.length > 0) {
-                  handleFocusChange(visibleBulletIds[0], 'end');
-                  isInitialFocusSet.current = true;
-              }
-          }, [visibleBulletIds, handleFocusChange]);
-          
+          useEffect(() => { if (!isInitialFocusSet.current && visibleBulletIds.length > 0) { handleFocusChange(visibleBulletIds[0], 'end'); isInitialFocusSet.current = true; } }, [visibleBulletIds, handleFocusChange]);
+
           const handleZoom = useCallback((id) => {
-              const currentBullets = bulletsRef.current;
-              const oldZoomedBulletId = zoomedBulletIdRef.current;
-              const currentBreadcrumbs = breadcrumbsRef.current;
-              
-              const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
-                                  (id !== null && currentBreadcrumbs.some(b => b.id === id));
-              
-              if (id === null) { 
+              const currentBullets = bulletsRef.current; const oldZoomedBulletId = zoomedBulletIdRef.current; const currentBreadcrumbs = breadcrumbsRef.current;
+              const isZoomingOut = (id === null && oldZoomedBulletId !== null) || (id !== null && currentBreadcrumbs.some(b => b.id === id));
+              if (id === null) {
                   setZoomedBulletId(null);
-                  if (oldZoomedBulletId) {
-                      setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-                  } else {
-                      const getVisibleIds = (nodes) => {
-                          let ids = [];
-                          for (const node of nodes) {
-                              ids.push(node.id);
-                              if (!node.isCollapsed && node.children.length > 0) {
-                                  ids = ids.concat(getVisibleIds(node.children));
-                              }
-                          }
-                          return ids;
-                      };
-                      const rootVisibleIds = getVisibleIds(currentBullets);
-                      if (rootVisibleIds.length > 0) {
-                          handleFocusChange(rootVisibleIds[0]);
-                      }
-                  }
+                  if (oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+                  else { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const rootVisibleIds = getVisibleIds(currentBullets); if (rootVisibleIds.length > 0) handleFocusChange(rootVisibleIds[0]); }
                   return;
               }
-
-              const find = (nodes) => {
-                  for(const node of nodes) {
-                      if (node.id === id) return node;
-                      const f = find(node.children);
-                      if (f) return f;
-                  }
-                  return null;
-              };
-              
+              const find = (nodes) => { for(const node of nodes) { if (node.id === id) return node; const f = find(node.children); if (f) return f; } return null; };
               const bulletToZoom = find(currentBullets);
-          
               if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
                   const newBullet = createNewBullet();
-                  setBullets(prevBullets => {
-                      const newBullets = structuredClone(prevBullets);
-                      const found = findBulletAndParent(id, newBullets);
-                      if (found) {
-                          found.node.children.push(newBullet);
-                          found.node.isCollapsed = false;
-                          return newBullets;
-                      }
-                      return prevBullets;
-                  });
+                  setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { found.node.children.push(newBullet); found.node.isCollapsed = false; return newBullets; } return prevBullets; });
                   setZoomedBulletId(id);
-                  setTimeout(() => {
-                      handleFocusChange(newBullet.id);
-                  }, 0);
+                  setTimeout(() => handleFocusChange(newBullet.id), 0);
               } else if (bulletToZoom) {
                   setZoomedBulletId(id);
-                  if (isZoomingOut && oldZoomedBulletId) {
-                      setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-                  } else if (bulletToZoom.children.length > 0) {
-                      const getVisibleIds = (nodes) => {
-                          let ids = [];
-                          for (const node of nodes) {
-                              ids.push(node.id);
-                              if (!node.isCollapsed && node.children.length > 0) {
-                                  ids = ids.concat(getVisibleIds(node.children));
-                              }
-                          }
-                          return ids;
-                      };
-                      const visibleChildrenIds = getVisibleIds(bulletToZoom.children);
-                      if (visibleChildrenIds.length > 0) {
-                          handleFocusChange(visibleChildrenIds[0]);
-                      }
-                  }
+                  if (isZoomingOut && oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+                  else if (bulletToZoom.children.length > 0) { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const visibleChildrenIds = getVisibleIds(bulletToZoom.children); if (visibleChildrenIds.length > 0) handleFocusChange(visibleChildrenIds[0]); }
               }
           }, [handleFocusChange, findBulletAndParent]);
 
           const handleGoToJournal = useCallback(() => {
-              const now = new Date();
-              const year = now.getFullYear().toString();
-              const month = (now.getMonth() + 1).toString().padStart(2, '0');
-              const day = now.getDate().toString().padStart(2, '0');
-              const dayText = `${year}-${month}-${day}`;
-
+              const now = new Date(); const year = now.getFullYear().toString(); const month = (now.getMonth() + 1).toString().padStart(2, '0'); const day = now.getDate().toString().padStart(2, '0'); const dayText = `${year}-${month}-${day}`;
               setBullets(prevBullets => {
-                  const newBullets = structuredClone(prevBullets);
-                  let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
-                  if (!journalNode) {
-                      journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
-                      newBullets.unshift(journalNode);
-                  }
-
-                  let yearNode = journalNode.children.find((b) => b.text === year);
-                  if (!yearNode) {
-                      yearNode = createNewBullet(year);
-                      journalNode.children.push(yearNode);
-                  }
-
-                  let monthNode = yearNode.children.find((b) => b.text === month);
-                  if (!monthNode) {
-                      monthNode = createNewBullet(month);
-                      yearNode.children.push(monthNode);
-                  }
-                  
-                  let dayNode = monthNode.children.find((b) => b.text === dayText);
-                  if (!dayNode) {
-                      dayNode = createNewBullet(dayText);
-                      monthNode.children.push(dayNode);
-                  }
+                   const newBullets = structuredClone(prevBullets);
+                   let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+                  if (!journalNode) { journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT); newBullets.unshift(journalNode); }
+                  let yearNode = journalNode.children.find((b) => b.text === year); if (!yearNode) { yearNode = createNewBullet(year); journalNode.children.push(yearNode); }
+                  let monthNode = yearNode.children.find((b) => b.text === month); if (!monthNode) { monthNode = createNewBullet(month); yearNode.children.push(monthNode); }
+                  let dayNode = monthNode.children.find((b) => b.text === dayText); if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
                   return newBullets;
               });
-              
               const ensureJournalPath = (currentNodes) => {
-                  const newBullets = structuredClone(currentNodes);
-                  let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
-                  if (!journalNode) {
-                      journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
-                      newBullets.unshift(journalNode);
-                  }
-                  let yearNode = journalNode.children.find((b) => b.text === year);
-                  if (!yearNode) {
-                      yearNode = createNewBullet(year);
-                      journalNode.children.push(yearNode);
-                  }
-                  let monthNode = yearNode.children.find((b) => b.text === month);
-                  if (!monthNode) {
-                      monthNode = createNewBullet(month);
-                      yearNode.children.push(monthNode);
-                  }
-                  let dayNode = monthNode.children.find((b) => b.text === dayText);
-                  if (!dayNode) {
-                      dayNode = createNewBullet(dayText);
-                      monthNode.children.push(dayNode);
-                  }
-                  return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
+                   const newBullets = structuredClone(currentNodes);
+                   let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT); if (!journalNode) { journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT); newBullets.unshift(journalNode); }
+                   let yearNode = journalNode.children.find((b) => b.text === year); if (!yearNode) { yearNode = createNewBullet(year); journalNode.children.push(yearNode); }
+                   let monthNode = yearNode.children.find((b) => b.text === month); if (!monthNode) { monthNode = createNewBullet(month); yearNode.children.push(monthNode); }
+                   let dayNode = monthNode.children.find((b) => b.text === dayText); if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
+                   return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
               };
-
-              setBullets(prev => {
-                  const result = ensureJournalPath(prev);
-                  setTimeout(() => {
-                      setZoomedBulletId(result.monthId);
-                      setTimeout(() => handleFocusChange(result.dayId), 0);
-                  }, 0);
-                  return result.nodes;
-              });
+              setBullets(prev => { const result = ensureJournalPath(prev); setTimeout(() => { setZoomedBulletId(result.monthId); setTimeout(() => handleFocusChange(result.dayId), 0); }, 0); return result.nodes; });
               addToast('Opened Daily Log', 'success');
-
           }, [handleFocusChange, addToast]);
 
-          const handleUpdate = useCallback((id, updates) => {
-              setBullets(prevBullets => {
-                  const found = findBulletAndParent(id, prevBullets);
-                  if (found?.node.isReadOnly) return prevBullets;
+          const handleUpdate = useCallback((id, updates) => { setBullets(prevBullets => { const found = findBulletAndParent(id, prevBullets); if (found?.node.isReadOnly) return prevBullets; const isStructuralOrContentChange = Object.keys(updates).some(key => key !== 'isCollapsed'); return mapBullets(prevBullets, bullet => bullet.id === id ? { ...bullet, ...updates, updatedAt: isStructuralOrContentChange ? Date.now() : bullet.updatedAt } : bullet); }); }, [findBulletAndParent]);
 
-                  const isStructuralOrContentChange = Object.keys(updates).some(key => key !== 'isCollapsed');
-
-                  return mapBullets(prevBullets, bullet =>
-                      bullet.id === id ? { 
-                          ...bullet, 
-                          ...updates, 
-                          updatedAt: isStructuralOrContentChange ? Date.now() : bullet.updatedAt 
-                      } : bullet
-                  );
-              });
-          }, [findBulletAndParent]);
-          
           useEffect(() => {
               const handleGlobalKeyDown = (e) => {
-                  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
-                      e.preventDefault();
-                      handleOpenSearch();
-                  }
-                  else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
-                      e.preventDefault();
-                      handleZoom(null);
-                      setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
-                      setTimeout(() => {
-                          const currentBullets = bulletsRef.current;
-                          if (currentBullets.length > 0) {
-                              handleFocusChange(currentBullets[0].id, 'start');
-                          }
-                      }, 10);
-                  }
-                  else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
-                      e.preventDefault();
-                      handleGoToJournal();
-                  }
-                  else if (e.ctrlKey && e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      const zoomedId = zoomedBulletIdRef.current;
-                      const crumbs = breadcrumbsRef.current;
-                      if (zoomedId) {
-                          const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null;
-                          handleZoom(parentId);
-                      }
-                  }
-                  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-                      const currentFocusId = focusOptionsRef.current.id;
-                      const visibleIds = visibleBulletIdsRef.current;
-                      
-                      if (!currentFocusId && visibleIds.length > 0) {
-                          const target = e.target;
-                          if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-                              e.preventDefault();
-                              handleFocusChange(visibleIds[0]);
-                          }
-                      }
-                  }
+                  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') { e.preventDefault(); handleOpenSearch(); }
+                  else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') { e.preventDefault(); handleZoom(null); setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true }))); setTimeout(() => { const currentBullets = bulletsRef.current; if (currentBullets.length > 0) handleFocusChange(currentBullets[0].id, 'start'); }, 10); }
+                  else if (e.ctrlKey && e.key.toLowerCase() === 'j') { e.preventDefault(); handleGoToJournal(); }
+                  else if (e.ctrlKey && e.key === 'ArrowUp') { e.preventDefault(); const zoomedId = zoomedBulletIdRef.current; const crumbs = breadcrumbsRef.current; if (zoomedId) { const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null; handleZoom(parentId); } }
+                  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId && visibleIds.length > 0) { const target = e.target; if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') { e.preventDefault(); handleFocusChange(visibleIds[0]); } } }
               };
-
               window.addEventListener('keydown', handleGlobalKeyDown);
-              return () => {
-                  window.removeEventListener('keydown', handleGlobalKeyDown);
-              };
+              return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
           }, [handleGoToJournal, handleZoom, handleFocusChange]);
 
           const handleAddSibling = useCallback((id, text = '') => {
               const newBullet = createNewBullet(text);
-              setBullets(prevBullets => {
-                  const newBullets = structuredClone(prevBullets);
-                  const found = findBulletAndParent(id, newBullets);
-                  if (found) {
-                      if (found.node.isReadOnly) return prevBullets;
-                      found.siblings.splice(found.index + 1, 0, newBullet);
-                      if (found.parent) {
-                          found.parent.updatedAt = Date.now();
-                      }
-                      return newBullets;
-                  }
-                  return prevBullets;
-              });
-              // Side effect: focus new bullet
+              setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { if (found.node.isReadOnly) return prevBullets; found.siblings.splice(found.index + 1, 0, newBullet); if (found.parent) found.parent.updatedAt = Date.now(); return newBullets; } return prevBullets; });
               setTimeout(() => handleFocusChange(newBullet.id), 0);
           }, [handleFocusChange, findBulletAndParent]);
 
           const handleDelete = useCallback((id) => {
               let prevSiblingId = null;
-              setBullets(prevBullets => {
-                  const foundTarget = findBulletAndParent(id, prevBullets);
-                  if (foundTarget?.node.isReadOnly) return prevBullets;
-
-                  const newBullets = structuredClone(prevBullets);
-                  const found = findBulletAndParent(id, newBullets);
-                  if (found) {
-                      prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null;
-                      if (found.parent) {
-                          found.parent.updatedAt = Date.now();
-                      }
-                      found.siblings.splice(found.index, 1);
-                      return newBullets;
-                  }
-                  return prevBullets;
-              });
+              setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null; if (found.parent) found.parent.updatedAt = Date.now(); found.siblings.splice(found.index, 1); return newBullets; } return prevBullets; });
               setTimeout(() => handleFocusChange(prevSiblingId), 0);
           }, [handleFocusChange, findBulletAndParent]);
 
           const handleMerge = useCallback((id) => {
               setBullets(prevBullets => {
-                  const foundTarget = findBulletAndParent(id, prevBullets);
-                  if (!foundTarget || foundTarget.node.isReadOnly) return prevBullets;
-
+                  const foundTarget = findBulletAndParent(id, prevBullets); if (!foundTarget || foundTarget.node.isReadOnly) return prevBullets;
                   if (foundTarget.index > 0) {
-                      const newBullets = structuredClone(prevBullets);
-                      const found = findBulletAndParent(id, newBullets);
-                      
-                      if (!found) return prevBullets;
-
-                      const prevSibling = found.siblings[found.index - 1];
-                      
-                      if (prevSibling.isReadOnly) return prevBullets;
-
-                      // Calculate cursor position before appending text
-                      const cursorPosition = prevSibling.text.length;
-                      
-                      // Merge text
-                      prevSibling.text += found.node.text;
-                      
-                      // Merge children
-                      prevSibling.children = [...prevSibling.children, ...found.node.children];
-                      
-                      // Update timestamp
-                      prevSibling.updatedAt = Date.now();
-                      
-                      // Ensure expanded if it acquired children
-                      if (found.node.children.length > 0) {
-                          prevSibling.isCollapsed = false;
-                      }
-                      
-                      // Remove the merged node
-                      found.siblings.splice(found.index, 1);
-                      if (found.parent) found.parent.updatedAt = Date.now();
-
-                      // Set focus to previous sibling at the merge point
-                      setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0);
-                      return newBullets;
+                      const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); const prevSibling = found.siblings[found.index - 1]; if (prevSibling.isReadOnly) return prevBullets;
+                      const cursorPosition = prevSibling.text.length; prevSibling.text += found.node.text; prevSibling.children = [...prevSibling.children, ...found.node.children]; prevSibling.updatedAt = Date.now(); if (found.node.children.length > 0) prevSibling.isCollapsed = false; found.siblings.splice(found.index, 1); if (found.parent) found.parent.updatedAt = Date.now();
+                      setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0); return newBullets;
                   } else {
-                      // Index 0 handling
-                      if (foundTarget.node.text === '') {
-                              const newBullets = structuredClone(prevBullets);
-                              const found = findBulletAndParent(id, newBullets);
-                              
-                              if (!found) return prevBullets;
-
-                              const parentId = found.parent?.id || null;
-                              
-                              found.siblings.splice(found.index, 1);
-                              if (found.parent) found.parent.updatedAt = Date.now();
-
-                              setTimeout(() => handleFocusChange(parentId, 'end'), 0);
-                              return newBullets;
-                      }
+                      if (foundTarget.node.text === '') { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); const parentId = found.parent?.id || null; found.siblings.splice(found.index, 1); if (found.parent) found.parent.updatedAt = Date.now(); setTimeout(() => handleFocusChange(parentId, 'end'), 0); return newBullets; }
                   }
-                  
                   return prevBullets;
               });
           }, [findBulletAndParent, handleFocusChange]);
 
-          const handleIndent = useCallback((id) => {
-              setBullets(prevBullets => {
-                  const foundTarget = findBulletAndParent(id, prevBullets);
-                  if (foundTarget?.node.isReadOnly) return prevBullets;
-
-                  const newBullets = structuredClone(prevBullets);
-                  const found = findBulletAndParent(id, newBullets);
-                  if (found && found.index > 0) {
-                      const prevSibling = found.siblings[found.index - 1];
-                      if (prevSibling.isReadOnly) return prevBullets;
-                      const [movedNode] = found.siblings.splice(found.index, 1);
-                      movedNode.updatedAt = Date.now();
-                      prevSibling.children.push(movedNode);
-                      prevSibling.isCollapsed = false;
-                      return newBullets;
-                  }
-                  return prevBullets;
-              });
-              setTimeout(() => handleFocusChange(id), 0);
-          }, [handleFocusChange, findBulletAndParent]);
-          
-          const handleOutdent = useCallback((id) => {
-              setBullets(prevBullets => {
-                  const foundTarget = findBulletAndParent(id, prevBullets);
-                  if (foundTarget?.node.isReadOnly) return prevBullets;
-
-                  const newBullets = structuredClone(prevBullets);
-                  const found = findBulletAndParent(id, newBullets);
-                  if (found && found.parent) {
-                      const parentInfo = findBulletAndParent(found.parent.id, newBullets);
-                      if(parentInfo && !parentInfo.node.isReadOnly){
-                          const [movedNode] = found.siblings.splice(found.index, 1);
-                          movedNode.updatedAt = Date.now();
-                          const subsequentSiblings = found.siblings.splice(found.index);
-                          movedNode.children.push(...subsequentSiblings);
-
-                          parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode);
-                          return newBullets;
-                      }
-                  }
-                  return prevBullets;
-              });
-              setTimeout(() => handleFocusChange(id), 0);
-          }, [handleFocusChange, findBulletAndParent]);
+          const handleIndent = useCallback((id) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found && found.index > 0) { const prevSibling = found.siblings[found.index - 1]; if (prevSibling.isReadOnly) return prevBullets; const [movedNode] = found.siblings.splice(found.index, 1); movedNode.updatedAt = Date.now(); prevSibling.children.push(movedNode); prevSibling.isCollapsed = false; return newBullets; } return prevBullets; }); setTimeout(() => handleFocusChange(id), 0); }, [handleFocusChange, findBulletAndParent]);
+          const handleOutdent = useCallback((id) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found && found.parent) { const parentInfo = findBulletAndParent(found.parent.id, newBullets); if(parentInfo && !parentInfo.node.isReadOnly){ const [movedNode] = found.siblings.splice(found.index, 1); movedNode.updatedAt = Date.now(); const subsequentSiblings = found.siblings.splice(found.index); movedNode.children.push(...subsequentSiblings); parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode); return newBullets; } } return prevBullets; }); setTimeout(() => handleFocusChange(id), 0); }, [handleFocusChange, findBulletAndParent]);
 
           const handleFoldAll = useCallback((id, collapse) => {
-              const setCollapseRecursively = (nodes) => {
-                  return nodes.map(node => {
-                      const newNode = { ...node };
-                      if (newNode.children.length > 0) {
-                          newNode.isCollapsed = collapse;
-                          if (!newNode.isReadOnly) {
-                              newNode.children = setCollapseRecursively(newNode.children);
-                          }
-                      }
-                      return newNode;
-                  });
-              };
-          
-              const findAndFold = (nodes) => {
-                  return nodes.map(node => {
-                      if (node.id === id) {
-                          const updatedNode = { ...node };
-                          if(updatedNode.children.length > 0) {
-                              updatedNode.isCollapsed = collapse;
-                              updatedNode.children = setCollapseRecursively(updatedNode.children);
-                          }
-                          return updatedNode;
-                      }
-                      if (node.children.length > 0) {
-                          return { ...node, children: findAndFold(node.children) };
-                      }
-                      return node;
-                  });
-              };
-          
+              const setCollapseRecursively = (nodes) => nodes.map(node => { const newNode = { ...node }; if (newNode.children.length > 0) { newNode.isCollapsed = collapse; if (!newNode.isReadOnly) newNode.children = setCollapseRecursively(newNode.children); } return newNode; });
+              const findAndFold = (nodes) => nodes.map(node => { if (node.id === id) { const updatedNode = { ...node }; if(updatedNode.children.length > 0) { updatedNode.isCollapsed = collapse; updatedNode.children = setCollapseRecursively(updatedNode.children); } return updatedNode; } if (node.children.length > 0) return { ...node, children: findAndFold(node.children) }; return node; });
               setBullets(prevBullets => findAndFold(prevBullets));
           }, []);
 
-          const handleMoveBullet = useCallback((id, direction) => {
-              setBullets(prevBullets => {
-                  const foundTarget = findBulletAndParent(id, prevBullets);
-                  if (foundTarget?.node.isReadOnly) return prevBullets;
-
-                  const newBullets = structuredClone(prevBullets);
-                  const found = findBulletAndParent(id, newBullets);
-              
-                  if (!found) return prevBullets;
-              
-                  const { siblings, index } = found;
-                  found.node.updatedAt = Date.now();
-              
-                  if (direction === 'up') {
-                      if (index > 0) {
-                          [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]];
-                          return newBullets;
-                      }
-                  } else {
-                      if (index < siblings.length - 1) {
-                          [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
-                          return newBullets;
-                      }
-                  }
-                  return prevBullets;
-              });
-          }, [findBulletAndParent]);
+          const handleMoveBullet = useCallback((id, direction) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (!found) return prevBullets; const { siblings, index } = found; found.node.updatedAt = Date.now(); if (direction === 'up') { if (index > 0) { [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]]; return newBullets; } } else { if (index < siblings.length - 1) { [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]]; return newBullets; } } return prevBullets; }); }, [findBulletAndParent]);
 
           const handleFocusParent = useCallback((id) => {
-              const zoomedId = zoomedBulletIdRef.current;
-              const currentBullets = bulletsRef.current;
-              
-              const findInScope = (nodes, targetId) => {
-                  for (const node of nodes) {
-                      if (node.id === targetId) return node;
-                      const f = findInScope(node.children, targetId);
-                      if (f) return f;
-                  }
-                  return null;
-              }
-              
-              let scope = currentBullets;
-              if (zoomedId) {
-                  const zoomedNode = findInScope(currentBullets, zoomedId);
-                  if (zoomedNode) scope = zoomedNode.children;
-                  else scope = [];
-              }
-
-              const findParent = (
-                  bulletId,
-                  nodes,
-                  parent = null
-                ) => {
-                  for (const node of nodes) {
-                    if (node.id === bulletId) {
-                      return { node, parent };
-                    }
-                    const found = findParent(bulletId, node.children, node);
-                    if (found) return found;
-                  }
-                  return null;
-              };
-              
-              const found = findParent(id, scope);
-              if (found?.parent) {
-                  handleFocusChange(found.parent.id);
-              }
+              const zoomedId = zoomedBulletIdRef.current; const currentBullets = bulletsRef.current;
+              const findInScope = (nodes, targetId) => { for (const node of nodes) { if (node.id === targetId) return node; const f = findInScope(node.children, targetId); if (f) return f; } return null; };
+              let scope = currentBullets; if (zoomedId) { const zoomedNode = findInScope(currentBullets, zoomedId); if (zoomedNode) scope = zoomedNode.children; else scope = []; }
+              const findParent = (bulletId, nodes, parent = null) => { for (const node of nodes) { if (node.id === bulletId) return { node, parent }; const found = findParent(bulletId, node.children, node); if (found) return found; } return null; };
+              const found = findParent(id, scope); if (found?.parent) handleFocusChange(found.parent.id);
           }, [handleFocusChange]);
 
-          const handleFocusChild = useCallback((id) => {
-              const currentBullets = bulletsRef.current;
-              const find = (nodes) => {
-                   for(const node of nodes) {
-                       if (node.id === id) return node;
-                       const f = find(node.children);
-                       if(f) return f;
-                   }
-                   return null;
-              };
-              const foundNode = find(currentBullets);
-              
-              if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) {
-                  handleFocusChange(foundNode.children[0].id, 'start');
-              }
-          }, [handleFocusChange]);
-
+          const handleFocusChild = useCallback((id) => { const currentBullets = bulletsRef.current; const find = (nodes) => { for(const node of nodes) { if (node.id === id) return node; const f = find(node.children); if(f) return f; } return null; }; const foundNode = find(currentBullets); if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) handleFocusChange(foundNode.children[0].id, 'start'); }, [handleFocusChange]);
 
           const handleExport = () => {
-              const dataStr = JSON.stringify(bullets, null, 2);
-              const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-              
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, '0');
-              const day = String(now.getDate()).padStart(2, '0');
-              const hours = String(now.getHours()).padStart(2, '0');
-              const minutes = String(now.getMinutes()).padStart(2, '0');
-              const seconds = String(now.getSeconds()).padStart(2, '0');
-              const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
-              
-              const sanitizedFileName = settings.fileName.replace(/[<>:"/\\|?*]/g, '_');
-              const exportFileDefaultName = `${sanitizedFileName}_bck_${timestamp}.json`;
-              
-              const linkElement = document.createElement('a');
-              linkElement.setAttribute('href', dataUri);
-              linkElement.setAttribute('download', exportFileDefaultName);
-              linkElement.click();
+              const dataStr = JSON.stringify(bullets, null, 2); const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+              const now = new Date(); const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+              const sanitizedFileName = settings.fileName.replace(/[<>:"/\\|?*]/g, '_'); const exportFileDefaultName = `${sanitizedFileName}_bck_${timestamp}.json`;
+              const linkElement = document.createElement('a'); linkElement.setAttribute('href', dataUri); linkElement.setAttribute('download', exportFileDefaultName); linkElement.click();
               addToast('Export started', 'success');
           };
 
-          const handleImport = (data) => {
-              setPendingImportData(data);
-              setIsImportModalOpen(true);
-          };
-
+          const handleImport = (data) => { setPendingImportData(data); setIsImportModalOpen(true); };
           const handleConfirmImport = (targetId) => {
               if (!pendingImportData) return;
-              
-              let nodesToImport = migrateBullets(pendingImportData);
-              nodesToImport = regenerateIds(nodesToImport);
-
-              if (targetId === null) {
-                  setBullets(prev => [...prev, ...nodesToImport]);
-              } else {
-                  const newBullets = structuredClone(bullets);
-                  const found = findBulletAndParent(targetId, newBullets);
-                  if (found && !found.node.isReadOnly) {
-                      found.node.children.push(...nodesToImport);
-                      found.node.isCollapsed = false;
-                      found.node.updatedAt = Date.now();
-                      setBullets(newBullets);
-                  }
-              }
-              
-              setIsImportModalOpen(false);
-              setPendingImportData(null);
-              addToast('Items imported successfully', 'success');
+              let nodesToImport = migrateBullets(pendingImportData); nodesToImport = regenerateIds(nodesToImport);
+              if (targetId === null) setBullets(prev => [...prev, ...nodesToImport]);
+              else { const newBullets = structuredClone(bullets); const found = findBulletAndParent(targetId, newBullets); if (found && !found.node.isReadOnly) { found.node.children.push(...nodesToImport); found.node.isCollapsed = false; found.node.updatedAt = Date.now(); setBullets(newBullets); } }
+              setIsImportModalOpen(false); setPendingImportData(null); addToast('Items imported successfully', 'success');
           };
           
           const handleAddItemToCurrentView = useCallback(() => {
-              const newBullet = createNewBullet();
-              const zoomedId = zoomedBulletIdRef.current;
-              
-              if (zoomedId) {
-                  setBullets(prevBullets => {
-                      const newBullets = structuredClone(prevBullets);
-                      const found = findBulletAndParent(zoomedId, newBullets);
-                      if (found && !found.node.isReadOnly) {
-                          found.node.children.push(newBullet);
-                          found.node.isCollapsed = false;
-                          found.node.updatedAt = Date.now();
-                          return newBullets;
-                      }
-                      return prevBullets;
-                  });
-              } else {
-                  setBullets(prev => [...prev, newBullet]);
-              }
+              const newBullet = createNewBullet(); const zoomedId = zoomedBulletIdRef.current;
+              if (zoomedId) { setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(zoomedId, newBullets); if (found && !found.node.isReadOnly) { found.node.children.push(newBullet); found.node.isCollapsed = false; found.node.updatedAt = Date.now(); return newBullets; } return prevBullets; }); }
+              else { setBullets(prev => [...prev, newBullet]); }
               setTimeout(() => handleFocusChange(newBullet.id), 0);
           }, [handleFocusChange, findBulletAndParent]);
 
-          const handleFocusMove = useCallback((direction, position = 'end') => {
-              const currentFocusId = focusOptionsRef.current.id;
-              const visibleIds = visibleBulletIdsRef.current;
-
-              if (!currentFocusId) {
-                  if (visibleIds.length > 0) {
-                       handleFocusChange(visibleIds[0], position);
-                  }
-                  return;
-              }
-              const currentIndex = visibleIds.indexOf(currentFocusId);
-              if (currentIndex === -1) return;
-              let nextIndex;
-              if (direction === 'down') {
-                  nextIndex = currentIndex + 1;
-                  if (nextIndex < visibleIds.length) {
-                      handleFocusChange(visibleIds[nextIndex], position);
-                  }
-              } else {
-                  nextIndex = currentIndex - 1;
-                  if (nextIndex >= 0) {
-                      handleFocusChange(visibleIds[nextIndex], position);
-                  }
-              }
-          }, [handleFocusChange]);
-
-          const handleOpenSearch = () => {
-              focusBeforeModalRef.current = currentFocusId;
-              setIsSearchModalOpen(true);
-          };
-
-          const handleCloseSearch = () => {
-              setIsSearchModalOpen(false);
-              if (focusBeforeModalRef.current) {
-                  const idToRestore = focusBeforeModalRef.current;
-                  handleFocusChange(idToRestore, 'start');
-                  setTimeout(() => {
-                      handleFocusChange(idToRestore, 'end');
-                  }, 0);
-                  focusBeforeModalRef.current = null;
-              }
-          };
-
-
-          const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
-              if (!inputRef.current) return;
-              const rect = inputRef.current.getBoundingClientRect();
-              setLinkSelectionHandler({ handler: selectionHandler });
-
-              const POPUP_MAX_WIDTH_PX = 768;
-              const VIEWPORT_PADDING_PX = 16;
-              
-              let left = rect.left + window.scrollX;
-              
-              if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) {
-                  left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX;
-              }
-
-              left = Math.max(VIEWPORT_PADDING_PX, left);
-
-              const currentBullets = bulletsRef.current;
-              const results = [];
-              const traverse = (nodes, currentPath) => {
-                  for (const node of nodes) {
-                      results.push({
-                          id: node.id,
-                          text: node.text,
-                          path: currentPath,
-                          createdAt: node.createdAt,
-                          updatedAt: node.updatedAt,
-                      });
-                      if (node.children && node.children.length > 0) {
-                          traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                      }
-                  }
-              };
-              traverse(currentBullets, []);
-              
-              const suggestions = !query 
-                  ? results.slice(0, 50) 
-                  : results.map(bullet => {
-                      const lowerText = bullet.text.toLowerCase();
-                      const lowerQuery = query.toLowerCase();
-                      let score = 0;
-                      if (lowerText.startsWith(lowerQuery)) {
-                          score = 2;
-                      } else if (lowerText.includes(lowerQuery)) {
-                          score = 1;
-                      }
-                      return { ...bullet, score };
-                  })
-                  .filter(bullet => bullet.score > 0 && bullet.id !== bulletId) 
-                  .sort((a, b) => b.score - a.score);
-
-              setLinkPopupState({
-                  isOpen: true,
-                  targetId: bulletId,
-                  query: query,
-                  position: { top: rect.bottom + window.scrollY, left: left },
-                  suggestions: suggestions.slice(0, 100), 
-                  selectedIndex: 0,
-              });
-
-          }, []);
-
-          const handleCloseLinkPopup = useCallback(() => {
-              setLinkPopupState(prev => {
-                  if (prev.isOpen) {
-                      return { ...prev, isOpen: false };
-                  }
-                  return prev;
-              });
-              setLinkSelectionHandler({ handler: null });
-          }, []);
-
-          const handleLinkNavigate = useCallback((direction) => {
-              if (!linkPopupState.isOpen) return; 
-              setLinkPopupState(prev => ({
-                  ...prev,
-                  selectedIndex: navigateSuggestions(prev, direction),
-              }));
-          }, [linkPopupState.isOpen]); 
-          
-          const handleLinkSelect = useCallback((callback) => {
-              setLinkPopupState(prev => {
-                   if (!prev.isOpen || prev.suggestions.length === 0) return prev;
-                   const selectedBullet = prev.suggestions[prev.selectedIndex];
-                   callback(selectedBullet);
-                   return prev;
-              });
-          }, []);
-
-          const handleLinkClick = useCallback((linkText) => {
-              const currentBullets = bulletsRef.current;
-              let targetBullet = null;
-              const find = (nodes) => {
-                  for (const node of nodes) {
-                      if (node.text === linkText) {
-                          targetBullet = node;
-                          return true;
-                      }
-                      if (find(node.children)) return true;
-                  }
-                  return false;
-              };
-              find(currentBullets);
-          
-              if (targetBullet) {
-                  const path = [];
-                  const findPath = (nodes, currentPath) => {
-                      for (const node of nodes) {
-                          const newPath = [...currentPath, node];
-                          if (node.id === targetBullet.id) {
-                              path.push(...newPath);
-                              return true;
-                          }
-                          if (findPath(node.children, newPath)) return true;
-                      }
-                      return false;
-                  };
-                  findPath(currentBullets, []);
-                  
-                  const parent = path.length > 1 ? path[path.length - 2] : null;
-                  setZoomedBulletId(parent ? parent.id : null);
-                  setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0);
-              } else {
-                  console.warn(`Link target not found: "${linkText}"`);
-                  addToast(`Link target "${linkText}" not found`, 'error');
-              }
-          }, [handleFocusChange, addToast]);
-
-          const handleTriggerTagPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
-              if (!inputRef.current) return;
-              const rect = inputRef.current.getBoundingClientRect();
-              setTagSelectionHandler({ handler: selectionHandler });
-
-              const POPUP_MAX_WIDTH_PX = 768;
-              const VIEWPORT_PADDING_PX = 16;
-              let left = rect.left + window.scrollX;
-              
-              if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) {
-                  left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX;
-              }
-              left = Math.max(VIEWPORT_PADDING_PX, left);
-              
-              const currentBullets = bulletsRef.current;
-              const tagSet = new Set();
-              const tagRegex = /#\w+/g;
-              
-              const traverse = (nodes) => {
-                  for(const node of nodes) {
-                      const matches = node.text.match(tagRegex);
-                      if(matches) matches.forEach(t => tagSet.add(t));
-                      traverse(node.children);
-                  }
-              }
-              traverse(currentBullets);
-              const allTagsList = Array.from(tagSet).sort();
-
-              const lowerCaseQuery = query.toLowerCase();
-              const suggestions = allTagsList.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
-
-              setTagPopupState({
-                  isOpen: true,
-                  targetId: bulletId,
-                  query: query,
-                  position: { top: rect.bottom + window.scrollY, left: left },
-                  suggestions: suggestions.slice(0, 100),
-                  selectedIndex: 0,
-              });
-          }, []);
-
-          const handleCloseTagPopup = useCallback(() => {
-              setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev);
-              setTagSelectionHandler({ handler: null });
-          }, []);
-          
-          const handleTagNavigate = useCallback((direction) => {
-              if (!tagPopupState.isOpen) return;
-              setTagPopupState(prev => ({
-                  ...prev,
-                  selectedIndex: navigateSuggestions(prev, direction),
-              }));
-          }, [tagPopupState.isOpen]);
-
-          const handleTagSelect = useCallback((callback) => {
-              setTagPopupState(prev => {
-                  if (!prev.isOpen || prev.suggestions.length === 0) return prev;
-                  const selectedTag = prev.suggestions[prev.selectedIndex];
-                  callback(selectedTag);
-                  return prev;
-              });
-          }, []);
-
-          const handleClearData = async () => {
-              if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) {
-                  try {
-                      await db.keyValuePairs.delete('bullets');
-                      // Reset to initial data
-                      const resetData = migrateBullets(initialData);
-                      setBullets(resetData);
-                      setZoomedBulletId(null);
-                      setSearchQuery('');
-                      setIsSettingsModalOpen(false);
-                      addToast('All data has been reset', 'success');
-                  } catch (error) {
-                      console.error("Failed to clear data", error);
-                      addToast('Failed to clear data', 'error');
-                  }
-              }
-          };
+          const handleFocusMove = useCallback((direction, position = 'end') => { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId) { if (visibleIds.length > 0) handleFocusChange(visibleIds[0], position); return; } const currentIndex = visibleIds.indexOf(currentFocusId); if (currentIndex === -1) return; let nextIndex; if (direction === 'down') { nextIndex = currentIndex + 1; if (nextIndex < visibleIds.length) handleFocusChange(visibleIds[nextIndex], position); } else { nextIndex = currentIndex - 1; if (nextIndex >= 0) handleFocusChange(visibleIds[nextIndex], position); } }, [handleFocusChange]);
+          const handleOpenSearch = () => { focusBeforeModalRef.current = currentFocusId; setIsSearchModalOpen(true); };
+          const handleCloseSearch = () => { setIsSearchModalOpen(false); if (focusBeforeModalRef.current) { const idToRestore = focusBeforeModalRef.current; handleFocusChange(idToRestore, 'start'); setTimeout(() => handleFocusChange(idToRestore, 'end'), 0); focusBeforeModalRef.current = null; } };
+          const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => { if (!inputRef.current) return; const rect = inputRef.current.getBoundingClientRect(); setLinkSelectionHandler({ handler: selectionHandler }); const POPUP_MAX_WIDTH_PX = 768; const VIEWPORT_PADDING_PX = 16; let left = rect.left + window.scrollX; if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX; left = Math.max(VIEWPORT_PADDING_PX, left); const currentBullets = bulletsRef.current; const results = []; const traverse = (nodes, currentPath) => { for (const node of nodes) { results.push({ id: node.id, text: node.text, path: currentPath, createdAt: node.createdAt, updatedAt: node.updatedAt }); if (node.children && node.children.length > 0) traverse(node.children, [...currentPath, node.text || 'Untitled']); } }; traverse(currentBullets, []); const suggestions = !query ? results.slice(0, 50) : results.map(bullet => { const lowerText = bullet.text.toLowerCase(); const lowerQuery = query.toLowerCase(); let score = 0; if (lowerText.startsWith(lowerQuery)) score = 2; else if (lowerText.includes(lowerQuery)) score = 1; return { ...bullet, score }; }).filter(bullet => bullet.score > 0 && bullet.id !== bulletId).sort((a, b) => b.score - a.score); setLinkPopupState({ isOpen: true, targetId: bulletId, query: query, position: { top: rect.bottom + window.scrollY, left: left }, suggestions: suggestions.slice(0, 100), selectedIndex: 0 }); }, []);
+          const handleCloseLinkPopup = useCallback(() => { setLinkPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev)); setLinkSelectionHandler({ handler: null }); }, []);
+          const handleLinkNavigate = useCallback((direction) => { if (!linkPopupState.isOpen) return; setLinkPopupState(prev => ({ ...prev, selectedIndex: navigateSuggestions(prev, direction) })); }, [linkPopupState.isOpen]);
+          const handleLinkSelect = useCallback((callback) => { setLinkPopupState(prev => { if (!prev.isOpen || prev.suggestions.length === 0) return prev; const selectedBullet = prev.suggestions[prev.selectedIndex]; callback(selectedBullet); return prev; }); }, []);
+          const handleLinkClick = useCallback((linkText) => { const currentBullets = bulletsRef.current; let targetBullet = null; const find = (nodes) => { for (const node of nodes) { if (node.text === linkText) { targetBullet = node; return true; } if (find(node.children)) return true; } return false; }; find(currentBullets); if (targetBullet) { const path = []; const findPath = (nodes, currentPath) => { for (const node of nodes) { const newPath = [...currentPath, node]; if (node.id === targetBullet.id) { path.push(...newPath); return true; } if (findPath(node.children, newPath)) return true; } return false; }; findPath(currentBullets, []); const parent = path.length > 1 ? path[path.length - 2] : null; setZoomedBulletId(parent ? parent.id : null); setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0); } else { console.warn(`Link target not found: "${linkText}"`); addToast(`Link target "${linkText}" not found`, 'error'); } }, [handleFocusChange, addToast]);
+          const handleTriggerTagPopup = useCallback((bulletId, query, inputRef, selectionHandler) => { if (!inputRef.current) return; const rect = inputRef.current.getBoundingClientRect(); setTagSelectionHandler({ handler: selectionHandler }); const POPUP_MAX_WIDTH_PX = 768; const VIEWPORT_PADDING_PX = 16; let left = rect.left + window.scrollX; if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX; left = Math.max(VIEWPORT_PADDING_PX, left); const currentBullets = bulletsRef.current; const tagSet = new Set(); const tagRegex = /#\w+/g; const traverse = (nodes) => { for(const node of nodes) { const matches = node.text.match(tagRegex); if(matches) matches.forEach(t => tagSet.add(t)); traverse(node.children); } }; traverse(currentBullets); const allTagsList = Array.from(tagSet).sort(); const lowerCaseQuery = query.toLowerCase(); const suggestions = allTagsList.filter(tag => tag.toLowerCase().includes(lowerCaseQuery)); setTagPopupState({ isOpen: true, targetId: bulletId, query: query, position: { top: rect.bottom + window.scrollY, left: left }, suggestions: suggestions.slice(0, 100), selectedIndex: 0 }); }, []);
+          const handleCloseTagPopup = useCallback(() => { setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev); setTagSelectionHandler({ handler: null }); }, []);
+          const handleTagNavigate = useCallback((direction) => { if (!tagPopupState.isOpen) return; setTagPopupState(prev => ({ ...prev, selectedIndex: navigateSuggestions(prev, direction) })); }, [tagPopupState.isOpen]);
+          const handleTagSelect = useCallback((callback) => { setTagPopupState(prev => { if (!prev.isOpen || prev.suggestions.length === 0) return prev; const selectedTag = prev.suggestions[prev.selectedIndex]; callback(selectedTag); return prev; }); }, []);
+          const handleClearData = async () => { if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) { try { await db.keyValuePairs.delete('bullets'); const resetData = migrateBullets(initialData); setBullets(resetData); setZoomedBulletId(null); setSearchQuery(''); setIsSettingsModalOpen(false); addToast('All data has been reset', 'success'); } catch (error) { console.error("Failed to clear data", error); addToast('Failed to clear data', 'error'); } } };
 
           return (
               <div className="h-screen w-screen flex flex-col">
-                  <Toolbar
-                      onImport={handleImport}
-                      onExport={handleExport}
-                      breadcrumbs={breadcrumbs}
-                      onBreadcrumbClick={handleZoom}
-                      fileName={settings.fileName}
-                      onOpenSettings={() => setIsSettingsModalOpen(true)}
-                      onGoToToday={handleGoToJournal}
-                      theme={theme}
-                      onThemeToggle={handleThemeToggle}
-                      onOpenSearch={handleOpenSearch}
-                  />
+                  <Toolbar onImport={handleImport} onExport={handleExport} breadcrumbs={breadcrumbs} onBreadcrumbClick={handleZoom} fileName={settings.fileName} onOpenSettings={() => setIsSettingsModalOpen(true)} onGoToToday={handleGoToJournal} theme={theme} onThemeToggle={handleThemeToggle} onOpenSearch={handleOpenSearch} />
                   <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none">
                       {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
                           <div key={bullet.id}>
-                              <BulletItem
-                                  bullet={bullet}
-                                  level={0}
-                                  onUpdate={handleUpdate}
-                                  onAddSibling={handleAddSibling}
-                                  onDelete={handleDelete}
-                                  onIndent={handleIndent}
-                                  onOutdent={handleOutdent}
-                                  onFocusChange={handleFocusChange}
-                                  onZoom={handleZoom}
-                                  onFocusMove={handleFocusMove}
-                                  onFocusParent={handleFocusParent}
-                                  onFocusChild={handleFocusChild}
-                                  onFoldAll={handleFoldAll}
-                                  onMoveBullet={handleMoveBullet}
-                                  currentFocusId={currentFocusId}
-                                  focusPosition={focusPosition}
-                                  searchQuery={searchQuery}
-                                  onLinkClick={handleLinkClick}
-                                  onTriggerLinkPopup={handleTriggerLinkPopup}
-                                  onCloseLinkPopup={handleCloseLinkPopup}
-                                  onLinkNavigate={handleLinkNavigate}
-                                  onLinkSelect={handleLinkSelect}
-                                  isLinkPopupOpen={linkPopupState.isOpen}
-                                  linkPopupTargetId={linkPopupState.targetId}
-                                  onTriggerTagPopup={handleTriggerTagPopup}
-                                  onCloseTagPopup={handleCloseTagPopup}
-                                  onTagNavigate={handleTagNavigate}
-                                  onTagSelect={handleTagSelect}
-                                  isTagPopupOpen={tagPopupState.isOpen}
-                                  tagPopupTargetId={tagPopupState.targetId}
-                                  isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null}
-                                  onNavigateTo={handleNavigate}
-                                  onMerge={handleMerge}
-                              />
+                              <BulletItem bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null} onNavigateTo={handleNavigate} onMerge={handleMerge} />
                           </div>
                       )) : (
                           <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
-                              <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                                {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
-                              </button>
+                              <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{zoomedBulletId ? 'Add an item here' : 'Start with a new item'}</button>
                           </div>
                       )}
-                       {linkPopupState.isOpen && (
-                          <LinkPopup
-                              suggestions={linkPopupState.suggestions}
-                              selectedIndex={linkPopupState.selectedIndex}
-                              onSelect={(bullet) => {
-                                  if (linkSelectionHandler.handler) {
-                                      linkSelectionHandler.handler(bullet);
-                                  }
-                              }}
-                              position={linkPopupState.position}
-                              containerRef={linkPopupRef}
-                          />
-                      )}
-                      {tagPopupState.isOpen && (
-                          <TagPopup
-                              suggestions={tagPopupState.suggestions}
-                              selectedIndex={tagPopupState.selectedIndex}
-                              onSelect={(tag) => {
-                                  if (tagSelectionHandler.handler) {
-                                      tagSelectionHandler.handler(tag);
-                                  }
-                              }}
-                              position={tagPopupState.position}
-                              containerRef={tagPopupRef}
-                          />
-                      )}
+                       {linkPopupState.isOpen && <LinkPopup suggestions={linkPopupState.suggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(bullet) => { if (linkSelectionHandler.handler) linkSelectionHandler.handler(bullet); }} position={linkPopupState.position} containerRef={linkPopupRef} />}
+                      {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(tag) => { if (tagSelectionHandler.handler) tagSelectionHandler.handler(tag); }} position={tagPopupState.position} containerRef={tagPopupRef} />}
                   </main>
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                       <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                      <span>Version 0.1.13</span>
+                      <span>Version 0.1.12</span>
                   </footer>
-                   <SearchModal
-                      isOpen={isSearchModalOpen}
-                      onClose={handleCloseSearch}
-                      bullets={bullets}
-                      onNavigate={handleNavigate}
-                  />
-                  <SettingsModal 
-                      isOpen={isSettingsModalOpen}
-                      onClose={() => setIsSettingsModalOpen(false)}
-                      onSave={setSettings}
-                      currentSettings={settings}
-                      onClearData={handleClearData}
-                  />
-                  <ImportSelectionModal
-                      isOpen={isImportModalOpen}
-                      onClose={() => {
-                          setIsImportModalOpen(false);
-                          setPendingImportData(null);
-                      }}
-                      onConfirm={handleConfirmImport}
-                      bullets={bullets}
-                  />
+                   <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
+                  <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />
+                  <ImportSelectionModal isOpen={isImportModalOpen} onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }} onConfirm={handleConfirmImport} bullets={bullets} />
                   <ToastContainer toasts={toasts} removeToast={removeToast} />
               </div>
           );
       };
 
-      // ----------------------
-      // index.tsx
-      // ----------------------
       const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error("Could not find root element to mount to");
-      }
-
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(
-          <App />
-      );
+      if (!rootElement) throw new Error("Could not find root element to mount to");
+      const root = createRoot(rootElement);
+      root.render(<App />);
     </script>
   </body>
 </html>

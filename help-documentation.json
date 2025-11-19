@@ -1,3 +1,4 @@
+
 [
   {
     "id": "doc-root",
@@ -77,6 +78,15 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-25",
+                "text": "2024-11-03: Release Build Refactor",
+                "children": [
+                    { "id": "cl-25-a", "text": "Refactored application into a standalone release build to improve portability and fix initialization issues.", "children": [], "isCollapsed": false },
+                    { "id": "cl-25-b", "text": "Updated application version to 0.1.12.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-24",
                 "text": "2024-11-02: Stability Fixes",
