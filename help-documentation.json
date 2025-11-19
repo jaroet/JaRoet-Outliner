@@ -1,3 +1,4 @@
+
 [
   {
     "id": "doc-root",
@@ -56,7 +57,8 @@
               { "id": "hk-n-4", "text": "Ctrl+Left Arrow : Collapse item (if it has children) or go to parent", "children": [], "isCollapsed": false },
               { "id": "hk-n-5", "text": "Ctrl+Right Arrow : Expand a collapsed item", "children": [], "isCollapsed": false },
               { "id": "hk-n-6", "text": "Ctrl+J : Go to today's log", "children": [], "isCollapsed": false },
-              { "id": "hk-n-7", "text": "Ctrl+Shift+K : Open the \"Quick Find\" window", "children": [], "isCollapsed": false }
+              { "id": "hk-n-7", "text": "Ctrl+Shift+K : Open the \"Quick Find\" window", "children": [], "isCollapsed": false },
+              { "id": "hk-n-8", "text": "Ctrl+Shift+H : Go to root and collapse all top-level items", "children": [], "isCollapsed": false }
             ],
             "isCollapsed": true
           },
@@ -76,6 +78,24 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-17",
+                "text": "2024-10-27: Hotkey Implementation",
+                "children": [
+                    { "id": "cl-17-a", "text": "Enabled the `Ctrl+Shift+H` hotkey functionality.", "children": [], "isCollapsed": false },
+                    { "id": "cl-17-b", "text": "Updated application version to 0.1.8.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-16",
+                "text": "2024-10-27: Home Hotkey",
+                "children": [
+                    { "id": "cl-16-a", "text": "Added `Ctrl+Shift+H` to quickly navigate to the root of the outline and collapse all top-level items.", "children": [], "isCollapsed": false },
+                    { "id": "cl-16-b", "text": "Updated application version to 0.1.7.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-15",
                 "text": "2024-08-06: Local Execution Fix",
@@ -146,7 +166,7 @@
                 "children": [
                     { "id": "cl-8-a", "text": "Enhanced the 'Quick Find' modal to support multi-word and multi-tag searches.", "children": [], "isCollapsed": false },
                     { "id": "cl-8-b", "text": "By default, multiple terms are combined with AND logic (e.g., `#doc changelog` finds items with both).", "children": [], "isCollapsed": false },
-                    { "id": "cl-8-c", "text": "You can now use `OR` to find items matching any of the terms (e.g., `#doc OR changelog`).", "children": [], "isCollapsed": false }
+                    { "id": "cl-8-c", "text": "You can use `OR` to find items matching any of the terms (e.g., `#doc OR changelog`).", "children": [], "isCollapsed": false }
                 ],
                 "isCollapsed": false
             },

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, FlatBullet, Settings, CoreBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -694,6 +695,17 @@ export const App = () => {
                 e.preventDefault();
                 handleOpenSearch();
             }
+            else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+                e.preventDefault();
+                handleZoom(null);
+                setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
+                setTimeout(() => {
+                    const currentBullets = bulletsRef.current;
+                    if (currentBullets.length > 0) {
+                        handleFocusChange(currentBullets[0].id, 'start');
+                    }
+                }, 10);
+            }
             else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
                 e.preventDefault();
                 handleGoToJournal();
@@ -1072,14 +1084,7 @@ export const App = () => {
 
         left = Math.max(VIEWPORT_PADDING_PX, left);
 
-        // Using flatBullets would require flatBulletsRef or recreation.
-        // However, flatBullets is derived from bullets. 
-        // Re-calculating here or using a ref is needed for 0 deps.
-        // Let's just assume we use the 'flatBullets' from closure (which changes) or calculate on fly.
-        // Since this event is rare (typing [[), re-rendering App isn't the bottleneck, typing is.
-        // But 'onTriggerLinkPopup' is passed to BulletItem. It must be stable.
-        // We will use bulletsRef to calculate suggestions on the fly.
-        
+        // Recalculate tags on the fly for stability
         const currentBullets = bulletsRef.current;
         const results: FlatBullet[] = [];
         const traverse = (nodes: Bullet[], currentPath: string[]) => {
@@ -1123,7 +1128,7 @@ export const App = () => {
             selectedIndex: 0,
         });
 
-    }, []); // Stable!
+    }, []);
 
     const handleCloseLinkPopup = useCallback(() => {
         setLinkPopupState(prev => {
@@ -1136,18 +1141,14 @@ export const App = () => {
     }, []);
 
     const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
-        if (!linkPopupState.isOpen) return; // This check accesses state, but that's fine, we need access to isOpen from closure or ref.
-        // Actually linkPopupState changes often. This handler is passed to BulletItem.
-        // If linkPopupState changes, BulletItem re-renders?
-        // Only the focused bullet calls this.
+        if (!linkPopupState.isOpen) return; 
         setLinkPopupState(prev => ({
             ...prev,
             selectedIndex: navigateSuggestions(prev, direction),
         }));
-    }, [linkPopupState.isOpen]); // This dependency is unavoidable if we check isOpen, but isOpen only changes when popup opens/closes.
+    }, [linkPopupState.isOpen]); 
     
     const handleLinkSelect = useCallback((callback: (selectedBullet: FlatBullet) => void) => {
-        // Access state from closure.
         setLinkPopupState(prev => {
              if (!prev.isOpen || prev.suggestions.length === 0) return prev;
              const selectedBullet = prev.suggestions[prev.selectedIndex];
@@ -1208,7 +1209,6 @@ export const App = () => {
         }
         left = Math.max(VIEWPORT_PADDING_PX, left);
         
-        // Recalculate tags on the fly for stability
         const currentBullets = bulletsRef.current;
         const tagSet = new Set<string>();
         const tagRegex = /#\w+/g;
@@ -1363,7 +1363,7 @@ export const App = () => {
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                 <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.6</span>
+                <span>Version 0.1.8</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}

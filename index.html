@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -2040,6 +2041,18 @@
                       e.preventDefault();
                       handleOpenSearch();
                   }
+                  else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+                      e.preventDefault();
+                      handleZoom(null);
+                      setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
+                      // Focus root item
+                      setTimeout(() => {
+                          const currentBullets = bulletsRef.current;
+                          if (currentBullets.length > 0) {
+                              handleFocusChange(currentBullets[0].id, 'start');
+                          }
+                      }, 10);
+                  }
                   else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
                       e.preventDefault();
                       handleGoToJournal();
@@ -2692,7 +2705,7 @@
                   </main>
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                       <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                      <span>Version 0.1.6</span>
+                      <span>Version 0.1.8</span>
                   </footer>
                   <SearchModal
                       isOpen={isSearchModalOpen}
