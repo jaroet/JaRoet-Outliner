@@ -1,12 +1,13 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CircleIcon } from './Icons.tsx';
-import type { FlatBullet } from '../types.ts';
+import type { Bullet, FlatBullet } from '../types.ts';
 
 interface ImportSelectionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (targetId: string | null) => void;
-    bullets: FlatBullet[];
+    bullets: Bullet[];
 }
 
 export const ImportSelectionModal: React.FC<ImportSelectionModalProps> = ({ isOpen, onClose, onConfirm, bullets }) => {
@@ -25,11 +26,34 @@ export const ImportSelectionModal: React.FC<ImportSelectionModalProps> = ({ isOp
         }
     }, [isOpen]);
 
+    // Optimization: Calculate flat list inside the modal only when open
+    const flatBullets: FlatBullet[] = useMemo(() => {
+        if (!isOpen) return [];
+        
+        const results: FlatBullet[] = [];
+        const traverse = (nodes: Bullet[], currentPath: string[]) => {
+            for (const node of nodes) {
+                results.push({
+                    id: node.id,
+                    text: node.text,
+                    path: currentPath,
+                    createdAt: node.createdAt,
+                    updatedAt: node.updatedAt,
+                });
+                if (node.children && node.children.length > 0) {
+                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                }
+            }
+        };
+        traverse(bullets, []);
+        return results;
+    }, [bullets, isOpen]);
+
     const filteredBullets = useMemo(() => {
         if (!searchQuery.trim()) return [];
         const lowerQuery = searchQuery.toLowerCase();
-        return bullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
-    }, [bullets, searchQuery]);
+        return flatBullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
+    }, [flatBullets, searchQuery]);
 
     const handleConfirm = () => {
         onConfirm(selectedId);

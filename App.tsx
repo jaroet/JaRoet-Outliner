@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Bullet, FlatBullet, Settings, CoreBullet } from './types.ts';
+import type { Bullet, Settings, CoreBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
 import { BulletItem } from './components/BulletItem.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -8,6 +8,7 @@ import { LinkPopup } from './components/LinkPopup.tsx';
 import { TagPopup } from './components/TagPopup.tsx';
 import { TrashIcon } from './components/Icons.tsx';
 import { ImportSelectionModal } from './components/ImportSelectionModal.tsx';
+import { ToastContainer, useToast } from './components/Toast.tsx';
 
 declare const Dexie: any;
 
@@ -208,7 +209,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 
 // --- Main App Component ---
 export const App = () => {
-    const { useState, useEffect, useCallback, useMemo, useRef } = React;
     const [bullets, setBullets] = useState<Bullet[]>(initialData);
     const [zoomedBulletId, setZoomedBulletId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -217,13 +217,16 @@ export const App = () => {
     const linkPopupRef = useRef(null);
     const tagPopupRef = useRef(null);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-    const [linkSelectionHandler, setLinkSelectionHandler] = useState<{ handler: ((bullet: FlatBullet) => void) | null }>({ handler: null });
+    const [linkSelectionHandler, setLinkSelectionHandler] = useState<{ handler: ((bullet: any) => void) | null }>({ handler: null });
     const [tagSelectionHandler, setTagSelectionHandler] = useState<{ handler: ((tag: string) => void) | null }>({ handler: null });
     const prevFocusId = useRef<string | null>(null);
     const dataLoadedRef = useRef(false);
     const prevCoreDataRef = useRef<string | null>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
     const focusBeforeModalRef = useRef<string | null>(null);
+    
+    // Toast Hook
+    const { toasts, addToast, removeToast } = useToast();
     
     const [settings, setSettings] = useState<Settings>({
         mainColor: '#60a5fa',
@@ -238,7 +241,7 @@ export const App = () => {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const [linkPopupState, setLinkPopupState] = useState({
-        isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as FlatBullet[], selectedIndex: 0
+        isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as any[], selectedIndex: 0
     });
     const [tagPopupState, setTagPopupState] = useState({
         isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as string[], selectedIndex: 0
@@ -271,7 +274,8 @@ export const App = () => {
         const newTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(newTheme);
         db.keyValuePairs.put({ key: 'theme', value: newTheme });
-    }, [theme]);
+        addToast(`Switched to ${newTheme} mode`, 'info');
+    }, [theme, addToast]);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -338,7 +342,7 @@ export const App = () => {
         // Always save settings locally to IndexedDB
         db.keyValuePairs.put({ key: 'settings', value: settings });
         
-        document.title = `${settings.fileName || 'Untitled'} - Jaroet Outliner`;
+        document.title = `${settings.fileName || 'Untitled'} - JaRoet Outliner`;
         
         const root = document.documentElement;
         root.style.setProperty('--main-color', settings.mainColor);
@@ -356,39 +360,6 @@ export const App = () => {
 
     }, [settings, bullets, getCoreDataString]);
     
-    const flatBullets: FlatBullet[] = useMemo(() => {
-        const results: FlatBullet[] = [];
-        const traverse = (nodes: Bullet[], currentPath: string[]) => {
-            for (const node of nodes) {
-                results.push({
-                    id: node.id,
-                    text: node.text,
-                    path: currentPath,
-                    createdAt: node.createdAt,
-                    updatedAt: node.updatedAt,
-                });
-                if (node.children && node.children.length > 0) {
-                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                }
-            }
-        };
-        traverse(bullets, []);
-        return results;
-    }, [bullets]);
-    
-    const allTags = useMemo(() => {
-        const tagSet = new Set<string>();
-        const tagRegex = /#\w+/g;
-        for (const bullet of flatBullets) {
-            const matches = bullet.text.match(tagRegex);
-            if (matches) {
-                matches.forEach(tag => tagSet.add(tag));
-            }
-        }
-        return Array.from(tagSet).sort();
-    }, [flatBullets]);
-
-
     const findBulletAndParent = useCallback((
         id: string,
         nodes: Bullet[],
@@ -515,8 +486,6 @@ export const App = () => {
             isInitialFocusSet.current = true;
         }
     }, [visibleBulletIds, handleFocusChange]);
-
-    // Optimized Handlers using Refs and Functional Updates to remain stable
     
     const handleZoom = useCallback((id: string | null) => {
         const currentBullets = bulletsRef.current;
@@ -671,8 +640,9 @@ export const App = () => {
             }, 0);
             return result.nodes;
         });
+        addToast('Opened Daily Log', 'success');
 
-    }, [handleFocusChange]);
+    }, [handleFocusChange, addToast]);
 
     const handleUpdate = useCallback((id: string, updates: Partial<Bullet>) => {
         setBullets(prevBullets => {
@@ -968,6 +938,7 @@ export const App = () => {
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
+        addToast('Export started', 'success');
     };
 
     const handleImport = (data: Bullet[]) => {
@@ -1001,6 +972,7 @@ export const App = () => {
         // Cleanup
         setIsImportModalOpen(false);
         setPendingImportData(null);
+        addToast('Items imported successfully', 'success');
     };
     
     const handleAddItemToCurrentView = useCallback(() => {
@@ -1070,7 +1042,7 @@ export const App = () => {
 
 
     // --- Link & Tag Popup Logic ---
-    const handleTriggerLinkPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: FlatBullet) => void) => {
+    const handleTriggerLinkPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => {
         if (!inputRef.current) return;
         const rect = inputRef.current.getBoundingClientRect();
         setLinkSelectionHandler({ handler: selectionHandler });
@@ -1086,9 +1058,9 @@ export const App = () => {
 
         left = Math.max(VIEWPORT_PADDING_PX, left);
 
-        // Recalculate tags on the fly for stability
+        // Calculate flat list only when needed for popup suggestions
         const currentBullets = bulletsRef.current;
-        const results: FlatBullet[] = [];
+        const results: any[] = [];
         const traverse = (nodes: Bullet[], currentPath: string[]) => {
             for (const node of nodes) {
                 results.push({
@@ -1150,7 +1122,7 @@ export const App = () => {
         }));
     }, [linkPopupState.isOpen]); 
     
-    const handleLinkSelect = useCallback((callback: (selectedBullet: FlatBullet) => void) => {
+    const handleLinkSelect = useCallback((callback: (selectedBullet: any) => void) => {
         setLinkPopupState(prev => {
              if (!prev.isOpen || prev.suggestions.length === 0) return prev;
              const selectedBullet = prev.suggestions[prev.selectedIndex];
@@ -1194,8 +1166,9 @@ export const App = () => {
             setTimeout(() => handleFocusChange((targetBullet as Bullet).id, 'end'), 0);
         } else {
             console.warn(`Link target not found: "${linkText}"`);
+            addToast(`Link target "${linkText}" not found`, 'error');
         }
-    }, [handleFocusChange]);
+    }, [handleFocusChange, addToast]);
 
     const handleTriggerTagPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => {
         if (!inputRef.current) return;
@@ -1270,9 +1243,10 @@ export const App = () => {
                 setZoomedBulletId(null);
                 setSearchQuery('');
                 setIsSettingsModalOpen(false);
+                addToast('All data has been reset', 'success');
             } catch (error) {
                 console.error("Failed to clear data", error);
-                alert("Failed to clear data. Please try again.");
+                addToast('Failed to clear data', 'error');
             }
         }
     };
@@ -1365,14 +1339,13 @@ export const App = () => {
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                 <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.10</span>
+                <span>Version 0.1.11</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
                 onClose={handleCloseSearch}
-                bullets={flatBullets}
+                bullets={bullets}
                 onNavigate={handleNavigate}
-                allTags={allTags}
             />
             <SettingsModal 
                 isOpen={isSettingsModalOpen}
@@ -1388,8 +1361,9 @@ export const App = () => {
                     setPendingImportData(null);
                 }}
                 onConfirm={handleConfirmImport}
-                bullets={flatBullets}
+                bullets={bullets}
             />
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 };

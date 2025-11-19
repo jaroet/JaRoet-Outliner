@@ -1,3 +1,4 @@
+
 [
   {
     "id": "doc-root",
@@ -78,11 +79,21 @@
         "text": "Changelog",
         "children": [
             {
-                "id": "cl-19",
+                "id": "cl-21",
+                "text": "2024-10-27: Performance & UX",
+                "children": [
+                    { "id": "cl-21-a", "text": "Implemented lazy search indexing. The application no longer calculates searchable items on every keystroke, significantly improving typing performance in large outlines.", "children": [], "isCollapsed": false },
+                    { "id": "cl-21-b", "text": "Replaced intrusive browser alerts with a non-blocking Toast notification system.", "children": [], "isCollapsed": false },
+                    { "id": "cl-21-c", "text": "Updated application version to 0.1.11.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-20",
                 "text": "2024-10-27: Documentation Fixes",
                 "children": [
-                    { "id": "cl-19-a", "text": "Corrected the JSON structure of the help documentation file to prevent import errors.", "children": [], "isCollapsed": false },
-                    { "id": "cl-19-b", "text": "Updated application version to 0.1.10.", "children": [], "isCollapsed": false }
+                    { "id": "cl-20-a", "text": "Corrected the JSON structure of the help documentation file to prevent import errors.", "children": [], "isCollapsed": false },
+                    { "id": "cl-20-b", "text": "Updated application version to 0.1.10.", "children": [], "isCollapsed": false }
                 ],
                 "isCollapsed": false
             },

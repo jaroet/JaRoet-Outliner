@@ -70,6 +70,21 @@
       .dark .tag-span {
         color: var(--main-color);
       }
+      
+      @keyframes fadeInUp {
+          from {
+              opacity: 0;
+              transform: translate3d(0, 100%, 0);
+          }
+          to {
+              opacity: 1;
+              transform: translate3d(0, 0, 0);
+          }
+      }
+
+      .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease-out;
+      }
     </style>
     <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -247,6 +262,45 @@
         </svg>
       );
 
+      // --- COMPONENTS: TOAST ---
+      const useToast = () => {
+          const [toasts, setToasts] = useState([]);
+
+          const addToast = useCallback((message, type = 'info') => {
+              const id = crypto.randomUUID();
+              setToasts(prev => [...prev, { id, message, type }]);
+              setTimeout(() => {
+                  removeToast(id);
+              }, 3000);
+          }, []);
+
+          const removeToast = useCallback((id) => {
+              setToasts(prev => prev.filter(t => t.id !== id));
+          }, []);
+
+          return { toasts, addToast, removeToast };
+      };
+
+      const ToastContainer = ({ toasts, removeToast }) => {
+          return (
+              <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none">
+                  {toasts.map(toast => (
+                      <div
+                          key={toast.id}
+                          className={`px-4 py-2 rounded-md shadow-lg text-white text-sm font-medium transition-all duration-300 animate-fade-in-up pointer-events-auto ${
+                              toast.type === 'success' ? 'bg-green-600' : 
+                              toast.type === 'error' ? 'bg-red-600' : 
+                              'bg-gray-800 dark:bg-gray-600'
+                          }`}
+                          onClick={() => removeToast(toast.id)}
+                      >
+                          {toast.message}
+                      </div>
+                  ))}
+              </div>
+          );
+      };
+
       // --- COMPONENTS: POPUPS ---
       const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
         const selectedItemRef = useRef(null);
@@ -344,11 +398,34 @@
             }
         }, [isOpen]);
 
+        // Optimization: Calculate flat list inside the modal only when open
+        const flatBullets = useMemo(() => {
+            if (!isOpen) return [];
+            
+            const results = [];
+            const traverse = (nodes, currentPath) => {
+                for (const node of nodes) {
+                    results.push({
+                        id: node.id,
+                        text: node.text,
+                        path: currentPath,
+                        createdAt: node.createdAt,
+                        updatedAt: node.updatedAt,
+                    });
+                    if (node.children && node.children.length > 0) {
+                        traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                    }
+                }
+            };
+            traverse(bullets, []);
+            return results;
+        }, [bullets, isOpen]);
+
         const filteredBullets = useMemo(() => {
             if (!searchQuery.trim()) return [];
             const lowerQuery = searchQuery.toLowerCase();
-            return bullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
-        }, [bullets, searchQuery]);
+            return flatBullets.filter(b => b.text.toLowerCase().includes(lowerQuery)).slice(0, 50);
+        }, [flatBullets, searchQuery]);
 
         const handleConfirm = () => {
             onConfirm(selectedId);
@@ -459,7 +536,7 @@
       };
 
       // --- COMPONENT: SEARCH MODAL ---
-      const SearchModal = ({ isOpen, onClose, bullets, onNavigate, allTags }) => {
+      const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
         const [query, setQuery] = useState('');
         const [selectedIndex, setSelectedIndex] = useState(0);
         const [activeTab, setActiveTab] = useState('search');
@@ -473,6 +550,42 @@
           suggestions: [],
           selectedIndex: 0,
         });
+        
+        // Optimization: Only calculate flat list when modal is open
+        const flatBullets = useMemo(() => {
+            if (!isOpen) return [];
+            
+            const results = [];
+            const traverse = (nodes, currentPath) => {
+                for (const node of nodes) {
+                    results.push({
+                        id: node.id,
+                        text: node.text,
+                        path: currentPath,
+                        createdAt: node.createdAt,
+                        updatedAt: node.updatedAt,
+                    });
+                    if (node.children && node.children.length > 0) {
+                        traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                    }
+                }
+            };
+            traverse(bullets, []);
+            return results;
+        }, [bullets, isOpen]);
+
+        const allTags = useMemo(() => {
+            if (!isOpen) return [];
+            const tagSet = new Set();
+            const tagRegex = /#\w+/g;
+            for (const bullet of flatBullets) {
+                const matches = bullet.text.match(tagRegex);
+                if (matches) {
+                    matches.forEach(tag => tagSet.add(tag));
+                }
+            }
+            return Array.from(tagSet).sort();
+        }, [flatBullets, isOpen]);
 
         useEffect(() => {
           if (isOpen) {
@@ -492,11 +605,11 @@
           let sourceList;
           
           if (activeTab === 'edited') {
-              sourceList = [...bullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+              sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
           } else if (activeTab === 'created') {
-              sourceList = [...bullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+              sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
           } else {
-              sourceList = bullets;
+              sourceList = flatBullets;
           }
 
           const trimmedQuery = query.trim();
@@ -516,7 +629,7 @@
                   return andTerms.every(term => lowerCaseText.includes(term));
               });
           });
-        }, [query, bullets, activeTab]);
+        }, [query, flatBullets, activeTab]);
 
         useEffect(() => {
           if (selectedItemRef.current) {
@@ -1614,6 +1727,8 @@
           const [theme, setTheme] = useState('dark');
           const focusBeforeModalRef = useRef(null);
           
+          const { toasts, addToast, removeToast } = useToast();
+
           const [settings, setSettings] = useState({
               mainColor: '#60a5fa',
               fileName: 'My Outline',
@@ -1659,7 +1774,8 @@
               const newTheme = theme === 'light' ? 'dark' : 'light';
               setTheme(newTheme);
               db.keyValuePairs.put({ key: 'theme', value: newTheme });
-          }, [theme]);
+              addToast(`Switched to ${newTheme} mode`, 'info');
+          }, [theme, addToast]);
 
           useEffect(() => {
               const root = window.document.documentElement;
@@ -1737,39 +1853,7 @@
 
           }, [settings, bullets, getCoreDataString]);
           
-          const flatBullets = useMemo(() => {
-              const results = [];
-              const traverse = (nodes, currentPath) => {
-                  for (const node of nodes) {
-                      results.push({
-                          id: node.id,
-                          text: node.text,
-                          path: currentPath,
-                          createdAt: node.createdAt,
-                          updatedAt: node.updatedAt,
-                      });
-                      if (node.children && node.children.length > 0) {
-                          traverse(node.children, [...currentPath, node.text || 'Untitled']);
-                      }
-                  }
-              };
-              traverse(bullets, []);
-              return results;
-          }, [bullets]);
           
-          const allTags = useMemo(() => {
-              const tagSet = new Set();
-              const tagRegex = /#\w+/g;
-              for (const bullet of flatBullets) {
-                  const matches = bullet.text.match(tagRegex);
-                  if (matches) {
-                      matches.forEach(tag => tagSet.add(tag));
-                  }
-              }
-              return Array.from(tagSet).sort();
-          }, [flatBullets]);
-
-
           const findBulletAndParent = useCallback((
               id,
               nodes,
@@ -2018,7 +2102,8 @@
 
                   return newBullets;
               });
-          }, [handleFocusChange]);
+              addToast('Opened Daily Log', 'success');
+          }, [handleFocusChange, addToast]);
 
           const handleUpdate = useCallback((id, updates) => {
               setBullets(prevBullets => {
@@ -2312,6 +2397,7 @@
               linkElement.setAttribute('href', dataUri);
               linkElement.setAttribute('download', exportFileDefaultName);
               linkElement.click();
+              addToast('Export started', 'success');
           };
 
           const handleImport = (data) => {
@@ -2345,6 +2431,7 @@
               // Cleanup
               setIsImportModalOpen(false);
               setPendingImportData(null);
+              addToast('Items imported successfully', 'success');
           };
           
           const handleAddItemToCurrentView = useCallback(() => {
@@ -2536,8 +2623,9 @@
                   setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0);
               } else {
                   console.warn(`Link target not found: "${linkText}"`);
+                  addToast(`Link target "${linkText}" not found`, 'error');
               }
-          }, [handleFocusChange]);
+          }, [handleFocusChange, addToast]);
 
           const handleTriggerTagPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
               if (!inputRef.current) return;
@@ -2612,9 +2700,10 @@
                       setZoomedBulletId(null);
                       setSearchQuery('');
                       setIsSettingsModalOpen(false);
+                      addToast('All data has been reset', 'success');
                   } catch (error) {
                       console.error("Failed to clear data", error);
-                      alert("Failed to clear data. Please try again.");
+                      addToast('Failed to clear data', 'error');
                   }
               }
           };
@@ -2707,14 +2796,13 @@
                   </main>
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                       <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                      <span>Version 0.1.10</span>
+                      <span>Version 0.1.11</span>
                   </footer>
                   <SearchModal
                       isOpen={isSearchModalOpen}
                       onClose={handleCloseSearch}
-                      bullets={flatBullets}
+                      bullets={bullets}
                       onNavigate={handleNavigate}
-                      allTags={allTags}
                   />
                   <SettingsModal 
                       isOpen={isSettingsModalOpen}
@@ -2730,8 +2818,9 @@
                           setPendingImportData(null);
                       }}
                       onConfirm={handleConfirmImport}
-                      bullets={flatBullets}
+                      bullets={bullets}
                   />
+                  <ToastContainer toasts={toasts} removeToast={removeToast} />
               </div>
           );
       };

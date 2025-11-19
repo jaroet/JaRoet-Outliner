@@ -1,19 +1,19 @@
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { SearchIcon } from './Icons.tsx';
 import { TagPopup } from './TagPopup.tsx';
-import type { FlatBullet } from '../types.ts';
+import type { Bullet, FlatBullet } from '../types.ts';
 
 interface SearchModalProps {
     isOpen: boolean;
     onClose: () => void;
-    bullets: FlatBullet[];
+    bullets: Bullet[];
     onNavigate: (id: string) => void;
-    allTags: string[];
 }
 
 type Tab = 'search' | 'edited' | 'created';
 
-export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate, allTags }) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('search');
@@ -27,6 +27,42 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
     suggestions: [] as string[],
     selectedIndex: 0,
   });
+
+  // Optimization: Only calculate flat list when modal is open
+  const flatBullets: FlatBullet[] = useMemo(() => {
+      if (!isOpen) return [];
+      
+      const results: FlatBullet[] = [];
+      const traverse = (nodes: Bullet[], currentPath: string[]) => {
+          for (const node of nodes) {
+              results.push({
+                  id: node.id,
+                  text: node.text,
+                  path: currentPath,
+                  createdAt: node.createdAt,
+                  updatedAt: node.updatedAt,
+              });
+              if (node.children && node.children.length > 0) {
+                  traverse(node.children, [...currentPath, node.text || 'Untitled']);
+              }
+          }
+      };
+      traverse(bullets, []);
+      return results;
+  }, [bullets, isOpen]);
+
+  const allTags = useMemo(() => {
+      if (!isOpen) return [];
+      const tagSet = new Set<string>();
+      const tagRegex = /#\w+/g;
+      for (const bullet of flatBullets) {
+          const matches = bullet.text.match(tagRegex);
+          if (matches) {
+              matches.forEach(tag => tagSet.add(tag));
+          }
+      }
+      return Array.from(tagSet).sort();
+  }, [flatBullets, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -46,11 +82,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
     let sourceList: FlatBullet[];
     
     if (activeTab === 'edited') {
-        sourceList = [...bullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     } else if (activeTab === 'created') {
-        sourceList = [...bullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } else {
-        sourceList = bullets;
+        sourceList = flatBullets;
     }
 
     const trimmedQuery = query.trim();
@@ -70,7 +106,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
             return andTerms.every(term => lowerCaseText.includes(term));
         });
     });
-  }, [query, bullets, activeTab]);
+  }, [query, flatBullets, activeTab]);
 
   useEffect(() => {
     if (selectedItemRef.current) {
