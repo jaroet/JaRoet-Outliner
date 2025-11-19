@@ -58,20 +58,22 @@ const createNewBullet = (text = ''): Bullet => {
 };
 
 const migrateBullets = (nodes: Bullet[]): Bullet[] => {
+    if (!Array.isArray(nodes)) return [];
     const now = Date.now();
     return nodes.map(node => ({
         ...node,
         createdAt: node.createdAt || now,
         updatedAt: node.updatedAt || now,
-        children: migrateBullets(node.children),
+        children: migrateBullets(node.children || []),
     }));
 };
 
 const regenerateIds = (nodes: Bullet[]): Bullet[] => {
+    if (!Array.isArray(nodes)) return [];
     return nodes.map(node => ({
         ...node,
         id: crypto.randomUUID(),
-        children: regenerateIds(node.children),
+        children: regenerateIds(node.children || []),
     }));
 };
 
@@ -1363,7 +1365,7 @@ export const App = () => {
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                 <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.8</span>
+                <span>Version 0.1.10</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
