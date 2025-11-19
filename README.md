@@ -9,7 +9,7 @@ But as I am no software developer the only way forward for me to get a result wa
 And the results blew my mind. Within a half an hour I had a working **Workflowy**, **Dynalist**, **Logseq** alternative without the need to install anything!  
 
 ## Installation
-As mentioned, no installation is needed to run it locally. Just a somewhat up-to-date browser (it is wise to have that up-to-date anyway) and a folder to copy the files to. 
+As mentioned, no installation is needed to run it locally. Just a somewhat up-to-date browser (it is wise to have that up-to-date anyway) and a folder to copy the files to. I have tested this on ChromeOS and Windows 11. 
 
 Unzip the ZIP file in any location you want. Create a folder first as the ZIP file has only 3 files in it. 
 
