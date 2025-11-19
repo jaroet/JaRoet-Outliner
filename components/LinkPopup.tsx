@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { FlatBullet } from '../types';
+import type { FlatBullet } from '../types.ts';
 
 interface LinkPopupProps {
     suggestions: FlatBullet[];

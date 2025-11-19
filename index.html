@@ -4,16 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jaroet Outliner</title>
-    
-    <!-- Dependencies -->
+    <title>JaRoet Outliner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
       }
     </script>
-    
     <style>
       :root {
         --main-color: #60a5fa;
@@ -73,74 +70,242 @@
         color: var(--main-color);
       }
     </style>
-    
-    <!-- React UMD builds (globals) -->
-    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-
-    <!-- Other dependencies (globals) -->
+    <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Add Dexie.js for IndexedDB -->
     <script src="https://unpkg.com/dexie@4.0.7/dist/dexie.js"></script>
-    
-    <!-- Babel Config -->
+    <!-- Configure Babel -->
     <script>
       Babel.config({
-        presets: ["env", "react", "typescript"]
+        presets: [
+          ["env", { "modules": false }],
+          "react",
+          "typescript"
+        ]
       });
     </script>
   <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
   }
 }
 </script>
 </head>
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-200">
     <div id="root"></div>
-    <!-- Application Code -->
-    <script type="text/babel">
-      // --- START: types.ts ---
-      interface Bullet {
-        id: string;
-        text: string;
-        children: Bullet[];
-        isCollapsed: boolean;
-        isReadOnly?: boolean;
-        originalId?: string;
-        createdAt?: number;
-        updatedAt?: number;
-      }
+    
+    <script type="text/babel" data-type="module">
+      import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+      import ReactDOM from 'react-dom/client';
 
-      interface FlatBullet {
-        id: string;
-        text: string;
-        path: string[];
-        createdAt?: number;
-        updatedAt?: number;
-      }
+      // --- TYPES ---
+      // Defined locally since we are in a single file
 
-      interface Settings {
-        mainColor: string;
-        fileName: string;
-        fontFamily: string;
-        fontSize: number;
-      }
+      // --- DATA: HELP DOCUMENTATION ---
+      const HELP_DATA = [
+        {
+            "id": "gs-1",
+            "text": "Quick Start Guide",
+            "children": [
+            { "id": "gs-2", "text": "Click on an item to start typing.", "children": [], "isCollapsed": false },
+            { "id": "gs-3", "text": "Press `Enter` to split an item or create a new one.", "children": [], "isCollapsed": false },
+            { "id": "gs-4", "text": "Press `Shift+Enter` to create a new line within an item.", "children": [], "isCollapsed": false },
+            { "id": "gs-5", "text": "Press `Tab` to indent an item (make it a child).", "children": [], "isCollapsed": false },
+            { "id": "gs-6", "text": "Press `Shift+Tab` to outdent an item.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "kf-1",
+            "text": "Key Features",
+            "children": [
+            { "id": "kf-2", "text": "Zoom In: Click a bullet point to focus on that item and its children.", "children": [], "isCollapsed": false },
+            { "id": "kf-3", "text": "Zoom Out: Use the breadcrumbs at the top or press `Ctrl+Up` to go back.", "children": [], "isCollapsed": false },
+            { "id": "kf-5", "text": "Expand/Collapse: Click the triangle next to an item to show or hide its children.", "children": [], "isCollapsed": false },
+            { "id": "kf-6", "text": "Daily Log: Press `Ctrl+J` to jump directly to a special section for today's date.", "children": [], "isCollapsed": false },
+            { "id": "kf-7", "text": "Quick Find: Press `Ctrl+Shift+K` to open the search bar. You can search for multiple terms (e.g., `#project release`) and use `OR` for broader results (e.g., `#bug OR #fix`).", "children": [], "isCollapsed": false },
+            { "id": "kf-8", "text": "Tags: Type `#tagname` to create a tag, which will be visually highlighted.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "hk-1",
+            "text": "All Hotkeys",
+            "children": [
+            {
+                "id": "hk-edit",
+                "text": "Creating & Editing",
+                "children": [
+                { "id": "hk-e-1", "text": "Enter : Create a new item or split the current one", "children": [], "isCollapsed": false },
+                { "id": "hk-e-2", "text": "Shift+Enter : Add a new line within the current item", "children": [], "isCollapsed": false },
+                { "id": "hk-e-3", "text": "Tab : Indent current item", "children": [], "isCollapsed": false },
+                { "id": "hk-e-4", "text": "Shift+Tab : Outdent current item", "children": [], "isCollapsed": false },
+                { "id": "hk-e-5", "text": "Backspace (on an empty item) : Delete the item", "children": [], "isCollapsed": false },
+                { "id": "hk-e-6", "text": "Ctrl+L : Turn selected text into a link", "children": [], "isCollapsed": false },
+                { "id": "hk-e-7", "text": "[[ : Start typing to link to another item", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
+            },
+            {
+                "id": "hk-nav",
+                "text": "Navigation & View",
+                "children": [
+                { "id": "hk-n-1", "text": "Up/Down Arrow : Navigate between items", "children": [], "isCollapsed": false },
+                { "id": "hk-n-2", "text": "Ctrl+Down Arrow (or click bullet) : Zoom in", "children": [], "isCollapsed": false },
+                { "id": "hk-n-3", "text": "Ctrl+Up Arrow : Zoom out", "children": [], "isCollapsed": false },
+                { "id": "hk-n-4", "text": "Ctrl+Left Arrow : Collapse item (if it has children) or go to parent", "children": [], "isCollapsed": false },
+                { "id": "hk-n-5", "text": "Ctrl+Right Arrow : Expand a collapsed item", "children": [], "isCollapsed": false },
+                { "id": "hk-n-6", "text": "Ctrl+J : Go to today's log", "children": [], "isCollapsed": false },
+                { "id": "hk-n-7", "text": "Ctrl+Shift+K : Open the \"Quick Find\" window", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
+            },
+            {
+                "id": "hk-org",
+                "text": "Organizing",
+                "children": [
+                { "id": "hk-o-1", "text": "Alt+Up Arrow : Move item up", "children": [], "isCollapsed": false },
+                { "id": "hk-o-2", "text": "Alt+Down Arrow : Move item down", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
+            }
+            ],
+            "isCollapsed": false
+        },
+        {
+            "id": "changelog-root",
+            "text": "Changelog",
+            "children": [
+                {
+                    "id": "cl-15",
+                    "text": "2024-08-06: Local Execution Fix",
+                    "children": [
+                        { "id": "cl-15-a", "text": "Fixed a significant loading issue that caused a blank screen when running the app directly from a downloaded file on a local computer. The application should now start correctly in this scenario.", "children": [], "isCollapsed": false },
+                        { "id": "cl-15-b", "text": "Updated application version to 0.1.4.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-14",
+                    "text": "2024-08-05: Critical Loading Fix",
+                    "children": [
+                        { "id": "cl-14-a", "text": "Fixed a critical bug that caused a blank screen when the application was launched, especially on Windows and ChromeOS. The app now loads reliably.", "children": [], "isCollapsed": false },
+                        { "id": "cl-14-b", "text": "Updated application version to 0.1.3.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-13",
+                    "text": "2024-08-04: Status Bar Enhancement",
+                    "children": [
+                        { "id": "cl-13-a", "text": "The text in the status bar now uses the main theme color, making it more vibrant and consistent with the UI.", "children": [], "isCollapsed": false },
+                        { "id": "cl-13-b", "text": "Updated application version to 0.1.2.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-12",
+                    "text": "2024-08-03: UI Polish & Versioning",
+                    "children": [
+                        { "id": "cl-12-a", "text": "Moved the outline title from the top toolbar to the bottom status bar for a cleaner look.", "children": [], "isCollapsed": false },
+                        { "id": "cl-12-b", "text": "Updated application version to 0.1.1.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-11",
+                    "text": "2024-08-02: Status Bar & Versioning",
+                    "children": [
+                        { "id": "cl-11-a", "text": "Added a status bar to the bottom of the application.", "children": [], "isCollapsed": false },
+                        { "id": "cl-11-b", "text": "The status bar now displays the current app version, starting with v0.1.0.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-10",
+                    "text": "2024-08-01: UI & Formatting Improvements",
+                    "children": [
+                        { "id": "cl-10-a", "text": "Renamed 'Recent Edits' and 'Recent Creations' tabs in Quick Find to 'Recently modified' and 'Recently created' for clarity.", "children": [], "isCollapsed": false },
+                        { "id": "cl-10-b", "text": "Timestamps in Quick Find now include the time and are displayed for all search results.", "children": [], "isCollapsed": false },
+                        { "id": "cl-10-c", "text": "All timestamps now use a 24-hour format.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-9",
+                    "text": "2024-07-31: Timestamps & Enhanced Search",
+                    "children": [
+                        { "id": "cl-9-a", "text": "Bullets now track their creation and last modification dates.", "children": [], "isCollapsed": false },
+                        { "id": "cl-9-b", "text": "The 'Quick Find' window (Ctrl+Shift+K) now has tabs to view bullets sorted by 'Recent Edits' and 'Recent Creations'.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-8",
+                    "text": "2024-07-30: Advanced Search",
+                    "children": [
+                        { "id": "cl-8-a", "text": "Enhanced the 'Quick Find' modal to support multi-word and multi-tag searches.", "children": [], "isCollapsed": false },
+                        { "id": "cl-8-b", "text": "By default, multiple terms are combined with AND logic (e.g., `#doc changelog` finds items with both).", "children": [], "isCollapsed": false },
+                        { "id": "cl-8-c", "text": "You can now use `OR` to find items matching any of the terms (e.g., `#doc OR changelog`).", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-7",
+                    "text": "2024-07-29: Further Optimization",
+                    "children": [
+                        { "id": "cl-7-a", "text": "Moved the changelog into the external `help-documentation.json` file.", "children": [], "isCollapsed": false },
+                        { "id": "cl-7-b", "text": "Externalized all application CSS into a separate `index.css` file.", "children": [], "isCollapsed": false },
+                        { "id": "cl-7-c", "text": "These changes make the main HTML file even smaller and faster to load.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-6",
+                    "text": "2024-07-28: Major Simplification",
+                    "children": [
+                        { "id": "cl-6-a", "text": "Streamlined the application by removing all traces of the old sidebar functionality from the documentation.", "children": [], "isCollapsed": false },
+                        { "id": "cl-6-b", "text": "Moved the extensive \"Help & Documentation\" content into a separate `help-documentation.json` file to reduce initial load size.", "children": [], "isCollapsed": false },
+                        { "id": "cl-6-c", "text": "You can import the new JSON file at any time to access the full guide.", "children": [], "isCollapsed": false }
+                    ],
+                    "isCollapsed": false
+                },
+                {
+                    "id": "cl-5",
+                    "text": "Sync & UI Updates",
+                    "children": [
+                        { "id": "cl-5-a", "text": "Removed GitHub Sync functionality in favor of local indexedDB storage.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": true
+        },
+        {
+            "id": "cl-2",
+            "text": "Bug Fixes & Optimizations",
+            "children": [
+                { "id": "cl-2-b", "text": "Refactored internal bullet addition logic for better consistency.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": true
+        },
+        {
+            "id": "cl-1",
+            "text": "Code Refactoring & Cleanup",
+            "children": [
+                { "id": "cl-1-a", "text": "Removed unused color utility functions.", "children": [], "isCollapsed": false },
+                { "id": "cl-1-b", "text": "Upgraded object cloning to `structuredClone` for better performance.", "children": [], "isCollapsed": false },
+                { "id": "cl-1-c", "text": "Improved unique ID generation using `crypto.randomUUID`.", "children": [], "isCollapsed": false },
+                { "id": "cl-1-d", "text": "Optimized text rendering to reduce unnecessary recalculations.", "children": [], "isCollapsed": false }
+            ],
+            "isCollapsed": true
+        }
+      ]
+    }
+];
 
-      type CoreBullet = {
-        id: string;
-        text: string;
-        children: CoreBullet[];
-        originalId?: string;
-        createdAt?: number;
-        updatedAt?: number;
-      };
-      // --- END: types.ts ---
-
-
-      // --- START: components/Icons.tsx ---
+      // --- COMPONENTS: ICONS ---
       const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -208,12 +373,15 @@
               <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25c0 5.385 4.365 9.75 9.75 9.75 2.806 0 5.347-1.257 7.141-3.248a9.753 9.753 0 0 1 1.861-3.75Z" />
           </svg>
       );
-      // --- END: components/Icons.tsx ---
+      
+      const TrashIcon = ({ className = 'w-5 h-5' }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+        </svg>
+      );
 
-
-      // --- START: components/LinkPopup.tsx ---
+      // --- COMPONENTS: POPUPS ---
       const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const { useEffect, useRef } = React;
         const selectedItemRef = useRef(null);
         
         useEffect(() => {
@@ -239,7 +407,7 @@
                     className={`w-full text-left px-3 py-2 text-sm ${
                       index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                     title={bullet.text}
+                    title={bullet.text}
                   >
                     <span className="truncate block">{bullet.text || <em>Untitled</em>}</span>
                     {bullet.path.length > 0 && (
@@ -254,12 +422,8 @@
           </div>
         );
       };
-      // --- END: components/LinkPopup.tsx ---
 
-
-      // --- START: components/TagPopup.tsx ---
       const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const { useEffect, useRef } = React;
         const selectedItemRef = useRef(null);
         
         useEffect(() => {
@@ -285,7 +449,7 @@
                     className={`w-full text-left px-3 py-2 text-sm ${
                       index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                     title={tag}
+                    title={tag}
                   >
                     <span className="truncate block">{tag}</span>
                   </button>
@@ -295,115 +459,9 @@
           </div>
         );
       };
-      // --- END: components/TagPopup.tsx ---
 
-
-      // --- START: components/Toolbar.tsx ---
-      const Toolbar = ({
-        onImport,
-        onExport,
-        breadcrumbs,
-        onBreadcrumbClick,
-        fileName,
-        onOpenSettings,
-        onGoToToday,
-        theme,
-        onThemeToggle,
-        onOpenSearch,
-      }) => {
-        const { useRef } = React;
-        const fileInputRef = useRef(null);
-
-        const handleImportClick = () => {
-          fileInputRef.current?.click();
-        };
-
-        const handleFileChange = (event) => {
-          const file = event.target.files?.[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              try {
-                const content = e.target?.result;
-                const data = JSON.parse(content);
-                // Basic validation
-                if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
-                  onImport(data);
-                } else {
-                  alert('Invalid JSON file format.');
-                }
-              } catch (error) {
-                alert('Error parsing JSON file.');
-                console.error(error);
-              }
-            };
-            reader.readAsText(file);
-          }
-           // Reset file input to allow re-uploading the same file
-          if(event.target) {
-              event.target.value = '';
-          }
-        };
-
-        return (
-          <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
-              <div className="flex-grow flex items-center gap-2 overflow-hidden">
-                  <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <HomeIcon />
-                  </button>
-                  {breadcrumbs.map((crumb, index) => (
-                      <React.Fragment key={crumb.id}>
-                      <span className="text-gray-400 dark:text-gray-500">/</span>
-                      <button
-                          onClick={() => onBreadcrumbClick(crumb.id)}
-                          className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate"
-                          title={crumb.text}
-                      >
-                          {crumb.text || <em>Untitled</em>}
-                      </button>
-                      </React.Fragment>
-                  ))}
-              </div>
-
-            <div className="flex items-center gap-2">
-               <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <SearchIcon />
-              </button>
-              <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <AppointmentIcon className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-1">
-                  <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      accept=".json"
-                      onChange={handleFileChange}
-                  />
-                  <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <UploadIcon />
-                  </button>
-                  <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <DownloadIcon />
-                  </button>
-                  <button onClick={onThemeToggle} title="Toggle Theme" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-                  </button>
-                  <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <SettingsIcon />
-                  </button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-      // --- END: components/Toolbar.tsx ---
-
-
-      // --- START: components/SearchModal.tsx ---
+      // --- COMPONENT: SEARCH MODAL ---
       const SearchModal = ({ isOpen, onClose, bullets, onNavigate, allTags }) => {
-        const { useState, useEffect, useMemo, useRef, useCallback } = React;
         const [query, setQuery] = useState('');
         const [selectedIndex, setSelectedIndex] = useState(0);
         const [activeTab, setActiveTab] = useState('search');
@@ -659,7 +717,7 @@
                           onKeyDown={handleKeyDown}
                           className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
                       />
-                       {tagPopupState.isOpen && inputRef.current && (
+                      {tagPopupState.isOpen && inputRef.current && (
                           <TagPopup
                               suggestions={tagPopupState.suggestions}
                               selectedIndex={tagPopupState.selectedIndex}
@@ -673,7 +731,7 @@
                       )}
                   </div>
                   <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
-                      {(['search', 'edited', 'created']).map(tab => (
+                      {['search', 'edited', 'created'].map(tab => (
                           <button
                               key={tab}
                               onClick={() => setActiveTab(tab)}
@@ -721,7 +779,7 @@
                                       </React.Fragment>
                                   ))
                               ) : (
-                                   <span className="italic opacity-50">Top level</span>
+                                  <span className="italic opacity-50">Top level</span>
                               )}
                           </div>
                         </div>
@@ -736,10 +794,106 @@
           </div>
         );
       };
-      // --- END: components/SearchModal.tsx ---
 
+      // --- COMPONENT: TOOLBAR ---
+      const Toolbar = ({
+        onImport,
+        onExport,
+        breadcrumbs,
+        onBreadcrumbClick,
+        fileName,
+        onOpenSettings,
+        onGoToToday,
+        theme,
+        onThemeToggle,
+        onOpenSearch,
+      }) => {
+        const fileInputRef = useRef(null);
 
-      // --- START: components/BulletItem.tsx ---
+        const handleImportClick = () => {
+          fileInputRef.current?.click();
+        };
+
+        const handleFileChange = (event) => {
+          const file = event.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const content = e.target?.result;
+                const data = JSON.parse(content);
+                if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
+                  onImport(data);
+                } else {
+                  alert('Invalid JSON file format.');
+                }
+              } catch (error) {
+                alert('Error parsing JSON file.');
+                console.error(error);
+              }
+            };
+            reader.readAsText(file);
+          }
+          if(event.target) {
+              event.target.value = '';
+          }
+        };
+
+        return (
+          <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+              <div className="flex-grow flex items-center gap-2 overflow-hidden">
+                  <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <HomeIcon />
+                  </button>
+                  {breadcrumbs.map((crumb, index) => (
+                      <React.Fragment key={crumb.id}>
+                      <span className="text-gray-400 dark:text-gray-500">/</span>
+                      <button
+                          onClick={() => onBreadcrumbClick(crumb.id)}
+                          className="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors truncate"
+                          title={crumb.text}
+                      >
+                          {crumb.text || <em>Untitled</em>}
+                      </button>
+                      </React.Fragment>
+                  ))}
+              </div>
+
+            <div className="flex items-center gap-2">
+              <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <SearchIcon />
+              </button>
+              <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <AppointmentIcon className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                  <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept=".json"
+                      onChange={handleFileChange}
+                  />
+                  <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <UploadIcon />
+                  </button>
+                  <button onClick={onExport} title="Export to JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <DownloadIcon />
+                  </button>
+                  <button onClick={onThemeToggle} title="Toggle Theme" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+                  </button>
+                  <button onClick={onOpenSettings} title="Settings" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <SettingsIcon />
+                  </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // --- COMPONENT: BULLET ITEM ---
       const highlightText = (text, highlight) => {
           if (!text) return text;
           const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
@@ -809,7 +963,7 @@
                   if (part.startsWith('#') && /#\w+/.test(part)) {
                       return (
                           <span key={index} className="tag-span">
-                               {highlightText(part, highlight)}
+                              {highlightText(part, highlight)}
                           </span>
                       );
                   }
@@ -828,11 +982,11 @@
                       const [, text, url] = mdLinkMatch;
                       let href = url.trim();
                       if (!/^(https?|ftp|mailto):/i.test(href)) {
-                         href = `https://${href}`;
+                        href = `https://${href}`;
                       }
                       return (
                           <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                             {highlightText(text, highlight)}
+                            {highlightText(text, highlight)}
                           </a>
                       );
                   }
@@ -894,7 +1048,6 @@
         isJournalRoot,
         onNavigateTo,
       }) => {
-        const { useState, useRef, useEffect, useCallback, useMemo } = React;
         const [isEditing, setIsEditing] = useState(false);
         const textInputRef = useRef(null);
 
@@ -1013,11 +1166,11 @@
               if (e.ctrlKey) {
                   switch (e.key) {
                       case 'ArrowLeft':
-                          if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }, false);
+                          if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
                           else if (level > 0) onFocusParent(bullet.id);
                           break;
                       case 'ArrowRight':
-                          if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }, false);
+                          if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
                           break;
                       case 'ArrowDown':
                           onZoom(bullet.id);
@@ -1031,7 +1184,7 @@
                           if (bullet.originalId) {
                               onNavigateTo(bullet.originalId);
                           } else if (hasChildren) {
-                              onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }, false);
+                              onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
                           }
                           break;
                       case 'ArrowUp': onFocusMove('up'); break;
@@ -1139,11 +1292,11 @@
               let handled = true;
               switch (e.key) {
                   case 'ArrowLeft':
-                      if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }, false);
+                      if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
                       else if (level > 0) onFocusParent(bullet.id);
                       break;
                   case 'ArrowRight':
-                      if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }, false);
+                      if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
                       else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
                       break;
                   case 'ArrowDown': onZoom(bullet.id); break;
@@ -1200,7 +1353,7 @@
 
         const toggleCollapse = () => {
           if (hasChildren) {
-            onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }, false);
+            onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
           }
         };
 
@@ -1336,100 +1489,19 @@
           </div>
         );
       };
-      // --- END: components/BulletItem.tsx ---
 
-
-      // --- START: App.tsx ---
-      class JaroetDatabase extends Dexie {
-          keyValuePairs;
-
-          constructor() {
-              super("JaroetOutlinerDB");
-              this.version(1).stores({
-                  keyValuePairs: 'key', 
-              });
-              this.keyValuePairs = this.table('keyValuePairs');
-          }
-      }
-
-      const db = new JaroetDatabase();
-
-      const DAILY_LOG_ROOT_TEXT = 'Daily Log';
-
-      const initialData = [
-        {
-          id: 'journal-root',
-          text: DAILY_LOG_ROOT_TEXT,
-          children: [],
-          isCollapsed: true,
-        },
-        {
-          id: 'doc-root',
-          text: 'Help & Documentation',
-          children: [
-            {
-              id: 'help-placeholder',
-              text: 'To view the full documentation and changelog, import the `help-documentation.json` file using the "Import from JSON" button in the toolbar.',
-              children: [],
-              isCollapsed: false,
-            },
-          ],
-          isCollapsed: true,
-        },
-      ];
-
-      const createNewBullet = (text = '') => {
-          const now = Date.now();
-          return {
-              id: crypto.randomUUID(),
-              text,
-              children: [],
-              isCollapsed: false,
-              createdAt: now,
-              updatedAt: now,
-          };
-      };
-
-      const migrateBullets = (nodes) => {
-          const now = Date.now();
-          return nodes.map(node => ({
-              ...node,
-              createdAt: node.createdAt || now,
-              updatedAt: node.updatedAt || now,
-              children: migrateBullets(node.children),
-          }));
-      };
-
-      const navigateSuggestions = (
-          prevState,
-          direction
-      ) => {
-          const { suggestions, selectedIndex } = prevState;
-          const count = suggestions.length;
-          if (count === 0) return selectedIndex;
-          if (direction === 'down') {
-              return (selectedIndex + 1) % count;
-          } else { // 'up'
-              return (selectedIndex - 1 + count) % count;
-          }
-      };
-
+      // --- COMPONENT: SETTINGS ---
       const FONT_LIST = [
         'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 
         'Times New Roman', 'Georgia', 'Garamond', 
         'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'
       ];
 
-      const SettingsModal = ({ isOpen, onClose, onSave, currentSettings, onClearDatabase }) => {
-          const { useState, useEffect } = React;
+      const SettingsModal = ({ isOpen, onClose, onSave, currentSettings, onClearData }) => {
           const [settings, setSettings] = useState(currentSettings);
-          const [isConfirmingReset, setIsConfirmingReset] = useState(false);
-          const [resetClickCount, setResetClickCount] = useState(0);
 
           useEffect(() => {
               setSettings(currentSettings);
-              setIsConfirmingReset(false);
-              setResetClickCount(0);
           }, [isOpen, currentSettings]);
 
           const handleSave = () => {
@@ -1445,19 +1517,6 @@
           const handleFontSizeChange = (e) => {
               setSettings(prev => ({...prev, fontSize: parseInt(e.target.value, 10) }));
           }
-
-          const handleResetClick = () => {
-            const newCount = resetClickCount + 1;
-            setResetClickCount(newCount);
-            if (newCount >= 3) {
-                onClearDatabase();
-            }
-          };
-
-          const handleCancelReset = () => {
-              setIsConfirmingReset(false);
-              setResetClickCount(0);
-          };
 
           if (!isOpen) return null;
 
@@ -1484,38 +1543,22 @@
                               <label htmlFor="fontSize" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
                               <input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/>
                           </div>
-                      </div>
-                      
-                      <div className="p-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
-                        <h3 className="text-md font-semibold text-red-600 dark:text-red-500">Danger Zone</h3>
-                        {!isConfirmingReset ? (
-                            <button 
-                                onClick={() => setIsConfirmingReset(true)}
-                                className="w-full px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors"
-                            >
-                                Clear All Data & Reset Application
-                            </button>
-                        ) : (
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-md space-y-3">
-                                <p className="text-sm text-red-800 dark:text-red-200">
-                                    Are you sure? This action is irreversible and will delete all your data. To proceed, click the button below 3 times.
-                                </p>
-                                <button
-                                    onClick={handleResetClick}
-                                    className="w-full px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold"
-                                >
-                                    I Agree, Delete Everything ({resetClickCount}/3)
-                                </button>
-                                <button
-                                    onClick={handleCancelReset}
-                                    className="w-full px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        )}
-                      </div>
 
+                          {/* Danger Zone */}
+                          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Data Management</h3>
+                              <button 
+                                  onClick={onClearData}
+                                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors w-full justify-center"
+                              >
+                                  <TrashIcon className="w-4 h-4" />
+                                  Reset Application Data
+                              </button>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                  Deletes all local data and restores the default template.
+                              </p>
+                          </div>
+                      </div>
                       <div className="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
                           <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
                           <button onClick={handleSave} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Save</button>
@@ -1525,8 +1568,71 @@
           );
       }
 
+      // --- DB SETUP ---
+      class JaroetDatabase extends Dexie {
+          constructor() {
+              super("JaroetOutlinerDB");
+              this.version(1).stores({
+                  keyValuePairs: 'key', 
+              });
+              this.keyValuePairs = this.table('keyValuePairs');
+          }
+      }
+
+      const db = new JaroetDatabase();
+
+      // --- APP COMPONENT ---
+      const DAILY_LOG_ROOT_TEXT = 'Daily Log';
+
+      const initialData = [
+        {
+          id: 'journal-root',
+          text: DAILY_LOG_ROOT_TEXT,
+          children: [],
+          isCollapsed: true,
+        },
+        {
+          id: 'doc-root',
+          text: 'Help & Documentation',
+          children: HELP_DATA, // Embedded help data
+          isCollapsed: true,
+        },
+      ];
+
+      const createNewBullet = (text = '') => {
+          const now = Date.now();
+          return {
+              id: crypto.randomUUID(),
+              text,
+              children: [],
+              isCollapsed: false,
+              createdAt: now,
+              updatedAt: now,
+          };
+      };
+
+      const migrateBullets = (nodes) => {
+          const now = Date.now();
+          return nodes.map(node => ({
+              ...node,
+              createdAt: node.createdAt || now,
+              updatedAt: node.updatedAt || now,
+              children: migrateBullets(node.children),
+          }));
+      };
+
+      const navigateSuggestions = (prevState, direction) => {
+          const { suggestions, selectedIndex } = prevState;
+          const count = suggestions.length;
+          if (count === 0) return selectedIndex;
+          if (direction === 'down') {
+              return (selectedIndex + 1) % count;
+          } else { // 'up'
+              return (selectedIndex - 1 + count) % count;
+          }
+      };
+
       const App = () => {
-          const { useState, useEffect, useCallback, useMemo, useRef } = React;
           const [bullets, setBullets] = useState(initialData);
           const [zoomedBulletId, setZoomedBulletId] = useState(null);
           const [searchQuery, setSearchQuery] = useState('');
@@ -1557,7 +1663,6 @@
           const [tagPopupState, setTagPopupState] = useState({
               isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0
           });
-
 
           const currentFocusId = focusOptions.id;
           const focusPosition = focusOptions.position;
@@ -1623,10 +1728,10 @@
                       const savedDataEntry = await db.keyValuePairs.get('bullets');
                       const savedData = savedDataEntry?.value;
                       if (savedData && Array.isArray(savedData)) {
-                         localBullets = savedData;
+                        localBullets = savedData;
                       }
                   } catch(e) {
-                     console.error("Failed to parse local data from IndexedDB", e);
+                    console.error("Failed to parse local data from IndexedDB", e);
                   }
                   
                   let initialLoadData = localBullets || initialData;
@@ -1658,7 +1763,7 @@
               
               const currentCoreData = getCoreDataString(bullets);
               if (currentCoreData !== prevCoreDataRef.current) {
-                   prevCoreDataRef.current = currentCoreData;
+                  prevCoreDataRef.current = currentCoreData;
               }
 
           }, [settings, bullets, getCoreDataString]);
@@ -1778,7 +1883,7 @@
           const handleZoom = useCallback((id) => {
               const oldZoomedBulletId = zoomedBulletId;
               const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
-                                   (id !== null && breadcrumbs.some(b => b.id === id));
+                                  (id !== null && breadcrumbs.some(b => b.id === id));
               
               if (id === null) { 
                   setZoomedBulletId(null);
@@ -1826,7 +1931,7 @@
                   if (isZoomingOut && oldZoomedBulletId) {
                       setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
                   } else if (bulletToZoom.children.length > 0) {
-                       const getVisibleIds = (nodes) => {
+                      const getVisibleIds = (nodes) => {
                           let ids = [];
                           for (const node of nodes) {
                               ids.push(node.id);
@@ -1930,22 +2035,14 @@
               });
           };
           
-          const handleUpdate = useCallback((id, updates, updateTimestamp = true) => {
+          const handleUpdate = useCallback((id, updates) => {
               const found = findBulletAndParent(id, bullets);
-              // Prevent content changes on read-only nodes, but allow UI changes like collapsing.
-              if (found?.node.isReadOnly && updateTimestamp) return;
+              if (found?.node.isReadOnly) return;
 
               setBullets(prevBullets =>
-                  mapBullets(prevBullets, bullet => {
-                      if (bullet.id === id) {
-                          const newBullet = { ...bullet, ...updates };
-                          if (updateTimestamp && !bullet.isReadOnly) {
-                              newBullet.updatedAt = Date.now();
-                          }
-                          return newBullet;
-                      }
-                      return bullet;
-                  })
+                  mapBullets(prevBullets, bullet =>
+                      bullet.id === id ? { ...bullet, ...updates, updatedAt: Date.now() } : bullet
+                  )
               );
           }, [bullets, findBulletAndParent]);
           
@@ -2022,7 +2119,7 @@
               const found = findBulletAndParent(id, newBullets);
               if (found && found.index > 0) {
                   const prevSibling = found.siblings[found.index - 1];
-                   if (prevSibling.isReadOnly) return;
+                  if (prevSibling.isReadOnly) return;
                   const [movedNode] = found.siblings.splice(found.index, 1);
                   movedNode.updatedAt = Date.now();
                   prevSibling.children.push(movedNode);
@@ -2180,7 +2277,7 @@
           const handleFocusMove = useCallback((direction, position = 'end') => {
               if (!currentFocusId) {
                   if (visibleBulletIds.length > 0) {
-                       handleFocusChange(visibleBulletIds[0], position);
+                      handleFocusChange(visibleBulletIds[0], position);
                   }
                   return;
               }
@@ -2217,12 +2314,13 @@
               }
           };
 
+          // --- Link & Tag Popup Logic ---
           const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => {
               if (!inputRef.current) return;
               const rect = inputRef.current.getBoundingClientRect();
               setLinkSelectionHandler({ handler: selectionHandler });
 
-              const POPUP_MAX_WIDTH_PX = 768;
+              const POPUP_MAX_WIDTH_PX = 768; // Corresponds to Tailwind's max-w-2xl
               const VIEWPORT_PADDING_PX = 16;
               
               let left = rect.left + window.scrollX;
@@ -2366,15 +2464,21 @@
               const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
               callback(selectedTag);
           }, [tagPopupState]);
-          
-          const handleClearDatabase = async () => {
-              try {
-                  await db.keyValuePairs.clear();
-                  alert('All data has been cleared. The application will now reload.');
-                  window.location.reload();
-              } catch (error) {
-                  console.error('Failed to clear database:', error);
-                  alert('An error occurred while trying to clear the data.');
+
+          const handleClearData = async () => {
+              if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) {
+                  try {
+                      await db.keyValuePairs.delete('bullets');
+                      // Reset to initial data
+                      const resetData = migrateBullets(initialData);
+                      setBullets(resetData);
+                      setZoomedBulletId(null);
+                      setSearchQuery('');
+                      setIsSettingsModalOpen(false);
+                  } catch (error) {
+                      console.error("Failed to clear data", error);
+                      alert("Failed to clear data. Please try again.");
+                  }
               }
           };
 
@@ -2433,11 +2537,11 @@
                       )) : (
                           <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
                               <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                                 {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
+                                {zoomedBulletId ? 'Add an item here' : 'Start with a new item'}
                               </button>
                           </div>
                       )}
-                       {linkPopupState.isOpen && (
+                      {linkPopupState.isOpen && (
                           <LinkPopup
                               suggestions={linkPopupState.suggestions}
                               selectedIndex={linkPopupState.selectedIndex}
@@ -2468,7 +2572,7 @@
                       <span title={settings.fileName} className="truncate">{settings.fileName}</span>
                       <span>Version 0.1.5</span>
                   </footer>
-                   <SearchModal
+                  <SearchModal
                       isOpen={isSearchModalOpen}
                       onClose={handleCloseSearch}
                       bullets={flatBullets}
@@ -2480,25 +2584,21 @@
                       onClose={() => setIsSettingsModalOpen(false)}
                       onSave={setSettings}
                       currentSettings={settings}
-                      onClearDatabase={handleClearDatabase}
+                      onClearData={handleClearData}
                   />
               </div>
           );
       };
-      // --- END: App.tsx ---
 
-
-      // --- START: index.tsx ---
+      // --- INDEX ---
       const rootElement = document.getElementById('root');
       if (!rootElement) {
         throw new Error("Could not find root element to mount to");
       }
 
       const root = ReactDOM.createRoot(rootElement);
-      root.render(
-          <App />
-      );
-      // --- END: index.tsx ---
+      root.render(<App />);
+
     </script>
   </body>
 </html>

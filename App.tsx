@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Bullet, FlatBullet, Settings, CoreBullet } from './types';
-import { Toolbar } from './components/Toolbar';
-import { BulletItem } from './components/BulletItem';
-import { SearchModal } from './components/SearchModal';
-import { LinkPopup } from './components/LinkPopup';
-import { TagPopup } from './components/TagPopup';
+import type { Bullet, FlatBullet, Settings, CoreBullet } from './types.ts';
+import { Toolbar } from './components/Toolbar.tsx';
+import { BulletItem } from './components/BulletItem.tsx';
+import { SearchModal } from './components/SearchModal.tsx';
+import { LinkPopup } from './components/LinkPopup.tsx';
+import { TagPopup } from './components/TagPopup.tsx';
+import { TrashIcon } from './components/Icons.tsx';
 
 declare const Dexie: any;
 
@@ -102,18 +103,14 @@ interface SettingsModalProps {
     onClose: () => void;
     onSave: (settings: Settings) => void;
     currentSettings: Settings;
-    onClearDatabase: () => void;
+    onClearData: () => void;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, currentSettings, onClearDatabase }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, currentSettings, onClearData }) => {
     const [settings, setSettings] = useState(currentSettings);
-    const [isConfirmingReset, setIsConfirmingReset] = useState(false);
-    const [resetClickCount, setResetClickCount] = useState(0);
 
     useEffect(() => {
         setSettings(currentSettings);
-        setIsConfirmingReset(false);
-        setResetClickCount(0);
     }, [isOpen, currentSettings]);
 
     const handleSave = () => {
@@ -129,19 +126,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
     const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSettings(prev => ({...prev, fontSize: parseInt(e.target.value, 10) }));
     }
-
-    const handleResetClick = () => {
-        const newCount = resetClickCount + 1;
-        setResetClickCount(newCount);
-        if (newCount >= 3) {
-            onClearDatabase();
-        }
-    };
-
-    const handleCancelReset = () => {
-        setIsConfirmingReset(false);
-        setResetClickCount(0);
-    };
 
     if (!isOpen) return null;
 
@@ -168,38 +152,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                         <label htmlFor="fontSize" className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Font Size ({settings.fontSize}px)</label>
                         <input type="range" id="fontSize" name="fontSize" min="12" max="24" value={settings.fontSize} onChange={handleFontSizeChange} className="w-full"/>
                     </div>
-                </div>
 
-                <div className="p-4 space-y-2 border-t border-gray-200 dark:border-gray-700">
-                    <h3 className="text-md font-semibold text-red-600 dark:text-red-500">Danger Zone</h3>
-                    {!isConfirmingReset ? (
-                        <button 
-                            onClick={() => setIsConfirmingReset(true)}
-                            className="w-full px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors"
+                    {/* Danger Zone */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                         <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Data Management</h3>
+                         <button 
+                            onClick={onClearData}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-md transition-colors w-full justify-center"
                         >
-                            Clear All Data & Reset Application
+                            <TrashIcon className="w-4 h-4" />
+                            Reset Application Data
                         </button>
-                    ) : (
-                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-md space-y-3">
-                            <p className="text-sm text-red-800 dark:text-red-200">
-                                Are you sure? This action is irreversible and will delete all your data. To proceed, click the button below 3 times.
-                            </p>
-                            <button
-                                onClick={handleResetClick}
-                                className="w-full px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white font-bold"
-                            >
-                                I Agree, Delete Everything ({resetClickCount}/3)
-                            </button>
-                            <button
-                                onClick={handleCancelReset}
-                                className="w-full px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    )}
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
+                            Deletes all local data and restores the default template.
+                        </p>
+                    </div>
                 </div>
-                
                 <div className="p-4 flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700">
                     <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
                     <button onClick={handleSave} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Save</button>
@@ -1056,14 +1024,20 @@ export const App = () => {
         callback(selectedTag);
     }, [tagPopupState]);
 
-    const handleClearDatabase = async () => {
-        try {
-            await db.keyValuePairs.clear();
-            alert('All data has been cleared. The application will now reload.');
-            window.location.reload();
-        } catch (error) {
-            console.error('Failed to clear database:', error);
-            alert('An error occurred while trying to clear the data.');
+    const handleClearData = async () => {
+        if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) {
+            try {
+                await db.keyValuePairs.delete('bullets');
+                // Reset to initial data
+                const resetData = migrateBullets(initialData);
+                setBullets(resetData);
+                setZoomedBulletId(null);
+                setSearchQuery('');
+                setIsSettingsModalOpen(false);
+            } catch (error) {
+                console.error("Failed to clear data", error);
+                alert("Failed to clear data. Please try again.");
+            }
         }
     };
 
@@ -1155,7 +1129,7 @@ export const App = () => {
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                 <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.5</span>
+                <span>Version 0.1.4</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
@@ -1169,7 +1143,7 @@ export const App = () => {
                 onClose={() => setIsSettingsModalOpen(false)}
                 onSave={setSettings}
                 currentSettings={settings}
-                onClearDatabase={handleClearDatabase}
+                onClearData={handleClearData}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { HomeIcon, AppointmentIcon, UploadIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon, SearchIcon } from './Icons';
+import { HomeIcon, AppointmentIcon, UploadIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon, SearchIcon } from './Icons.tsx';
 
 interface Breadcrumb {
     id: string;

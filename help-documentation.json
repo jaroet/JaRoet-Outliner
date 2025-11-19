@@ -74,32 +74,20 @@
     "text": "Changelog",
     "children": [
         {
-            "id": "cl-16",
-            "text": "2024-08-07: Data Reset Feature",
-            "children": [
-                { "id": "cl-16-a", "text": "Added a 'Clear All Data & Reset Application' button in the Settings modal.", "children": [], "isCollapsed": false },
-                { "id": "cl-16-b", "text": "This feature allows users to completely wipe their local database and start fresh. A three-click confirmation is required to prevent accidental deletion.", "children": [], "isCollapsed": false },
-                { "id": "cl-16-c", "text": "Updated application version to 0.1.5.", "children": [], "isCollapsed": false }
-            ],
-            "isCollapsed": false
-        },
-        {
             "id": "cl-15",
-            "text": "2024-08-06: True Single-File Portability Fix",
+            "text": "2024-08-06: Local Execution Fix",
             "children": [
-                { "id": "cl-15-a", "text": "Corrected the application's architecture to ensure it runs correctly from a single HTML file without requiring a local web server.", "children": [], "isCollapsed": false },
-                { "id": "cl-15-b", "text": "The app is now fully functional when opened directly from your file system (`file:///...`).", "children": [], "isCollapsed": false },
-                { "id": "cl-15-c", "text": "Updated application version to 0.1.4.", "children": [], "isCollapsed": false }
+                { "id": "cl-15-a", "text": "Fixed a significant loading issue that caused a blank screen when running the app directly from a downloaded file on a local computer. The application should now start correctly in this scenario.", "children": [], "isCollapsed": false },
+                { "id": "cl-15-b", "text": "Updated application version to 0.1.4.", "children": [], "isCollapsed": false }
             ],
             "isCollapsed": false
         },
         {
             "id": "cl-14",
-            "text": "2024-08-05: Single-File Portability",
+            "text": "2024-08-05: Critical Loading Fix",
             "children": [
-                { "id": "cl-14-a", "text": "The entire application has been bundled into a single `index.html` file.", "children": [], "isCollapsed": false },
-                { "id": "cl-14-b", "text": "This allows the app to be saved and run anywhere by simply double-clicking the file, no local server required.", "children": [], "isCollapsed": false },
-                { "id": "cl-14-c", "text": "Updated application version to 0.1.3.", "children": [], "isCollapsed": false }
+                { "id": "cl-14-a", "text": "Fixed a critical bug that caused a blank screen when the application was launched, especially on Windows and ChromeOS. The app now loads reliably.", "children": [], "isCollapsed": false },
+                { "id": "cl-14-b", "text": "Updated application version to 0.1.3.", "children": [], "isCollapsed": false }
             ],
             "isCollapsed": false
         },

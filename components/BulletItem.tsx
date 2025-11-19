@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons';
-import type { Bullet } from '../types';
+import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons.tsx';
+import type { Bullet } from '../types.ts';
 
 // --- Helper Functions for Rich Text Rendering ---
 

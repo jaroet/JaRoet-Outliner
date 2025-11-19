@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { SearchIcon } from './Icons';
-import { TagPopup } from './TagPopup';
-import type { FlatBullet } from '../types';
+import { SearchIcon } from './Icons.tsx';
+import { TagPopup } from './TagPopup.tsx';
+import type { FlatBullet } from '../types.ts';
 
 interface SearchModalProps {
     isOpen: boolean;
