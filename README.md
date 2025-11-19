@@ -1,7 +1,3 @@
-<div align="center">
-<img width="800" height="175" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # JaRoet Outliner
 I arrived in a situation where I am unable to install any software on my computer. Being a big fan of **outliner software** and **PKM solutions**, I tried to create an outliner that does not need any installation whatsoever and has no dependency on anything online. 
 
