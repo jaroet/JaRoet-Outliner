@@ -24,6 +24,10 @@ The **help-documentation.json** file contains a small outline that showcases the
 
 The **demo.json** file contains an example outline to show how the application can be used. 
 
+with the Help & Documentation imported the out-of-the-box interface looks like this:
+<img width="1116" height="734" alt="image" src="https://github.com/user-attachments/assets/c859b8cf-04ae-4ef7-947e-8951609b1914" />
+
+
 ## Storage
 As I did not want anything online or in the cloud, everything you add to the application is stored in a local **IndexedDB** instance. From the application you can export the content of this IndexedDB (being your outline) to JSON as a backup and you can also import an exported JSON file. In the settings menu there is an option to reset the indexedDB and start over. 
 
