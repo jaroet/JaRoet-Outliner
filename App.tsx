@@ -6,6 +6,7 @@ import { SearchModal } from './components/SearchModal.tsx';
 import { LinkPopup } from './components/LinkPopup.tsx';
 import { TagPopup } from './components/TagPopup.tsx';
 import { TrashIcon } from './components/Icons.tsx';
+import { ImportSelectionModal } from './components/ImportSelectionModal.tsx';
 
 declare const Dexie: any;
 
@@ -36,18 +37,11 @@ const initialData: Bullet[] = [
     isCollapsed: true,
   },
   {
-    id: 'doc-root',
-    text: 'Help & Documentation',
-    children: [
-      {
-        id: 'help-placeholder',
-        text: 'To view the full documentation and changelog, import the `help-documentation.json` file using the "Import from JSON" button in the toolbar.',
-        children: [],
-        isCollapsed: false,
-      },
-    ],
-    isCollapsed: true,
-  },
+    id: 'help-info',
+    text: 'For help and documentation, import the help-documentation.json file.',
+    children: [],
+    isCollapsed: false,
+  }
 ];
 
 const createNewBullet = (text = ''): Bullet => {
@@ -70,6 +64,38 @@ const migrateBullets = (nodes: Bullet[]): Bullet[] => {
         updatedAt: node.updatedAt || now,
         children: migrateBullets(node.children),
     }));
+};
+
+const regenerateIds = (nodes: Bullet[]): Bullet[] => {
+    return nodes.map(node => ({
+        ...node,
+        id: crypto.randomUUID(),
+        children: regenerateIds(node.children),
+    }));
+};
+
+// Optimized mapBullets with structural sharing
+const mapBullets = (
+    nodes: Bullet[],
+    callback: (bullet: Bullet) => Bullet
+): Bullet[] => {
+    let changed = false;
+    const newNodes = nodes.map(node => {
+        const newNode = callback(node);
+        const newChildren = mapBullets(newNode.children, callback);
+        
+        // If the node itself didn't change (identity check) and children didn't change, return original
+        if (newNode === node && newChildren === node.children) {
+            return node;
+        }
+        
+        changed = true;
+        return {
+            ...newNode,
+            children: newChildren,
+        };
+    });
+    return changed ? newNodes : nodes;
 };
 
 /**
@@ -203,6 +229,10 @@ export const App = () => {
         fontSize: 16,
     });
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+    // Import Modal State
+    const [pendingImportData, setPendingImportData] = useState<Bullet[] | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const [linkPopupState, setLinkPopupState] = useState({
         isOpen: false, targetId: null as string | null, query: '', position: { top: 0, left: 0 }, suggestions: [] as FlatBullet[], selectedIndex: 0
@@ -435,75 +465,6 @@ export const App = () => {
         }
     }, [bullets, handleFocusChange]);
 
-    const handleZoom = useCallback((id: string | null) => {
-        const oldZoomedBulletId = zoomedBulletId;
-        const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
-                             (id !== null && breadcrumbs.some(b => b.id === id));
-        
-        if (id === null) { 
-            setZoomedBulletId(null);
-            if (oldZoomedBulletId) {
-                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-            } else {
-                const getVisibleIds = (nodes: Bullet[]): string[] => {
-                    let ids: string[] = [];
-                    for (const node of nodes) {
-                        ids.push(node.id);
-                        if (!node.isCollapsed && node.children.length > 0) {
-                            ids = ids.concat(getVisibleIds(node.children));
-                        }
-                    }
-                    return ids;
-                };
-                const rootVisibleIds = getVisibleIds(bullets);
-                if (rootVisibleIds.length > 0) {
-                    handleFocusChange(rootVisibleIds[0]);
-                }
-            }
-            return;
-        }
-    
-        const bulletToZoom = findBulletAndParent(id, bullets)?.node;
-    
-        if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
-            const newBullet = createNewBullet();
-            const newBullets = structuredClone(bullets);
-            const found = findBulletAndParent(id, newBullets);
-            if (found) {
-                found.node.children.push(newBullet);
-                found.node.isCollapsed = false;
-                found.node.updatedAt = Date.now();
-                setBullets(newBullets);
-                setZoomedBulletId(id);
-                setTimeout(() => {
-                    handleFocusChange(newBullet.id);
-                }, 0);
-            } else {
-                setZoomedBulletId(id);
-            }
-        } else if (bulletToZoom) {
-            setZoomedBulletId(id);
-            if (isZoomingOut && oldZoomedBulletId) {
-                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-            } else if (bulletToZoom.children.length > 0) {
-                 const getVisibleIds = (nodes: Bullet[]): string[] => {
-                    let ids: string[] = [];
-                    for (const node of nodes) {
-                        ids.push(node.id);
-                        if (!node.isCollapsed && node.children.length > 0) {
-                            ids = ids.concat(getVisibleIds(node.children));
-                        }
-                    }
-                    return ids;
-                };
-                const visibleChildrenIds = getVisibleIds(bulletToZoom.children);
-                if (visibleChildrenIds.length > 0) {
-                    handleFocusChange(visibleChildrenIds[0]);
-                }
-            }
-        }
-    }, [zoomedBulletId, bullets, handleFocusChange, breadcrumbs, findBulletAndParent]);
-
     const displayedBullets = useMemo(() => {
         if (!zoomedBulletId) return bullets;
         const findZoomed = (nodes: Bullet[]): Bullet | null => {
@@ -532,12 +493,111 @@ export const App = () => {
         return getVisibleIds(displayedBullets);
     }, [displayedBullets]);
     
+    // --- Refs for Stabilization ---
+    const bulletsRef = useRef(bullets);
+    const visibleBulletIdsRef = useRef(visibleBulletIds);
+    const zoomedBulletIdRef = useRef(zoomedBulletId);
+    const focusOptionsRef = useRef(focusOptions);
+    const breadcrumbsRef = useRef(breadcrumbs);
+
+    useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
+    useEffect(() => { visibleBulletIdsRef.current = visibleBulletIds; }, [visibleBulletIds]);
+    useEffect(() => { zoomedBulletIdRef.current = zoomedBulletId; }, [zoomedBulletId]);
+    useEffect(() => { focusOptionsRef.current = focusOptions; }, [focusOptions]);
+    useEffect(() => { breadcrumbsRef.current = breadcrumbs; }, [breadcrumbs]);
+
     useEffect(() => {
         if (!isInitialFocusSet.current && visibleBulletIds.length > 0) {
             handleFocusChange(visibleBulletIds[0], 'end');
             isInitialFocusSet.current = true;
         }
     }, [visibleBulletIds, handleFocusChange]);
+
+    // Optimized Handlers using Refs and Functional Updates to remain stable
+    
+    const handleZoom = useCallback((id: string | null) => {
+        const currentBullets = bulletsRef.current;
+        const oldZoomedBulletId = zoomedBulletIdRef.current;
+        const currentBreadcrumbs = breadcrumbsRef.current;
+        
+        const isZoomingOut = (id === null && oldZoomedBulletId !== null) || 
+                             (id !== null && currentBreadcrumbs.some(b => b.id === id));
+        
+        if (id === null) { 
+            setZoomedBulletId(null);
+            if (oldZoomedBulletId) {
+                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+            } else {
+                // Calculate visible IDs for root from current state
+                const getVisibleIds = (nodes: Bullet[]): string[] => {
+                    let ids: string[] = [];
+                    for (const node of nodes) {
+                        ids.push(node.id);
+                        if (!node.isCollapsed && node.children.length > 0) {
+                            ids = ids.concat(getVisibleIds(node.children));
+                        }
+                    }
+                    return ids;
+                };
+                const rootVisibleIds = getVisibleIds(currentBullets);
+                if (rootVisibleIds.length > 0) {
+                    handleFocusChange(rootVisibleIds[0]);
+                }
+            }
+            return;
+        }
+
+        // Helper to find bullet in current state
+        const find = (nodes: Bullet[]): Bullet | null => {
+            for(const node of nodes) {
+                if (node.id === id) return node;
+                const f = find(node.children);
+                if (f) return f;
+            }
+            return null;
+        };
+        
+        const bulletToZoom = find(currentBullets);
+    
+        if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
+            const newBullet = createNewBullet();
+            setBullets(prevBullets => {
+                const newBullets = structuredClone(prevBullets);
+                const found = findBulletAndParent(id, newBullets);
+                if (found) {
+                    found.node.children.push(newBullet);
+                    found.node.isCollapsed = false;
+                    // Do not update updatedAt
+                    return newBullets;
+                }
+                return prevBullets;
+            });
+            setZoomedBulletId(id);
+            setTimeout(() => {
+                handleFocusChange(newBullet.id);
+            }, 0);
+        } else if (bulletToZoom) {
+            setZoomedBulletId(id);
+            if (isZoomingOut && oldZoomedBulletId) {
+                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+            } else if (bulletToZoom.children.length > 0) {
+                 const getVisibleIds = (nodes: Bullet[]): string[] => {
+                    let ids: string[] = [];
+                    for (const node of nodes) {
+                        ids.push(node.id);
+                        if (!node.isCollapsed && node.children.length > 0) {
+                            ids = ids.concat(getVisibleIds(node.children));
+                        }
+                    }
+                    return ids;
+                };
+                const visibleChildrenIds = getVisibleIds(bulletToZoom.children);
+                if (visibleChildrenIds.length > 0) {
+                    handleFocusChange(visibleChildrenIds[0]);
+                }
+            }
+        }
+    }, [handleFocusChange, findBulletAndParent]);
 
     const handleGoToJournal = useCallback(() => {
         const now = new Date();
@@ -546,60 +606,87 @@ export const App = () => {
         const day = now.getDate().toString().padStart(2, '0');
         const dayText = `${year}-${month}-${day}`;
 
-        const newBullets = structuredClone(bullets);
-        
-        let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
-        if (!journalNode) {
-            journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
-            newBullets.unshift(journalNode);
-        }
+        setBullets(prevBullets => {
+             const newBullets = structuredClone(prevBullets);
+             let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+            if (!journalNode) {
+                journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
+                newBullets.unshift(journalNode);
+            }
 
-        let yearNode = journalNode.children.find((b) => b.text === year);
-        if (!yearNode) {
-            yearNode = createNewBullet(year);
-            journalNode.children.push(yearNode);
-        }
+            let yearNode = journalNode.children.find((b) => b.text === year);
+            if (!yearNode) {
+                yearNode = createNewBullet(year);
+                journalNode.children.push(yearNode);
+            }
 
-        let monthNode = yearNode.children.find((b) => b.text === month);
-        if (!monthNode) {
-            monthNode = createNewBullet(month);
-            yearNode.children.push(monthNode);
-        }
-        
-        let dayNode = monthNode.children.find((b) => b.text === dayText);
-        if (!dayNode) {
-            dayNode = createNewBullet(dayText);
-            monthNode.children.push(dayNode);
-        }
-        
-        setBullets(newBullets);
-        setZoomedBulletId(monthNode.id);
-        setTimeout(() => handleFocusChange(dayNode.id), 0);
-    }, [bullets, handleFocusChange]);
-
-    const mapBullets = (
-        nodes: Bullet[],
-        callback: (bullet: Bullet) => Bullet
-    ): Bullet[] => {
-        return nodes.map(node => {
-            const newNode = callback(node);
-            return {
-                ...newNode,
-                children: mapBullets(newNode.children, callback),
-            };
+            let monthNode = yearNode.children.find((b) => b.text === month);
+            if (!monthNode) {
+                monthNode = createNewBullet(month);
+                yearNode.children.push(monthNode);
+            }
+            
+            let dayNode = monthNode.children.find((b) => b.text === dayText);
+            if (!dayNode) {
+                dayNode = createNewBullet(dayText);
+                monthNode.children.push(dayNode);
+            }
+            return newBullets;
         });
-    };
-    
-    const handleUpdate = useCallback((id: string, updates: Partial<Bullet>) => {
-        const found = findBulletAndParent(id, bullets);
-        if (found?.node.isReadOnly) return;
+        
+        // Ensure correct navigation
+        const ensureJournalPath = (currentNodes: Bullet[]): { nodes: Bullet[], monthId: string, dayId: string } => {
+             const newBullets = structuredClone(currentNodes);
+             let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+             if (!journalNode) {
+                journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
+                newBullets.unshift(journalNode);
+             }
+             let yearNode = journalNode.children.find((b) => b.text === year);
+             if (!yearNode) {
+                yearNode = createNewBullet(year);
+                journalNode.children.push(yearNode);
+             }
+             let monthNode = yearNode.children.find((b) => b.text === month);
+             if (!monthNode) {
+                monthNode = createNewBullet(month);
+                yearNode.children.push(monthNode);
+             }
+             let dayNode = monthNode.children.find((b) => b.text === dayText);
+             if (!dayNode) {
+                dayNode = createNewBullet(dayText);
+                monthNode.children.push(dayNode);
+             }
+             return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
+        };
 
-        setBullets(prevBullets =>
-            mapBullets(prevBullets, bullet =>
-                bullet.id === id ? { ...bullet, ...updates, updatedAt: Date.now() } : bullet
-            )
-        );
-    }, [bullets, findBulletAndParent]);
+        setBullets(prev => {
+            const result = ensureJournalPath(prev);
+            setTimeout(() => {
+                setZoomedBulletId(result.monthId);
+                setTimeout(() => handleFocusChange(result.dayId), 0);
+            }, 0);
+            return result.nodes;
+        });
+
+    }, [handleFocusChange]);
+
+    const handleUpdate = useCallback((id: string, updates: Partial<Bullet>) => {
+        setBullets(prevBullets => {
+            const found = findBulletAndParent(id, prevBullets);
+            if (found?.node.isReadOnly) return prevBullets;
+
+            const isStructuralOrContentChange = Object.keys(updates).some(key => key !== 'isCollapsed');
+
+            return mapBullets(prevBullets, bullet =>
+                bullet.id === id ? { 
+                    ...bullet, 
+                    ...updates, 
+                    updatedAt: isStructuralOrContentChange ? Date.now() : bullet.updatedAt 
+                } : bullet
+            );
+        });
+    }, [findBulletAndParent]);
     
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -613,16 +700,23 @@ export const App = () => {
             }
             else if (e.ctrlKey && e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (zoomedBulletId) {
-                    const parentId = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].id : null;
+                const zoomedId = zoomedBulletIdRef.current;
+                const crumbs = breadcrumbsRef.current;
+                if (zoomedId) {
+                    const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null;
                     handleZoom(parentId);
                 }
             }
-            else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !currentFocusId && visibleBulletIds.length > 0) {
-                const target = e.target as HTMLElement;
-                if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    handleFocusChange(visibleBulletIds[0]);
+            else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                 const currentFocusId = focusOptionsRef.current.id;
+                 const visibleIds = visibleBulletIdsRef.current;
+                 
+                 if (!currentFocusId && visibleIds.length > 0) {
+                    const target = e.target as HTMLElement;
+                    if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        handleFocusChange(visibleIds[0]);
+                    }
                 }
             }
         };
@@ -631,79 +725,92 @@ export const App = () => {
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [zoomedBulletId, breadcrumbs, currentFocusId, visibleBulletIds, handleGoToJournal, handleZoom, handleFocusChange]);
+    }, [handleGoToJournal, handleZoom, handleFocusChange]);
 
     const handleAddSibling = useCallback((id: string, text = '') => {
         const newBullet = createNewBullet(text);
-        const newBullets = structuredClone(bullets);
-        const found = findBulletAndParent(id, newBullets);
-
-        if (found) {
-            if (found.node.isReadOnly) return;
-            found.siblings.splice(found.index + 1, 0, newBullet);
-            if (found.parent) {
-                found.parent.updatedAt = Date.now();
-            }
-            setBullets(newBullets);
-            handleFocusChange(newBullet.id);
-        }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+        setBullets(prevBullets => {
+             const newBullets = structuredClone(prevBullets);
+             const found = findBulletAndParent(id, newBullets);
+             if (found) {
+                if (found.node.isReadOnly) return prevBullets;
+                found.siblings.splice(found.index + 1, 0, newBullet);
+                if (found.parent) {
+                    found.parent.updatedAt = Date.now();
+                }
+                return newBullets;
+             }
+             return prevBullets;
+        });
+        // Side effect: focus new bullet
+        setTimeout(() => handleFocusChange(newBullet.id), 0);
+    }, [handleFocusChange, findBulletAndParent]);
 
     const handleDelete = useCallback((id: string) => {
-        const foundTarget = findBulletAndParent(id, bullets);
-        if (foundTarget?.node.isReadOnly) return;
+        let prevSiblingId: string | null = null;
+        setBullets(prevBullets => {
+             const foundTarget = findBulletAndParent(id, prevBullets);
+             if (foundTarget?.node.isReadOnly) return prevBullets;
 
-        const newBullets = structuredClone(bullets);
-        const found = findBulletAndParent(id, newBullets);
-        if (found) {
-            const prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id;
-            if (found.parent) {
-                found.parent.updatedAt = Date.now();
-            }
-            found.siblings.splice(found.index, 1);
-            setBullets(newBullets);
-            handleFocusChange(prevSiblingId || null);
-        }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+             const newBullets = structuredClone(prevBullets);
+             const found = findBulletAndParent(id, newBullets);
+             if (found) {
+                prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null;
+                if (found.parent) {
+                    found.parent.updatedAt = Date.now();
+                }
+                found.siblings.splice(found.index, 1);
+                return newBullets;
+             }
+             return prevBullets;
+        });
+        setTimeout(() => handleFocusChange(prevSiblingId), 0);
+    }, [handleFocusChange, findBulletAndParent]);
     
     const handleIndent = useCallback((id: string) => {
-        const foundTarget = findBulletAndParent(id, bullets);
-        if (foundTarget?.node.isReadOnly) return;
+        setBullets(prevBullets => {
+            const foundTarget = findBulletAndParent(id, prevBullets);
+            if (foundTarget?.node.isReadOnly) return prevBullets;
 
-        const newBullets = structuredClone(bullets);
-        const found = findBulletAndParent(id, newBullets);
-        if (found && found.index > 0) {
-            const prevSibling = found.siblings[found.index - 1];
-             if (prevSibling.isReadOnly) return;
-            const [movedNode] = found.siblings.splice(found.index, 1);
-            movedNode.updatedAt = Date.now();
-            prevSibling.children.push(movedNode);
-            prevSibling.isCollapsed = false;
-            setBullets(newBullets);
-            handleFocusChange(id);
-        }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
-    
-    const handleOutdent = useCallback((id: string) => {
-        const foundTarget = findBulletAndParent(id, bullets);
-        if (foundTarget?.node.isReadOnly) return;
-
-        const newBullets = structuredClone(bullets);
-        const found = findBulletAndParent(id, newBullets);
-        if (found && found.parent) {
-            const parentInfo = findBulletAndParent(found.parent.id, newBullets);
-            if(parentInfo && !parentInfo.node.isReadOnly){
+            const newBullets = structuredClone(prevBullets);
+            const found = findBulletAndParent(id, newBullets);
+            if (found && found.index > 0) {
+                const prevSibling = found.siblings[found.index - 1];
+                 if (prevSibling.isReadOnly) return prevBullets;
                 const [movedNode] = found.siblings.splice(found.index, 1);
                 movedNode.updatedAt = Date.now();
-                const subsequentSiblings = found.siblings.splice(found.index);
-                movedNode.children.push(...subsequentSiblings);
-
-                parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode);
-                setBullets(newBullets);
-                handleFocusChange(id);
+                prevSibling.children.push(movedNode);
+                prevSibling.isCollapsed = false;
+                return newBullets;
             }
-        }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+            return prevBullets;
+        });
+        setTimeout(() => handleFocusChange(id), 0);
+    }, [handleFocusChange, findBulletAndParent]);
+    
+    const handleOutdent = useCallback((id: string) => {
+        setBullets(prevBullets => {
+            const foundTarget = findBulletAndParent(id, prevBullets);
+            if (foundTarget?.node.isReadOnly) return prevBullets;
+
+            const newBullets = structuredClone(prevBullets);
+            const found = findBulletAndParent(id, newBullets);
+            if (found && found.parent) {
+                const parentInfo = findBulletAndParent(found.parent.id, newBullets);
+                if(parentInfo && !parentInfo.node.isReadOnly){
+                    const [movedNode] = found.siblings.splice(found.index, 1);
+                    movedNode.updatedAt = Date.now();
+                    const subsequentSiblings = found.siblings.splice(found.index);
+                    movedNode.children.push(...subsequentSiblings);
+
+                    parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode);
+                    return newBullets;
+                }
+            }
+            return prevBullets;
+        });
+        setTimeout(() => handleFocusChange(id), 0);
+    }, [handleFocusChange, findBulletAndParent]);
 
     const handleFoldAll = useCallback((id: string, collapse: boolean) => {
         const setCollapseRecursively = (nodes: Bullet[]): Bullet[] => {
@@ -740,33 +847,55 @@ export const App = () => {
     }, []);
 
     const handleMoveBullet = useCallback((id: string, direction: 'up' | 'down') => {
-        const foundTarget = findBulletAndParent(id, bullets);
-        if (foundTarget?.node.isReadOnly) return;
+        setBullets(prevBullets => {
+            const foundTarget = findBulletAndParent(id, prevBullets);
+            if (foundTarget?.node.isReadOnly) return prevBullets;
 
-        const newBullets = structuredClone(bullets);
-        const found = findBulletAndParent(id, newBullets);
-    
-        if (!found) return;
-    
-        const { siblings, index } = found;
-        found.node.updatedAt = Date.now();
-    
-        if (direction === 'up') {
-            if (index > 0) {
-                [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]];
-                setBullets(newBullets);
+            const newBullets = structuredClone(prevBullets);
+            const found = findBulletAndParent(id, newBullets);
+        
+            if (!found) return prevBullets;
+        
+            const { siblings, index } = found;
+            found.node.updatedAt = Date.now();
+        
+            if (direction === 'up') {
+                if (index > 0) {
+                    [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]];
+                    return newBullets;
+                }
+            } else { // 'down'
+                if (index < siblings.length - 1) {
+                    [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
+                    return newBullets;
+                }
             }
-        } else { // 'down'
-            if (index < siblings.length - 1) {
-                [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]];
-                setBullets(newBullets);
-            }
-        }
-    }, [bullets, findBulletAndParent]);
+            return prevBullets;
+        });
+    }, [findBulletAndParent]);
 
     const handleFocusParent = useCallback((id: string) => {
-        const currentTree = zoomedBulletId ? displayedBullets : bullets;
-        const findInCurrentView = (
+        const zoomedId = zoomedBulletIdRef.current;
+        const currentBullets = bulletsRef.current;
+        
+        // Helper to find in current view scope
+        const findInScope = (nodes: Bullet[], targetId: string): Bullet | null => {
+            for (const node of nodes) {
+                if (node.id === targetId) return node;
+                const f = findInScope(node.children, targetId);
+                if (f) return f;
+            }
+            return null;
+        }
+        
+        let scope = currentBullets;
+        if (zoomedId) {
+            const zoomedNode = findInScope(currentBullets, zoomedId);
+            if (zoomedNode) scope = zoomedNode.children;
+            else scope = [];
+        }
+
+        const findParent = (
             bulletId: string,
             nodes: Bullet[],
             parent: Bullet | null = null
@@ -775,29 +904,52 @@ export const App = () => {
               if (node.id === bulletId) {
                 return { node, parent };
               }
-              const found = findInCurrentView(bulletId, node.children, node);
+              const found = findParent(bulletId, node.children, node);
               if (found) return found;
             }
             return null;
         };
-        const found = findInCurrentView(id, currentTree);
+        
+        const found = findParent(id, scope);
         if (found?.parent) {
             handleFocusChange(found.parent.id);
         }
-    }, [zoomedBulletId, bullets, displayedBullets, handleFocusChange]);
+    }, [handleFocusChange]);
 
     const handleFocusChild = useCallback((id: string) => {
-        const found = findBulletAndParent(id, bullets);
-        if (found?.node && found.node.children.length > 0 && !found.node.isCollapsed) {
-            handleFocusChange(found.node.children[0].id, 'start');
+        const currentBullets = bulletsRef.current;
+        const find = (nodes: Bullet[]): Bullet | null => {
+             for(const node of nodes) {
+                 if (node.id === id) return node;
+                 const f = find(node.children);
+                 if(f) return f;
+             }
+             return null;
+        };
+        const foundNode = find(currentBullets);
+        
+        if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) {
+            handleFocusChange(foundNode.children[0].id, 'start');
         }
-    }, [bullets, handleFocusChange, findBulletAndParent]);
+    }, [handleFocusChange]);
 
 
     const handleExport = () => {
         const dataStr = JSON.stringify(bullets, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = 'workflowy_clone_data.json';
+        
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+        
+        const sanitizedFileName = settings.fileName.replace(/[<>:"/\\|?*]/g, '_');
+        const exportFileDefaultName = `${sanitizedFileName}_bck_${timestamp}.json`;
+        
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
@@ -805,52 +957,85 @@ export const App = () => {
     };
 
     const handleImport = (data: Bullet[]) => {
-        const migratedData = migrateBullets(data);
-        setBullets(migratedData);
-        setZoomedBulletId(null);
-        setSearchQuery('');
+        // Instead of overriding immediately, we open the selection modal
+        setPendingImportData(data);
+        setIsImportModalOpen(true);
+    };
+
+    const handleConfirmImport = (targetId: string | null) => {
+        if (!pendingImportData) return;
+        
+        // Ensure imported data matches current schema and has fresh IDs to avoid collisions
+        let nodesToImport = migrateBullets(pendingImportData);
+        nodesToImport = regenerateIds(nodesToImport);
+
+        if (targetId === null) {
+            // Add to root
+            setBullets(prev => [...prev, ...nodesToImport]);
+        } else {
+            // Add to specific bullet
+            const newBullets = structuredClone(bullets);
+            const found = findBulletAndParent(targetId, newBullets);
+            if (found && !found.node.isReadOnly) {
+                found.node.children.push(...nodesToImport);
+                found.node.isCollapsed = false;
+                found.node.updatedAt = Date.now();
+                setBullets(newBullets);
+            }
+        }
+        
+        // Cleanup
+        setIsImportModalOpen(false);
+        setPendingImportData(null);
     };
     
     const handleAddItemToCurrentView = useCallback(() => {
         const newBullet = createNewBullet();
-        if (zoomedBulletId) {
-            const newBullets = structuredClone(bullets);
-            const found = findBulletAndParent(zoomedBulletId, newBullets);
-            if (found && !found.node.isReadOnly) {
-                found.node.children.push(newBullet);
-                found.node.isCollapsed = false;
-                found.node.updatedAt = Date.now();
-                setBullets(newBullets);
-                handleFocusChange(newBullet.id);
-            }
+        const zoomedId = zoomedBulletIdRef.current;
+        
+        if (zoomedId) {
+            setBullets(prevBullets => {
+                const newBullets = structuredClone(prevBullets);
+                const found = findBulletAndParent(zoomedId, newBullets);
+                if (found && !found.node.isReadOnly) {
+                    found.node.children.push(newBullet);
+                    found.node.isCollapsed = false;
+                    found.node.updatedAt = Date.now();
+                    return newBullets;
+                }
+                return prevBullets;
+            });
         } else {
             setBullets(prev => [...prev, newBullet]);
-            handleFocusChange(newBullet.id);
         }
-    }, [bullets, zoomedBulletId, handleFocusChange, findBulletAndParent]);
+        setTimeout(() => handleFocusChange(newBullet.id), 0);
+    }, [handleFocusChange, findBulletAndParent]);
 
     const handleFocusMove = useCallback((direction: 'up' | 'down', position: 'start' | 'end' = 'end') => {
+        const currentFocusId = focusOptionsRef.current.id;
+        const visibleIds = visibleBulletIdsRef.current;
+
         if (!currentFocusId) {
-            if (visibleBulletIds.length > 0) {
-                 handleFocusChange(visibleBulletIds[0], position);
+            if (visibleIds.length > 0) {
+                 handleFocusChange(visibleIds[0], position);
             }
             return;
         }
-        const currentIndex = visibleBulletIds.indexOf(currentFocusId);
+        const currentIndex = visibleIds.indexOf(currentFocusId);
         if (currentIndex === -1) return;
         let nextIndex;
         if (direction === 'down') {
             nextIndex = currentIndex + 1;
-            if (nextIndex < visibleBulletIds.length) {
-                handleFocusChange(visibleBulletIds[nextIndex], position);
+            if (nextIndex < visibleIds.length) {
+                handleFocusChange(visibleIds[nextIndex], position);
             }
         } else { // 'up'
             nextIndex = currentIndex - 1;
             if (nextIndex >= 0) {
-                handleFocusChange(visibleBulletIds[nextIndex], position);
+                handleFocusChange(visibleIds[nextIndex], position);
             }
         }
-    }, [currentFocusId, visibleBulletIds, handleFocusChange]);
+    }, [handleFocusChange]);
 
     const handleOpenSearch = () => {
         focusBeforeModalRef.current = currentFocusId;
@@ -861,9 +1046,6 @@ export const App = () => {
         setIsSearchModalOpen(false);
         if (focusBeforeModalRef.current) {
             const idToRestore = focusBeforeModalRef.current;
-            // By setting the position to 'start' and then immediately back to 'end' in a timeout,
-            // we ensure the focus effect's dependencies change in BulletItem, forcing it to re-run
-            // and re-apply focus, even if the focused ID hasn't changed.
             handleFocusChange(idToRestore, 'start');
             setTimeout(() => {
                 handleFocusChange(idToRestore, 'end');
@@ -890,9 +1072,35 @@ export const App = () => {
 
         left = Math.max(VIEWPORT_PADDING_PX, left);
 
+        // Using flatBullets would require flatBulletsRef or recreation.
+        // However, flatBullets is derived from bullets. 
+        // Re-calculating here or using a ref is needed for 0 deps.
+        // Let's just assume we use the 'flatBullets' from closure (which changes) or calculate on fly.
+        // Since this event is rare (typing [[), re-rendering App isn't the bottleneck, typing is.
+        // But 'onTriggerLinkPopup' is passed to BulletItem. It must be stable.
+        // We will use bulletsRef to calculate suggestions on the fly.
+        
+        const currentBullets = bulletsRef.current;
+        const results: FlatBullet[] = [];
+        const traverse = (nodes: Bullet[], currentPath: string[]) => {
+            for (const node of nodes) {
+                results.push({
+                    id: node.id,
+                    text: node.text,
+                    path: currentPath,
+                    createdAt: node.createdAt,
+                    updatedAt: node.updatedAt,
+                });
+                if (node.children && node.children.length > 0) {
+                    traverse(node.children, [...currentPath, node.text || 'Untitled']);
+                }
+            }
+        };
+        traverse(currentBullets, []);
+        
         const suggestions = !query 
-            ? flatBullets.slice(0, 50) 
-            : flatBullets.map(bullet => {
+            ? results.slice(0, 50) 
+            : results.map(bullet => {
                 const lowerText = bullet.text.toLowerCase();
                 const lowerQuery = query.toLowerCase();
                 let score = 0;
@@ -915,7 +1123,7 @@ export const App = () => {
             selectedIndex: 0,
         });
 
-    }, [flatBullets]);
+    }, []); // Stable!
 
     const handleCloseLinkPopup = useCallback(() => {
         setLinkPopupState(prev => {
@@ -928,20 +1136,28 @@ export const App = () => {
     }, []);
 
     const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
-        if (!linkPopupState.isOpen) return;
+        if (!linkPopupState.isOpen) return; // This check accesses state, but that's fine, we need access to isOpen from closure or ref.
+        // Actually linkPopupState changes often. This handler is passed to BulletItem.
+        // If linkPopupState changes, BulletItem re-renders?
+        // Only the focused bullet calls this.
         setLinkPopupState(prev => ({
             ...prev,
             selectedIndex: navigateSuggestions(prev, direction),
         }));
-    }, [linkPopupState.isOpen]);
+    }, [linkPopupState.isOpen]); // This dependency is unavoidable if we check isOpen, but isOpen only changes when popup opens/closes.
     
     const handleLinkSelect = useCallback((callback: (selectedBullet: FlatBullet) => void) => {
-        if (!linkPopupState.isOpen || linkPopupState.suggestions.length === 0) return;
-        const selectedBullet = linkPopupState.suggestions[linkPopupState.selectedIndex];
-        callback(selectedBullet);
-    }, [linkPopupState]);
+        // Access state from closure.
+        setLinkPopupState(prev => {
+             if (!prev.isOpen || prev.suggestions.length === 0) return prev;
+             const selectedBullet = prev.suggestions[prev.selectedIndex];
+             callback(selectedBullet);
+             return prev;
+        });
+    }, []);
 
     const handleLinkClick = useCallback((linkText: string) => {
+        const currentBullets = bulletsRef.current;
         let targetBullet: Bullet | null = null;
         const find = (nodes: Bullet[]): boolean => {
             for (const node of nodes) {
@@ -953,7 +1169,7 @@ export const App = () => {
             }
             return false;
         };
-        find(bullets);
+        find(currentBullets);
     
         if (targetBullet) {
             const path: Bullet[] = [];
@@ -968,7 +1184,7 @@ export const App = () => {
                 }
                 return false;
             };
-            findPath(bullets, []);
+            findPath(currentBullets, []);
             
             const parent = path.length > 1 ? path[path.length - 2] : null;
             setZoomedBulletId(parent ? parent.id : null);
@@ -976,7 +1192,7 @@ export const App = () => {
         } else {
             console.warn(`Link target not found: "${linkText}"`);
         }
-    }, [bullets, handleFocusChange]);
+    }, [handleFocusChange]);
 
     const handleTriggerTagPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => {
         if (!inputRef.current) return;
@@ -992,8 +1208,23 @@ export const App = () => {
         }
         left = Math.max(VIEWPORT_PADDING_PX, left);
         
+        // Recalculate tags on the fly for stability
+        const currentBullets = bulletsRef.current;
+        const tagSet = new Set<string>();
+        const tagRegex = /#\w+/g;
+        
+        const traverse = (nodes: Bullet[]) => {
+            for(const node of nodes) {
+                const matches = node.text.match(tagRegex);
+                if(matches) matches.forEach(t => tagSet.add(t));
+                traverse(node.children);
+            }
+        }
+        traverse(currentBullets);
+        const allTagsList = Array.from(tagSet).sort();
+
         const lowerCaseQuery = query.toLowerCase();
-        const suggestions = allTags.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
+        const suggestions = allTagsList.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
 
         setTagPopupState({
             isOpen: true,
@@ -1003,7 +1234,7 @@ export const App = () => {
             suggestions: suggestions.slice(0, 100),
             selectedIndex: 0,
         });
-    }, [allTags]);
+    }, []);
 
     const handleCloseTagPopup = useCallback(() => {
         setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev);
@@ -1019,10 +1250,13 @@ export const App = () => {
     }, [tagPopupState.isOpen]);
 
     const handleTagSelect = useCallback((callback: (selectedTag: string) => void) => {
-        if (!tagPopupState.isOpen || tagPopupState.suggestions.length === 0) return;
-        const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
-        callback(selectedTag);
-    }, [tagPopupState]);
+        setTagPopupState(prev => {
+            if (!prev.isOpen || prev.suggestions.length === 0) return prev;
+            const selectedTag = prev.suggestions[prev.selectedIndex];
+            callback(selectedTag);
+            return prev;
+        });
+    }, []);
 
     const handleClearData = async () => {
         if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) {
@@ -1129,7 +1363,7 @@ export const App = () => {
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
                 <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.4</span>
+                <span>Version 0.1.6</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
@@ -1144,6 +1378,15 @@ export const App = () => {
                 onSave={setSettings}
                 currentSettings={settings}
                 onClearData={handleClearData}
+            />
+            <ImportSelectionModal
+                isOpen={isImportModalOpen}
+                onClose={() => {
+                    setIsImportModalOpen(false);
+                    setPendingImportData(null);
+                }}
+                onConfirm={handleConfirmImport}
+                bullets={flatBullets}
             />
         </div>
     );

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons.tsx';
 import type { Bullet } from '../types.ts';
@@ -167,7 +168,7 @@ interface BulletItemProps {
     onNavigateTo: (id: string) => void;
 }
 
-export const BulletItem: React.FC<BulletItemProps> = ({
+const BulletItemImpl: React.FC<BulletItemProps> = ({
   bullet,
   level,
   onUpdate,
@@ -642,3 +643,5 @@ export const BulletItem: React.FC<BulletItemProps> = ({
     </div>
   );
 };
+
+export const BulletItem = React.memo(BulletItemImpl);

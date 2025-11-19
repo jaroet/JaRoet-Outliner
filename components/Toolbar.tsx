@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { HomeIcon, AppointmentIcon, UploadIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon, SearchIcon } from './Icons.tsx';
 
@@ -19,7 +20,7 @@ interface ToolbarProps {
   onOpenSearch: () => void;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({
+export const Toolbar: React.FC<ToolbarProps> = React.memo(({
   onImport,
   onExport,
   breadcrumbs,
@@ -116,4 +117,4 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       </div>
     </div>
   );
-};
+});

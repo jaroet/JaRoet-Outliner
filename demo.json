@@ -1,0 +1,327 @@
+[
+  {
+    "id": "example-outline-root",
+    "text": "Example outline",
+    "children": [
+      {
+        "id": "root-daily-log",
+        "text": "Daily Log",
+        "children": [
+          {
+            "id": "year-2024",
+            "text": "2024",
+            "children": [
+              {
+                "id": "month-10",
+                "text": "10",
+                "children": [
+                  {
+                    "id": "day-2024-10-24",
+                    "text": "2024-10-24",
+                    "children": [
+                      {
+                        "id": "log-1",
+                        "text": "09:00 Standup",
+                        "children": [
+                          {
+                            "id": "log-1a",
+                            "text": "Blocked on the API response format for the [[User Profile Module]]. Need to check with #backend team.",
+                            "children": [],
+                            "isCollapsed": false
+                          },
+                          {
+                            "id": "log-1b",
+                            "text": "Plan to finish the dark mode toggle today #frontend.",
+                            "children": [],
+                            "isCollapsed": false
+                          }
+                        ],
+                        "isCollapsed": false
+                      },
+                      {
+                        "id": "log-2",
+                        "text": "11:30 Deep Work",
+                        "children": [
+                          {
+                            "id": "log-2a",
+                            "text": "Refactoring the `BulletItem` component. The render performance is lagging on large lists.",
+                            "children": [],
+                            "isCollapsed": false
+                          },
+                          {
+                            "id": "log-2b",
+                            "text": "Found a memory leak in the event listeners. Fixed.",
+                            "children": [],
+                            "isCollapsed": false
+                          }
+                        ],
+                        "isCollapsed": false
+                      },
+                      {
+                        "id": "log-3",
+                        "text": "15:00 Meeting notes",
+                        "children": [
+                          {
+                            "id": "log-3a",
+                            "text": "Sync with [[Sarah Jenkins]] regarding the new design system tokens.",
+                            "children": [],
+                            "isCollapsed": false
+                          },
+                          {
+                            "id": "log-3b",
+                            "text": "Action item: Update `tailwind.config.js` with new colors.",
+                            "children": [],
+                            "isCollapsed": false
+                          }
+                        ],
+                        "isCollapsed": false
+                      }
+                    ],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "day-2024-10-25",
+                    "text": "2024-10-25",
+                    "children": [
+                      {
+                        "id": "log-4",
+                        "text": "To-Do Today",
+                        "children": [
+                          {
+                            "id": "log-4a",
+                            "text": "Deploy v0.1.6 to production #urgent",
+                            "children": [],
+                            "isCollapsed": false
+                          },
+                          {
+                            "id": "log-4b",
+                            "text": "Email john.doe@jaroet-inc.com regarding the server costs.",
+                            "children": [],
+                            "isCollapsed": false
+                          }
+                        ],
+                        "isCollapsed": false
+                      }
+                    ],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": false
+          }
+        ],
+        "isCollapsed": true
+      },
+      {
+        "id": "p-1",
+        "text": "Projects (Active)",
+        "children": [
+          {
+            "id": "p-1-1",
+            "text": "Jaroet Outliner Web App",
+            "children": [
+              {
+                "id": "p-1-1-a",
+                "text": "Backlog",
+                "children": [
+                  {
+                    "id": "bug-1",
+                    "text": "Fix drag and drop stutter on Safari #bug #frontend",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "feat-1",
+                    "text": "Add Markdown export support #feature",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "feat-2",
+                    "text": "Implement user authentication (OAuth)",
+                    "children": [
+                      {
+                        "id": "feat-2a",
+                        "text": "Research Supabase vs Firebase",
+                        "children": [],
+                        "isCollapsed": false
+                      }
+                    ],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": false
+              },
+              {
+                "id": "p-1-1-b",
+                "text": "User Profile Module",
+                "children": [
+                  {
+                    "id": "upm-1",
+                    "text": "Specs: [Figma Link](https://figma.com)",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "upm-2",
+                    "text": "Current Status: #blocked (Waiting on API)",
+                    "children": [],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": false
+          },
+          {
+            "id": "p-1-2",
+            "text": "Internal Dashboard",
+            "children": [
+              {
+                "id": "p-1-2-a",
+                "text": "Update analytics charts",
+                "children": [],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": true
+          }
+        ],
+        "isCollapsed": false
+      },
+      {
+        "id": "kb-1",
+        "text": "Knowledge Base & Wiki",
+        "children": [
+          {
+            "id": "kb-tech",
+            "text": "Tech Stack",
+            "children": [
+              {
+                "id": "kb-react",
+                "text": "React Best Practices",
+                "children": [
+                  {
+                    "id": "kb-r-1",
+                    "text": "Always use `React.memo` for list items in the outliner to prevent re-rendering the whole tree.",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "kb-r-2",
+                    "text": "Use `useCallback` for event handlers passed to children.",
+                    "children": [],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": false
+              },
+              {
+                "id": "kb-css",
+                "text": "CSS / Tailwind",
+                "children": [
+                  {
+                    "id": "kb-c-1",
+                    "text": "Dark mode: use the `dark:` prefix.",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "kb-c-2",
+                    "text": "Custom colors are defined in `tailwind.config` inside index.html.",
+                    "children": [],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": false
+          },
+          {
+            "id": "kb-people",
+            "text": "Team Directory",
+            "children": [
+              {
+                "id": "person-1",
+                "text": "Sarah Jenkins - Lead Designer",
+                "children": [
+                  {
+                    "id": "p1a",
+                    "text": "Email: sarah@jaroet-inc.com",
+                    "children": [],
+                    "isCollapsed": false
+                  },
+                  {
+                    "id": "p1b",
+                    "text": "Timezone: EST",
+                    "children": [],
+                    "isCollapsed": false
+                  }
+                ],
+                "isCollapsed": true
+              },
+              {
+                "id": "person-2",
+                "text": "Jane Doe - Product Manager",
+                "children": [],
+                "isCollapsed": true
+              }
+            ],
+            "isCollapsed": false
+          }
+        ],
+        "isCollapsed": false
+      },
+      {
+        "id": "personal-1",
+        "text": "Personal / Random",
+        "children": [
+          {
+            "id": "bk-1",
+            "text": "Book Reading List",
+            "children": [
+              {
+                "id": "bk-1a",
+                "text": "Clean Code - Robert C. Martin #reading",
+                "children": [],
+                "isCollapsed": false
+              },
+              {
+                "id": "bk-1b",
+                "text": "The Pragmatic Programmer #completed",
+                "children": [],
+                "isCollapsed": false
+              },
+              {
+                "id": "bk-1c",
+                "text": "Dune #fiction #to-read",
+                "children": [],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": false
+          },
+          {
+            "id": "ideas-1",
+            "text": "App Ideas",
+            "children": [
+              {
+                "id": "idea-a",
+                "text": "A plant watering tracker that connects to a humidity sensor.",
+                "children": [],
+                "isCollapsed": false
+              }
+            ],
+            "isCollapsed": false
+          }
+        ],
+        "isCollapsed": false
+      }
+    ],
+    "isCollapsed": false
+  }
+]
