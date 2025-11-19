@@ -25,6 +25,7 @@ The **help-documentation.json** file contains a small outline that showcases the
 The **demo.json** file contains an example outline to show how the application can be used. 
 
 with the Help & Documentation imported the out-of-the-box interface looks like this:
+
 <img width="1116" height="734" alt="image" src="https://github.com/user-attachments/assets/c859b8cf-04ae-4ef7-947e-8951609b1914" />
 
 
