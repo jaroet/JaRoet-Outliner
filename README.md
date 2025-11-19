@@ -25,10 +25,10 @@ The **help-documentation.json** file contains a small outline that showcases the
 The **demo.json** file contains an example outline to show how the application can be used. 
 
 ## Storage
-As I did not want anything online or in the cloud everything you add to the application in stored in an **IndexedDB**. From the application you can export the content of this IndexedDB (being your outline) to JSON and you can also import an exported JSON file. In the settings menu there is an option to reset the indexedDB and start over. 
+As I did not want anything online or in the cloud, everything you add to the application is stored in a local **IndexedDB** instance. From the application you can export the content of this IndexedDB (being your outline) to JSON as a backup and you can also import an exported JSON file. In the settings menu there is an option to reset the indexedDB and start over. 
 
 ## JSON Import and Export
-- You can export and import JSON files created with this app. 
+- You can export the outline and import JSON files created with this app. 
 - On import you get an option to choose where you want to import the JSON file to. Default is the root but you can choose any bullet in your outline under which the content of the JSOM file will be imported. 
 - The export to JSON is always a complete export of the outline. It is more meant as a way to backup your outline. I plan a change to also export a part of your outline.  
 
