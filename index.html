@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -1096,7 +1097,7 @@
           const [tagPopupState, setTagPopupState] = useState({ isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0 });
 
           // Sidebar State
-          const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+          const [isSidebarOpen, setIsSidebarOpen] = useState(false);
           const [recentBullets, setRecentBullets] = useState([]);
           const [favoriteBullets, setFavoriteBullets] = useState([]);
 
@@ -1640,11 +1641,19 @@
                   {linkPopupState.isOpen && <LinkPopup suggestions={linkPopupState.suggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(bullet) => { if (linkSelectionHandler.handler) linkSelectionHandler.handler(bullet); }} position={linkPopupState.position} containerRef={linkPopupRef} />}
                   {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(tag) => { if (tagSelectionHandler.handler) tagSelectionHandler.handler(tag); }} position={tagPopupState.position} containerRef={tagPopupRef} />}
                   
-                  <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
+                  <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
                       <div className="flex items-center gap-2 min-w-0">
                           <span title={settings.fileName} className="truncate">{settings.fileName}</span>
                       </div>
-                      <span className="flex-shrink-0 ml-2">Version 0.1.19</span>
+                      <a 
+                          href="https://github.com/jaroet/JaRoet-Outliner/releases" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex-shrink-0 ml-2 hover:underline"
+                          title="View Release Notes"
+                      >
+                          Version 0.1.21
+                      </a>
                   </footer>
                    <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
                   <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />

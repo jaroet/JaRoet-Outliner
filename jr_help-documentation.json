@@ -1,4 +1,5 @@
 
+
 [
   {
     "id": "doc-root",
@@ -78,6 +79,25 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-33",
+                "text": "2024-11-11: UI Adjustments",
+                "children": [
+                    { "id": "cl-33-a", "text": "Increased the text size in the status bar for better readability.", "children": [], "isCollapsed": false },
+                    { "id": "cl-33-b", "text": "The sidebar is now collapsed by default when opening the application.", "children": [], "isCollapsed": false },
+                    { "id": "cl-33-c", "text": "Updated application version to 0.1.21.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-32",
+                "text": "2024-11-11: Version Link",
+                "children": [
+                    { "id": "cl-32-a", "text": "The version number in the status bar is now a link to the GitHub releases page.", "children": [], "isCollapsed": false },
+                    { "id": "cl-32-b", "text": "Updated application version to 0.1.20.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-31",
                 "text": "2024-11-10: Sidebar Polish",
