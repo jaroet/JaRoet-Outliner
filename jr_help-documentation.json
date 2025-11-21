@@ -79,6 +79,36 @@
         "text": "Changelog",
         "children": [
             {
+                "id": "cl-31",
+                "text": "2024-11-10: Sidebar Polish",
+                "children": [
+                    { "id": "cl-31-a", "text": "Further reduced spacing for sidebar items for a denser view.", "children": [], "isCollapsed": false },
+                    { "id": "cl-31-b", "text": "Updated sidebar headers to use a bold, regular font size.", "children": [], "isCollapsed": false },
+                    { "id": "cl-31-c", "text": "Updated application version to 0.1.19.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-30",
+                "text": "2024-11-09: Refinements",
+                "children": [
+                    { "id": "cl-30-a", "text": "Reduced padding for items in the Favorites and Recent sidebar lists for a more compact view.", "children": [], "isCollapsed": false },
+                    { "id": "cl-30-b", "text": "Removed the logo image from the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-30-c", "text": "Updated application version to 0.1.18.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-29",
+                "text": "2024-11-08: UI Refinements",
+                "children": [
+                    { "id": "cl-29-a", "text": "Removed the logo from the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-29-b", "text": "Reduced padding in the sidebar for favorites and recents, allowing more items to be visible.", "children": [], "isCollapsed": false },
+                    { "id": "cl-29-c", "text": "Updated application version to 0.1.17.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
                 "id": "cl-28",
                 "text": "2024-11-07: Sidebar Improvements",
                 "children": [

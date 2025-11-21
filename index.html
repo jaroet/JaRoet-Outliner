@@ -314,15 +314,15 @@
              <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden">
                 {/* Favorites */}
                 <div>
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}>
-                        <div className="flex items-center gap-2"><StarIcon className="w-4 h-4" /><span className="font-semibold">Favorites</span></div>
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}>
+                        <div className="flex items-center gap-2"><StarIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Favorites</span></div>
                         <button className="text-gray-400">{isFavoritesCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
                     </div>
                     {!isFavoritesCollapsed && (
                         <div className="p-2">
                             {favorites.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No favorites yet</div> : (
-                                <ul className="space-y-1">{favorites.map(item => (
-                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
+                                <ul className="space-y-0">{favorites.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
                                 ))}</ul>
                             )}
                         </div>
@@ -330,15 +330,15 @@
                 </div>
                 {/* Recents */}
                 <div className="border-t border-gray-200 dark:border-gray-700">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}>
-                        <div className="flex items-center gap-2"><ClockIcon className="w-4 h-4" /><span className="font-semibold">Recents</span></div>
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}>
+                        <div className="flex items-center gap-2"><ClockIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Recents</span></div>
                         <button className="text-gray-400">{isRecentsCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
                     </div>
                     {!isRecentsCollapsed && (
                         <div className="p-2">
                             {recents.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No recent changes</div> : (
-                                <ul className="space-y-1">{recents.map(item => (
-                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
+                                <ul className="space-y-0">{recents.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
                                 ))}</ul>
                             )}
                         </div>
@@ -1642,10 +1642,9 @@
                   
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
                       <div className="flex items-center gap-2 min-w-0">
-                          <img src="./jr_logo.png" alt="Logo" className="w-4 h-4 object-contain" />
                           <span title={settings.fileName} className="truncate">{settings.fileName}</span>
                       </div>
-                      <span className="flex-shrink-0 ml-2">Version 0.1.16</span>
+                      <span className="flex-shrink-0 ml-2">Version 0.1.19</span>
                   </footer>
                    <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
                   <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />

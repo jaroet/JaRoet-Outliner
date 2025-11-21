@@ -61,12 +61,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                 {/* Favorites Section */}
                 <div>
                     <div 
-                        className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
+                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
                         onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}
                     >
                         <div className="flex items-center gap-2">
                             <StarIcon className="w-4 h-4" />
-                            <span className="font-semibold">Favorites</span>
+                            <span className="font-bold text-[length:var(--font-size)]">Favorites</span>
                         </div>
                         <button className="text-gray-400">
                             {isFavoritesCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
@@ -80,12 +80,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                                     No favorites yet
                                 </div>
                             ) : (
-                                <ul className="space-y-1">
+                                <ul className="space-y-0">
                                     {favorites.map(item => (
                                         <li key={item.id}>
                                             <button
                                                 onClick={() => onNavigate(item.id)}
-                                                className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"
+                                                className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"
                                             >
                                                 <div className="text-gray-800 dark:text-gray-200 truncate font-medium">
                                                     {item.text || <em className="text-gray-400">Untitled</em>}
@@ -102,12 +102,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                 {/* Recents Section */}
                 <div className="border-t border-gray-200 dark:border-gray-700">
                     <div 
-                        className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
+                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
                         onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}
                     >
                         <div className="flex items-center gap-2">
                             <ClockIcon className="w-4 h-4" />
-                            <span className="font-semibold">Recents</span>
+                            <span className="font-bold text-[length:var(--font-size)]">Recents</span>
                         </div>
                         <button className="text-gray-400">
                             {isRecentsCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
@@ -121,12 +121,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                                     No recent changes
                                 </div>
                             ) : (
-                                <ul className="space-y-1">
+                                <ul className="space-y-0">
                                     {recents.map(item => (
                                         <li key={item.id}>
                                             <button
                                                 onClick={() => onNavigate(item.id)}
-                                                className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"
+                                                className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"
                                             >
                                                 <div className="text-gray-800 dark:text-gray-200 truncate font-medium">
                                                     {item.text || <em className="text-gray-400">Untitled</em>}

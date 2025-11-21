@@ -1589,10 +1589,9 @@ export const App = () => {
 
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
                 <div className="flex items-center gap-2 min-w-0">
-                    <img src="./jr_logo.png" alt="Logo" className="w-4 h-4 object-contain" />
                     <span title={settings.fileName} className="truncate">{settings.fileName}</span>
                 </div>
-                <span className="flex-shrink-0 ml-2">Version 0.1.16</span>
+                <span className="flex-shrink-0 ml-2">Version 0.1.19</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}
