@@ -558,8 +558,8 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
     <div className="flex flex-col group">
         <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
             <div
-                style={{ marginLeft: `${level * 1.5}rem` }}
-                className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]"
+                style={{ marginLeft: `${level * 1.5}em` }}
+                className="flex-shrink-0 flex items-center h-[1.5em] text-[var(--main-color)]"
             >
                 <button
                     onClick={toggleCollapse}
@@ -568,7 +568,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                 >
                     {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                 </button>
-                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors" aria-label="Zoom in">
+                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-[1.5em] h-[1.5em] flex items-center justify-center transition-colors" aria-label="Zoom in">
                     {renderBulletIcon()}
                 </button>
             </div>
@@ -578,7 +578,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                         {isEditing ? (
                             <div className="relative">
                                 <div
-                                    className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words"
+                                    className="absolute top-0 left-0 w-full h-full pointer-events-none leading-[1.5] whitespace-pre-wrap break-words"
                                     aria-hidden="true"
                                 >
                                     {renderedRichTextSimple}
@@ -589,13 +589,13 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                                     onChange={handleTextChange}
                                     onKeyDown={handleTextKeyDown}
                                     readOnly={bullet.isReadOnly}
-                                    className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6"
+                                    className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]"
                                     rows={1}
                                     aria-label="Edit item"
                                 />
                             </div>
                         ) : (
-                            <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
+                            <div onClick={handleTextClick} className={`w-full min-h-[1.5em] leading-[1.5] break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
                             {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}

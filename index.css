@@ -8,7 +8,15 @@ body {
   font-family: var(--font-family);
   font-size: var(--font-size);
   overflow: hidden; /* Prevent body scroll when resizing */
+  line-height: 1.5;
 }
+
+/* Ensure form elements inherit font settings from body */
+input, textarea, button, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
 /* Simple scrollbar styling for a more modern look */
 ::-webkit-scrollbar {
   width: 8px;

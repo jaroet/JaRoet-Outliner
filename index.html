@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2360a5fa' /></svg>" />
+    <link rel="icon" type="image/png" href="./jr_favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JaRoet Outliner</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -115,7 +114,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 01-1.37.49l1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -577,7 +576,7 @@
                     ))}
                 </div>
               <div className="flex items-center gap-2">
-                 <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SearchIcon /></button>
+                 <button onClick={onOpenSearch} title="Quick find... (use #tag, AND, OR)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SearchIcon /></button>
                 <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><AppointmentIcon className="w-5 h-5" /></button>
                 <div className="flex items-center gap-1">
                     <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
@@ -790,22 +789,22 @@
         return (
           <div className="flex flex-col group">
               <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
-                  <div style={{ marginLeft: `${level * 1.5}rem` }} className="flex-shrink-0 flex items-center h-6 text-[var(--main-color)]">
+                  <div style={{ marginLeft: `${level * 1.5}em` }} className="flex-shrink-0 flex items-center h-[1.5em] text-[var(--main-color)]">
                       <button onClick={toggleCollapse} className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`} aria-label={bullet.isCollapsed ? 'Expand' : 'Collapse'}>
                           {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
                       </button>
-                      <button onClick={() => onZoom(bullet.id)} className="ml-1 w-6 h-6 flex items-center justify-center transition-colors" aria-label="Zoom in">{renderBulletIcon()}</button>
+                      <button onClick={() => onZoom(bullet.id)} className="ml-1 w-[1.5em] h-[1.5em] flex items-center justify-center transition-colors" aria-label="Zoom in">{renderBulletIcon()}</button>
                   </div>
                   <div className="flex-grow ml-2">
                       <div className="flex items-center">
                           <div className="flex-grow">
                               {isEditing ? (
                                   <div className="relative">
-                                      <div className="absolute top-0 left-0 w-full h-full pointer-events-none leading-6 whitespace-pre-wrap break-words" aria-hidden="true">{renderedRichTextSimple}</div>
-                                      <textarea ref={textInputRef} value={bullet.text} onChange={handleTextChange} onKeyDown={handleTextKeyDown} readOnly={bullet.isReadOnly} className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-6" rows={1} aria-label="Edit item" />
+                                      <div className="absolute top-0 left-0 w-full h-full pointer-events-none leading-[1.5] whitespace-pre-wrap break-words" aria-hidden="true">{renderedRichTextSimple}</div>
+                                      <textarea ref={textInputRef} value={bullet.text} onChange={handleTextChange} onKeyDown={handleTextKeyDown} readOnly={bullet.isReadOnly} className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]" rows={1} aria-label="Edit item" />
                                   </div>
                               ) : (
-                                  <div onClick={handleTextClick} className={`w-full min-h-[1.5rem] leading-6 break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
+                                  <div onClick={handleTextClick} className={`w-full min-h-[1.5em] leading-[1.5] break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
                                   {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                                   </div>
                               )}
@@ -823,6 +822,7 @@
           </div>
         );
       };
+
       const BulletItem = React.memo(BulletItemImpl);
 
       // --- App ---
@@ -839,7 +839,7 @@
       const DAILY_LOG_ROOT_TEXT = 'Daily Log';
       const initialData = [
         { id: 'journal-root', text: DAILY_LOG_ROOT_TEXT, children: [], isCollapsed: true },
-        { id: 'help-info', text: 'For help and documentation, import the help-documentation.json file.', children: [], isCollapsed: false }
+        { id: 'help-info', text: 'For help and documentation, import the jr_help-documentation.json file.', children: [], isCollapsed: false }
       ];
 
       const createNewBullet = (text = '') => { const now = Date.now(); return { id: crypto.randomUUID(), text, children: [], isCollapsed: false, createdAt: now, updatedAt: now }; };
@@ -1216,8 +1216,11 @@
                       {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(tag) => { if (tagSelectionHandler.handler) tagSelectionHandler.handler(tag); }} position={tagPopupState.position} containerRef={tagPopupRef} />}
                   </main>
                   <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
-                      <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                      <span>Version 0.1.12</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                          <img src="./jr_logo.png" alt="Logo" className="w-4 h-4 object-contain" />
+                          <span title={settings.fileName} className="truncate">{settings.fileName}</span>
+                      </div>
+                      <span className="flex-shrink-0 ml-2">Version 0.1.13</span>
                   </footer>
                    <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
                   <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />

@@ -40,7 +40,7 @@ const initialData: Bullet[] = [
   },
   {
     id: 'help-info',
-    text: 'For help and documentation, import the help-documentation.json file.',
+    text: 'For help and documentation, import the jr_help-documentation.json file.',
     children: [],
     isCollapsed: false,
   }
@@ -1396,8 +1396,11 @@ export const App = () => {
                 )}
             </main>
             <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
-                <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                <span>Version 0.1.12</span>
+                <div className="flex items-center gap-2 min-w-0">
+                    <img src="./jr_logo.png" alt="Logo" className="w-4 h-4 object-contain" />
+                    <span title={settings.fileName} className="truncate">{settings.fileName}</span>
+                </div>
+                <span className="flex-shrink-0 ml-2">Version 0.1.13</span>
             </footer>
              <SearchModal
                 isOpen={isSearchModalOpen}

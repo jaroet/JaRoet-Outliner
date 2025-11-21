@@ -79,6 +79,15 @@
         "text": "Changelog",
         "children": [
             {
+                "id": "cl-26",
+                "text": "2024-11-04: Visual & Branding Updates",
+                "children": [
+                    { "id": "cl-26-a", "text": "Updated favicon to favicon.png and added logo.png to the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-26-b", "text": "Updated application version to 0.1.13.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
                 "id": "cl-25",
                 "text": "2024-11-03: Release Build Refactor",
                 "children": [
