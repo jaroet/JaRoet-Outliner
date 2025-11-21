@@ -1,6 +1,6 @@
 
 import React, { useRef } from 'react';
-import { HomeIcon, AppointmentIcon, UploadIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon, SearchIcon } from './Icons.tsx';
+import { HomeIcon, AppointmentIcon, UploadIcon, DownloadIcon, SettingsIcon, SunIcon, MoonIcon, SearchIcon, SidebarIcon, StarIcon } from './Icons.tsx';
 
 interface Breadcrumb {
     id: string;
@@ -18,6 +18,11 @@ interface ToolbarProps {
   theme: 'light' | 'dark';
   onThemeToggle: () => void;
   onOpenSearch: () => void;
+  isSidebarOpen: boolean;
+  onToggleSidebar: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  canFavorite: boolean;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = React.memo(({
@@ -31,6 +36,11 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({
   theme,
   onThemeToggle,
   onOpenSearch,
+  isSidebarOpen,
+  onToggleSidebar,
+  isFavorite,
+  onToggleFavorite,
+  canFavorite,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +77,14 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({
 
   return (
     <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+        <button 
+            onClick={onToggleSidebar} 
+            className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isSidebarOpen ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
+            title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+        >
+            <SidebarIcon />
+        </button>
+
         <div className="flex-grow flex items-center gap-2 overflow-hidden">
             <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <HomeIcon />
@@ -91,6 +109,14 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({
         </button>
         <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <AppointmentIcon className="w-5 h-5" />
+        </button>
+        <button 
+            onClick={onToggleFavorite} 
+            title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${!canFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!canFavorite}
+        >
+            <StarIcon filled={isFavorite} />
         </button>
 
         <div className="flex items-center gap-1">

@@ -1,9 +1,11 @@
+
 export interface Bullet {
   id: string;
   text: string;
   children: Bullet[];
   isCollapsed: boolean;
   isReadOnly?: boolean;
+  isFavorite?: boolean;
   originalId?: string;
   createdAt?: number;
   updatedAt?: number;
@@ -30,6 +32,7 @@ export type CoreBullet = {
   id: string;
   text: string;
   children: CoreBullet[];
+  isFavorite?: boolean;
   originalId?: string;
   createdAt?: number;
   updatedAt?: number;

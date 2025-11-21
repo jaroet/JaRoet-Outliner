@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -11,7 +12,88 @@
         darkMode: 'class',
       }
     </script>
-    <link rel="stylesheet" href="./index.css" />
+    <style>
+      :root {
+        --main-color: #60a5fa;
+        --font-family: sans-serif;
+        --font-size: 16px;
+      }
+      body {
+        font-family: var(--font-family);
+        font-size: var(--font-size);
+        overflow: hidden; /* Prevent body scroll when resizing */
+        line-height: 1.5;
+      }
+
+      /* Ensure form elements inherit font settings from body */
+      input, textarea, button, select {
+        font-family: inherit;
+        font-size: inherit;
+      }
+
+      /* Simple scrollbar styling for a more modern look */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      /* Light theme */
+      ::-webkit-scrollbar-track {
+        background: #f1f5f9; /* cool-gray-100 */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1; /* cool-gray-300 */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; /* cool-gray-400 */
+      }
+      /* Dark theme */
+      .dark ::-webkit-scrollbar-track {
+        background: #1e293b; /* slate-800 */
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569; /* slate-600 */
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #64748b; /* slate-500 */
+      }
+      .focus-outline {
+        outline: 2px solid var(--main-color);
+        outline-offset: -1px;
+        border-radius: 4px;
+      }
+      .selected-item-bg {
+        /* Mix with 20% black to darken the main color, ensuring good contrast with white text */
+        background-color: color-mix(in srgb, var(--main-color) 80%, black);
+      }
+      .tag-span {
+        background-color: color-mix(in srgb, var(--main-color) 20%, transparent);
+        color: color-mix(in srgb, var(--main-color) 70%, black);
+        border-radius: 0.375rem; /* rounded-md */
+        padding: 0.125rem 0.25rem; /* py-0.5 px-1 */
+        margin: 0 0.0625rem; /* mx-px */
+        font-size: 0.875rem; /* text-sm */
+      }
+
+      .dark .tag-span {
+        color: var(--main-color);
+      }
+
+      @keyframes fadeInUp {
+          from {
+              opacity: 0;
+              transform: translate3d(0, 100%, 0);
+          }
+          to {
+              opacity: 1;
+              transform: translate3d(0, 0, 0);
+          }
+      }
+
+      .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease-out;
+      }
+    </style>
     <!-- Add Babel for in-browser JSX/TS transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Add Dexie.js for IndexedDB -->
@@ -114,7 +196,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 01-1.37.49l1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -135,6 +217,24 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
               <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
+      );
+
+      const SidebarIcon = ({ className = 'w-5 h-5' }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      );
+
+      const ClockIcon = ({ className = 'w-4 h-4' }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+      );
+
+      const StarIcon = ({ className = 'w-5 h-5', filled = false }) => (
+        <svg xmlns="http://www.w3.org/2000/svg" fill={filled ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+        </svg>
       );
 
       // --- Toast ---
@@ -172,6 +272,95 @@
               </div>
           );
       };
+
+      // --- LeftSidebar ---
+      const formatTimeAgo = (timestamp) => {
+        const now = Date.now();
+        const diffInSeconds = Math.floor((now - timestamp) / 1000);
+        if (diffInSeconds < 60) return 'Just now';
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 7) return `${diffInDays}d ago`;
+        return new Date(timestamp).toLocaleDateString();
+      };
+
+      const LeftSidebar = React.memo(({ isOpen, recents, favorites, onNavigate }) => {
+        const [width, setWidth] = useState(256);
+        const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
+        const [isFavoritesCollapsed, setIsFavoritesCollapsed] = useState(false);
+        const [isResizing, setIsResizing] = useState(false);
+
+        const startResizing = useCallback((mouseDownEvent) => {
+            mouseDownEvent.preventDefault();
+            setIsResizing(true);
+            const startX = mouseDownEvent.clientX;
+            const startWidth = width;
+
+            const doDrag = (mouseMoveEvent) => {
+                const newWidth = startWidth + (mouseMoveEvent.clientX - startX);
+                if (newWidth > 150 && newWidth < 600) {
+                    setWidth(newWidth);
+                }
+            };
+
+            const stopDrag = () => {
+                setIsResizing(false);
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }, [width]);
+
+        if (!isOpen) return null;
+
+        return (
+          <div 
+            className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full relative group/sidebar"
+            style={{ width: `${width}px`, fontSize: 'calc(var(--font-size) * 0.87)' }}
+          >
+             <div className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-10 hover:bg-blue-400/50 transition-colors ${isResizing ? 'bg-blue-400/50' : ''}`} onMouseDown={startResizing} />
+             <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden">
+                {/* Favorites */}
+                <div>
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}>
+                        <div className="flex items-center gap-2"><StarIcon className="w-4 h-4" /><span className="font-semibold">Favorites</span></div>
+                        <button className="text-gray-400">{isFavoritesCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
+                    </div>
+                    {!isFavoritesCollapsed && (
+                        <div className="p-2">
+                            {favorites.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No favorites yet</div> : (
+                                <ul className="space-y-1">{favorites.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
+                                ))}</ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+                {/* Recents */}
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}>
+                        <div className="flex items-center gap-2"><ClockIcon className="w-4 h-4" /><span className="font-semibold">Recents</span></div>
+                        <button className="text-gray-400">{isRecentsCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
+                    </div>
+                    {!isRecentsCollapsed && (
+                        <div className="p-2">
+                            {recents.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No recent changes</div> : (
+                                <ul className="space-y-1">{recents.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div><div className="text-[0.85em] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">{formatTimeAgo(item.updatedAt)}</div></button></li>
+                                ))}</ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+          </div>
+        );
+      });
 
       // --- Tag Popup ---
       const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
@@ -549,7 +738,7 @@
       };
 
       // --- Toolbar ---
-      const Toolbar = React.memo(({ onImport, onExport, breadcrumbs, onBreadcrumbClick, fileName, onOpenSettings, onGoToToday, theme, onThemeToggle, onOpenSearch }) => {
+      const Toolbar = React.memo(({ onImport, onExport, breadcrumbs, onBreadcrumbClick, fileName, onOpenSettings, onGoToToday, theme, onThemeToggle, onOpenSearch, isSidebarOpen, onToggleSidebar, isFavorite, onToggleFavorite, canFavorite }) => {
           const fileInputRef = useRef(null);
           const handleImportClick = () => fileInputRef.current?.click();
           const handleFileChange = (event) => {
@@ -569,6 +758,7 @@
           };
           return (
             <div className="flex-shrink-0 sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
+                <button onClick={onToggleSidebar} className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isSidebarOpen ? 'bg-gray-100 dark:bg-gray-700' : ''}`} title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}><SidebarIcon /></button>
                 <div className="flex-grow flex items-center gap-2 overflow-hidden">
                     <button onClick={() => onBreadcrumbClick(null)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><HomeIcon /></button>
                     {breadcrumbs.map((crumb, index) => (
@@ -576,8 +766,9 @@
                     ))}
                 </div>
               <div className="flex items-center gap-2">
-                 <button onClick={onOpenSearch} title="Quick find... (use #tag, AND, OR)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SearchIcon /></button>
+                 <button onClick={onOpenSearch} title="Quick Find (Ctrl+Shift+K)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><SearchIcon /></button>
                 <button onClick={onGoToToday} title="Go to Today's Log (Ctrl+J)" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><AppointmentIcon className="w-5 h-5" /></button>
+                <button onClick={onToggleFavorite} title={isFavorite ? "Remove from Favorites" : "Add to Favorites"} className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${!canFavorite ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!canFavorite}><StarIcon filled={isFavorite} /></button>
                 <div className="flex items-center gap-1">
                     <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleFileChange} />
                     <button onClick={handleImportClick} title="Import from JSON" className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"><UploadIcon /></button>
@@ -917,12 +1108,17 @@
           const [linkPopupState, setLinkPopupState] = useState({ isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0 });
           const [tagPopupState, setTagPopupState] = useState({ isOpen: false, targetId: null, query: '', position: { top: 0, left: 0 }, suggestions: [], selectedIndex: 0 });
 
+          // Sidebar State
+          const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+          const [recentBullets, setRecentBullets] = useState([]);
+          const [favoriteBullets, setFavoriteBullets] = useState([]);
+
           const currentFocusId = focusOptions.id;
           const focusPosition = focusOptions.position;
           const handleFocusChange = useCallback((id, position = 'end') => setFocusOptions({ id, position }), []);
 
           const getCoreDataString = useCallback((nodes) => {
-              const removeUiState = (b) => ({ id: b.id, text: b.text, children: b.children.map(removeUiState), originalId: b.originalId, createdAt: b.createdAt, updatedAt: b.updatedAt });
+              const removeUiState = (b) => ({ id: b.id, text: b.text, children: b.children.map(removeUiState), originalId: b.originalId, createdAt: b.createdAt, updatedAt: b.updatedAt, isFavorite: b.isFavorite });
               const coreBullets = nodes.map(removeUiState);
               return JSON.stringify(coreBullets);
           }, []);
@@ -936,12 +1132,55 @@
 
           useEffect(() => { window.document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
 
+          // --- Recent & Favorite Bullets Logic ---
+          useEffect(() => {
+              if (dataLoadedRef.current && recentBullets.length === 0 && favoriteBullets.length === 0) {
+                  const allItems = [];
+                  const favs = [];
+                  const traverse = (nodes) => {
+                      for (const node of nodes) {
+                          allItems.push({ id: node.id, text: node.text, updatedAt: node.updatedAt || 0 });
+                          if (node.isFavorite) favs.push({ id: node.id, text: node.text });
+                          if (node.children.length > 0) traverse(node.children);
+                      }
+                  };
+                  traverse(bullets);
+                  allItems.sort((a, b) => b.updatedAt - a.updatedAt);
+                  setRecentBullets(allItems.slice(0, 12));
+                  setFavoriteBullets(favs);
+              }
+          }, [dataLoadedRef.current]);
+
+          const updateRecentList = useCallback((id, text, updatedAt) => {
+              setRecentBullets(prev => {
+                  const newList = prev.filter(item => item.id !== id);
+                  let itemText = text;
+                  if (itemText === undefined) {
+                      const existing = prev.find(i => i.id === id);
+                      if (existing) itemText = existing.text;
+                      else return prev;
+                  }
+                  newList.unshift({ id, text: itemText, updatedAt });
+                  return newList.slice(0, 12);
+              });
+          }, []);
+
+          const removeFromRecentList = useCallback((id) => {
+              setRecentBullets(prev => prev.filter(item => item.id !== id));
+              setFavoriteBullets(prev => prev.filter(item => item.id !== id));
+          }, []);
+
           useEffect(() => {
               const loadData = async () => {
                   const savedThemeEntry = await db.keyValuePairs.get('theme');
                   const savedTheme = savedThemeEntry?.value;
                   if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) setTheme(savedTheme);
                   
+                  try {
+                    const savedSidebar = await db.keyValuePairs.get('isSidebarOpen');
+                    if (savedSidebar !== undefined) setIsSidebarOpen(savedSidebar.value);
+                  } catch (e) { console.error("Failed to load sidebar state", e); }
+
                   let loadedSettings;
                   const defaultSettings = { mainColor: '#60a5fa', fileName: 'My Outline', fontFamily: 'sans-serif', fontSize: 16 };
                   try {
@@ -997,11 +1236,15 @@
                   if (found && !found.node.isReadOnly && found.node.text === '' && found.node.children.length === 0) {
                       const newBullets = structuredClone(bullets);
                       const foundAgain = findBulletAndParent(prevId, newBullets);
-                      if (foundAgain) { foundAgain.siblings.splice(foundAgain.index, 1); setBullets(newBullets); }
+                      if (foundAgain) { 
+                          foundAgain.siblings.splice(foundAgain.index, 1); 
+                          setBullets(newBullets); 
+                          removeFromRecentList(prevId);
+                      }
                   }
               }
               prevFocusId.current = currentId;
-          }, [focusOptions.id, bullets, findBulletAndParent]);
+          }, [focusOptions.id, bullets, findBulletAndParent, removeFromRecentList]);
 
           const breadcrumbs = useMemo(() => {
               if (!zoomedBulletId) return [];
@@ -1043,6 +1286,43 @@
               const zoomedNode = findZoomed(bullets);
               return zoomedNode ? zoomedNode.children : [];
           }, [bullets, zoomedBulletId]);
+          
+          // Favorites Logic
+          const targetFavoriteId = currentFocusId || zoomedBulletId;
+
+          const isTargetFavorite = useMemo(() => {
+              if (!targetFavoriteId) return false;
+              const findBullet = (nodes) => { for (const node of nodes) { if (node.id === targetFavoriteId) return node; const found = findBullet(node.children); if (found) return found; } return null; }
+              const node = findBullet(bullets);
+              return node?.isFavorite || false;
+          }, [bullets, targetFavoriteId]);
+
+          const handleToggleFavorite = useCallback(() => {
+              if (!targetFavoriteId) return;
+              
+              setBullets(prev => {
+                  let isNowFav = false;
+                  let targetText = '';
+                  const newBullets = mapBullets(prev, b => {
+                      if (b.id === targetFavoriteId) {
+                          isNowFav = !b.isFavorite;
+                          targetText = b.text;
+                          return { ...b, isFavorite: isNowFav };
+                      }
+                      return b;
+                  });
+                  setFavoriteBullets(currentFavs => {
+                      if (isNowFav) {
+                        if (currentFavs.some(f => f.id === targetFavoriteId)) return currentFavs;
+                        return [...currentFavs, { id: targetFavoriteId, text: targetText }];
+                      }
+                      else return currentFavs.filter(f => f.id !== targetFavoriteId);
+                  });
+                  if (isNowFav) addToast('Added to favorites', 'success');
+                  else addToast('Removed from favorites', 'info');
+                  return newBullets;
+              });
+          }, [targetFavoriteId, addToast]);
 
           const visibleBulletIds = useMemo(() => {
               const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; };
@@ -1067,15 +1347,25 @@
               const bulletToZoom = find(currentBullets);
               if (bulletToZoom && bulletToZoom.children.length === 0 && !bulletToZoom.isReadOnly) {
                   const newBullet = createNewBullet();
-                  setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { found.node.children.push(newBullet); found.node.isCollapsed = false; return newBullets; } return prevBullets; });
+                  setBullets(prevBullets => { 
+                      const newBullets = structuredClone(prevBullets); 
+                      const found = findBulletAndParent(id, newBullets); 
+                      if (found) { 
+                          found.node.children.push(newBullet); 
+                          found.node.isCollapsed = false; 
+                          return newBullets; 
+                      } 
+                      return prevBullets; 
+                  });
                   setZoomedBulletId(id);
                   setTimeout(() => handleFocusChange(newBullet.id), 0);
+                  updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
               } else if (bulletToZoom) {
                   setZoomedBulletId(id);
                   if (isZoomingOut && oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
                   else if (bulletToZoom.children.length > 0) { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const visibleChildrenIds = getVisibleIds(bulletToZoom.children); if (visibleChildrenIds.length > 0) handleFocusChange(visibleChildrenIds[0]); }
               }
-          }, [handleFocusChange, findBulletAndParent]);
+          }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleGoToJournal = useCallback(() => {
               const now = new Date(); const year = now.getFullYear().toString(); const month = (now.getMonth() + 1).toString().padStart(2, '0'); const day = now.getDate().toString().padStart(2, '0'); const dayText = `${year}-${month}-${day}`;
@@ -1100,7 +1390,23 @@
               addToast('Opened Daily Log', 'success');
           }, [handleFocusChange, addToast]);
 
-          const handleUpdate = useCallback((id, updates) => { setBullets(prevBullets => { const found = findBulletAndParent(id, prevBullets); if (found?.node.isReadOnly) return prevBullets; const isStructuralOrContentChange = Object.keys(updates).some(key => key !== 'isCollapsed'); return mapBullets(prevBullets, bullet => bullet.id === id ? { ...bullet, ...updates, updatedAt: isStructuralOrContentChange ? Date.now() : bullet.updatedAt } : bullet); }); }, [findBulletAndParent]);
+          const handleUpdate = useCallback((id, updates) => { 
+              setBullets(prevBullets => { 
+                  const found = findBulletAndParent(id, prevBullets); 
+                  if (found?.node.isReadOnly) return prevBullets; 
+                  const isStructuralOrContentChange = Object.keys(updates).some(key => key !== 'isCollapsed'); 
+                  const newUpdatedAt = isStructuralOrContentChange ? Date.now() : undefined;
+
+                  if (updates.text !== undefined) {
+                      updateRecentList(id, updates.text, newUpdatedAt || Date.now());
+                      setFavoriteBullets(prev => prev.map(f => f.id === id ? { ...f, text: updates.text } : f));
+                  } else if (isStructuralOrContentChange) {
+                      updateRecentList(id, undefined, newUpdatedAt || Date.now());
+                  }
+
+                  return mapBullets(prevBullets, bullet => bullet.id === id ? { ...bullet, ...updates, updatedAt: newUpdatedAt || bullet.updatedAt } : bullet); 
+              }); 
+          }, [findBulletAndParent, updateRecentList]);
 
           useEffect(() => {
               const handleGlobalKeyDown = (e) => {
@@ -1116,32 +1422,119 @@
 
           const handleAddSibling = useCallback((id, text = '') => {
               const newBullet = createNewBullet(text);
-              setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { if (found.node.isReadOnly) return prevBullets; found.siblings.splice(found.index + 1, 0, newBullet); if (found.parent) found.parent.updatedAt = Date.now(); return newBullets; } return prevBullets; });
+              setBullets(prevBullets => { 
+                  const newBullets = structuredClone(prevBullets); 
+                  const found = findBulletAndParent(id, newBullets); 
+                  if (found) { 
+                      if (found.node.isReadOnly) return prevBullets; 
+                      found.siblings.splice(found.index + 1, 0, newBullet); 
+                      if (found.parent) found.parent.updatedAt = Date.now(); 
+                      return newBullets; 
+                  } 
+                  return prevBullets; 
+              });
               setTimeout(() => handleFocusChange(newBullet.id), 0);
-          }, [handleFocusChange, findBulletAndParent]);
+              updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
+          }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleDelete = useCallback((id) => {
               let prevSiblingId = null;
-              setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found) { prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null; if (found.parent) found.parent.updatedAt = Date.now(); found.siblings.splice(found.index, 1); return newBullets; } return prevBullets; });
+              setBullets(prevBullets => { 
+                  const foundTarget = findBulletAndParent(id, prevBullets); 
+                  if (foundTarget?.node.isReadOnly) return prevBullets; 
+                  const newBullets = structuredClone(prevBullets); 
+                  const found = findBulletAndParent(id, newBullets); 
+                  if (found) { 
+                      prevSiblingId = found.index > 0 ? found.siblings[found.index - 1].id : found.parent?.id || null; 
+                      if (found.parent) found.parent.updatedAt = Date.now(); 
+                      found.siblings.splice(found.index, 1); 
+                      return newBullets; 
+                  } 
+                  return prevBullets; 
+              });
+              removeFromRecentList(id);
               setTimeout(() => handleFocusChange(prevSiblingId), 0);
-          }, [handleFocusChange, findBulletAndParent]);
+          }, [handleFocusChange, findBulletAndParent, removeFromRecentList]);
 
           const handleMerge = useCallback((id) => {
               setBullets(prevBullets => {
                   const foundTarget = findBulletAndParent(id, prevBullets); if (!foundTarget || foundTarget.node.isReadOnly) return prevBullets;
                   if (foundTarget.index > 0) {
                       const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); const prevSibling = found.siblings[found.index - 1]; if (prevSibling.isReadOnly) return prevBullets;
-                      const cursorPosition = prevSibling.text.length; prevSibling.text += found.node.text; prevSibling.children = [...prevSibling.children, ...found.node.children]; prevSibling.updatedAt = Date.now(); if (found.node.children.length > 0) prevSibling.isCollapsed = false; found.siblings.splice(found.index, 1); if (found.parent) found.parent.updatedAt = Date.now();
+                      const cursorPosition = prevSibling.text.length; 
+                      prevSibling.text += found.node.text; 
+                      prevSibling.children = [...prevSibling.children, ...found.node.children]; 
+                      prevSibling.updatedAt = Date.now(); 
+                      if (found.node.children.length > 0) prevSibling.isCollapsed = false; 
+                      found.siblings.splice(found.index, 1); 
+                      if (found.parent) found.parent.updatedAt = Date.now();
+                      
+                      removeFromRecentList(found.node.id);
+                      updateRecentList(prevSibling.id, prevSibling.text, prevSibling.updatedAt || Date.now());
+                      setFavoriteBullets(prev => prev.map(f => f.id === prevSibling.id ? { ...f, text: prevSibling.text } : f));
+
                       setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0); return newBullets;
                   } else {
-                      if (foundTarget.node.text === '') { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); const parentId = found.parent?.id || null; found.siblings.splice(found.index, 1); if (found.parent) found.parent.updatedAt = Date.now(); setTimeout(() => handleFocusChange(parentId, 'end'), 0); return newBullets; }
+                      if (foundTarget.node.text === '') { 
+                          const newBullets = structuredClone(prevBullets); 
+                          const found = findBulletAndParent(id, newBullets); 
+                          const parentId = found.parent?.id || null; 
+                          found.siblings.splice(found.index, 1); 
+                          if (found.parent) found.parent.updatedAt = Date.now(); 
+                          
+                          removeFromRecentList(found.node.id);
+                          
+                          setTimeout(() => handleFocusChange(parentId, 'end'), 0); 
+                          return newBullets; 
+                      }
                   }
                   return prevBullets;
               });
-          }, [findBulletAndParent, handleFocusChange]);
+          }, [findBulletAndParent, handleFocusChange, removeFromRecentList, updateRecentList]);
 
-          const handleIndent = useCallback((id) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found && found.index > 0) { const prevSibling = found.siblings[found.index - 1]; if (prevSibling.isReadOnly) return prevBullets; const [movedNode] = found.siblings.splice(found.index, 1); movedNode.updatedAt = Date.now(); prevSibling.children.push(movedNode); prevSibling.isCollapsed = false; return newBullets; } return prevBullets; }); setTimeout(() => handleFocusChange(id), 0); }, [handleFocusChange, findBulletAndParent]);
-          const handleOutdent = useCallback((id) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (found && found.parent) { const parentInfo = findBulletAndParent(found.parent.id, newBullets); if(parentInfo && !parentInfo.node.isReadOnly){ const [movedNode] = found.siblings.splice(found.index, 1); movedNode.updatedAt = Date.now(); const subsequentSiblings = found.siblings.splice(found.index); movedNode.children.push(...subsequentSiblings); parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode); return newBullets; } } return prevBullets; }); setTimeout(() => handleFocusChange(id), 0); }, [handleFocusChange, findBulletAndParent]);
+          const handleIndent = useCallback((id) => { 
+              setBullets(prevBullets => { 
+                  const foundTarget = findBulletAndParent(id, prevBullets); 
+                  if (foundTarget?.node.isReadOnly) return prevBullets; 
+                  const newBullets = structuredClone(prevBullets); 
+                  const found = findBulletAndParent(id, newBullets); 
+                  if (found && found.index > 0) { 
+                      const prevSibling = found.siblings[found.index - 1]; 
+                      if (prevSibling.isReadOnly) return prevBullets; 
+                      const [movedNode] = found.siblings.splice(found.index, 1); 
+                      movedNode.updatedAt = Date.now(); 
+                      prevSibling.children.push(movedNode); 
+                      prevSibling.isCollapsed = false; 
+                      return newBullets; 
+                  } 
+                  return prevBullets; 
+              }); 
+              updateRecentList(id, undefined, Date.now());
+              setTimeout(() => handleFocusChange(id), 0); 
+          }, [handleFocusChange, findBulletAndParent, updateRecentList]);
+
+          const handleOutdent = useCallback((id) => { 
+              setBullets(prevBullets => { 
+                  const foundTarget = findBulletAndParent(id, prevBullets); 
+                  if (foundTarget?.node.isReadOnly) return prevBullets; 
+                  const newBullets = structuredClone(prevBullets); 
+                  const found = findBulletAndParent(id, newBullets); 
+                  if (found && found.parent) { 
+                      const parentInfo = findBulletAndParent(found.parent.id, newBullets); 
+                      if(parentInfo && !parentInfo.node.isReadOnly){ 
+                          const [movedNode] = found.siblings.splice(found.index, 1); 
+                          movedNode.updatedAt = Date.now(); 
+                          const subsequentSiblings = found.siblings.splice(found.index); 
+                          movedNode.children.push(...subsequentSiblings); 
+                          parentInfo.siblings.splice(parentInfo.index + 1, 0, movedNode); 
+                          return newBullets; 
+                      } 
+                  } 
+                  return prevBullets; 
+              }); 
+              updateRecentList(id, undefined, Date.now());
+              setTimeout(() => handleFocusChange(id), 0); 
+          }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleFoldAll = useCallback((id, collapse) => {
               const setCollapseRecursively = (nodes) => nodes.map(node => { const newNode = { ...node }; if (newNode.children.length > 0) { newNode.isCollapsed = collapse; if (!newNode.isReadOnly) newNode.children = setCollapseRecursively(newNode.children); } return newNode; });
@@ -1149,7 +1542,21 @@
               setBullets(prevBullets => findAndFold(prevBullets));
           }, []);
 
-          const handleMoveBullet = useCallback((id, direction) => { setBullets(prevBullets => { const foundTarget = findBulletAndParent(id, prevBullets); if (foundTarget?.node.isReadOnly) return prevBullets; const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(id, newBullets); if (!found) return prevBullets; const { siblings, index } = found; found.node.updatedAt = Date.now(); if (direction === 'up') { if (index > 0) { [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]]; return newBullets; } } else { if (index < siblings.length - 1) { [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]]; return newBullets; } } return prevBullets; }); }, [findBulletAndParent]);
+          const handleMoveBullet = useCallback((id, direction) => { 
+              setBullets(prevBullets => { 
+                  const foundTarget = findBulletAndParent(id, prevBullets); 
+                  if (foundTarget?.node.isReadOnly) return prevBullets; 
+                  const newBullets = structuredClone(prevBullets); 
+                  const found = findBulletAndParent(id, newBullets); 
+                  if (!found) return prevBullets; 
+                  const { siblings, index } = found; 
+                  found.node.updatedAt = Date.now(); 
+                  if (direction === 'up') { if (index > 0) { [siblings[index], siblings[index - 1]] = [siblings[index - 1], siblings[index]]; return newBullets; } } 
+                  else { if (index < siblings.length - 1) { [siblings[index], siblings[index + 1]] = [siblings[index + 1], siblings[index]]; return newBullets; } } 
+                  return prevBullets; 
+              }); 
+              updateRecentList(id, undefined, Date.now());
+          }, [findBulletAndParent, updateRecentList]);
 
           const handleFocusParent = useCallback((id) => {
               const zoomedId = zoomedBulletIdRef.current; const currentBullets = bulletsRef.current;
@@ -1173,6 +1580,21 @@
           const handleConfirmImport = (targetId) => {
               if (!pendingImportData) return;
               let nodesToImport = migrateBullets(pendingImportData); nodesToImport = regenerateIds(nodesToImport);
+
+              const importedItems = [];
+              const traverse = (nodes) => {
+                  for(const n of nodes) {
+                      importedItems.push({id: n.id, text: n.text, updatedAt: n.updatedAt || Date.now()});
+                      traverse(n.children);
+                  }
+              };
+              traverse(nodesToImport);
+              setRecentBullets(prev => {
+                  const combined = [...importedItems, ...prev];
+                  combined.sort((a,b) => b.updatedAt - a.updatedAt);
+                  return combined.slice(0, 12);
+              });
+
               if (targetId === null) setBullets(prev => [...prev, ...nodesToImport]);
               else { const newBullets = structuredClone(bullets); const found = findBulletAndParent(targetId, newBullets); if (found && !found.node.isReadOnly) { found.node.children.push(...nodesToImport); found.node.isCollapsed = false; found.node.updatedAt = Date.now(); setBullets(newBullets); } }
               setIsImportModalOpen(false); setPendingImportData(null); addToast('Items imported successfully', 'success');
@@ -1180,10 +1602,23 @@
           
           const handleAddItemToCurrentView = useCallback(() => {
               const newBullet = createNewBullet(); const zoomedId = zoomedBulletIdRef.current;
-              if (zoomedId) { setBullets(prevBullets => { const newBullets = structuredClone(prevBullets); const found = findBulletAndParent(zoomedId, newBullets); if (found && !found.node.isReadOnly) { found.node.children.push(newBullet); found.node.isCollapsed = false; found.node.updatedAt = Date.now(); return newBullets; } return prevBullets; }); }
+              if (zoomedId) { 
+                  setBullets(prevBullets => { 
+                      const newBullets = structuredClone(prevBullets); 
+                      const found = findBulletAndParent(zoomedId, newBullets); 
+                      if (found && !found.node.isReadOnly) { 
+                          found.node.children.push(newBullet); 
+                          found.node.isCollapsed = false; 
+                          found.node.updatedAt = Date.now(); 
+                          return newBullets; 
+                      } 
+                      return prevBullets; 
+                  }); 
+              }
               else { setBullets(prev => [...prev, newBullet]); }
               setTimeout(() => handleFocusChange(newBullet.id), 0);
-          }, [handleFocusChange, findBulletAndParent]);
+              updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
+          }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleFocusMove = useCallback((direction, position = 'end') => { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId) { if (visibleIds.length > 0) handleFocusChange(visibleIds[0], position); return; } const currentIndex = visibleIds.indexOf(currentFocusId); if (currentIndex === -1) return; let nextIndex; if (direction === 'down') { nextIndex = currentIndex + 1; if (nextIndex < visibleIds.length) handleFocusChange(visibleIds[nextIndex], position); } else { nextIndex = currentIndex - 1; if (nextIndex >= 0) handleFocusChange(visibleIds[nextIndex], position); } }, [handleFocusChange]);
           const handleOpenSearch = () => { focusBeforeModalRef.current = currentFocusId; setIsSearchModalOpen(true); };
@@ -1197,30 +1632,37 @@
           const handleCloseTagPopup = useCallback(() => { setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev); setTagSelectionHandler({ handler: null }); }, []);
           const handleTagNavigate = useCallback((direction) => { if (!tagPopupState.isOpen) return; setTagPopupState(prev => ({ ...prev, selectedIndex: navigateSuggestions(prev, direction) })); }, [tagPopupState.isOpen]);
           const handleTagSelect = useCallback((callback) => { setTagPopupState(prev => { if (!prev.isOpen || prev.suggestions.length === 0) return prev; const selectedTag = prev.suggestions[prev.selectedIndex]; callback(selectedTag); return prev; }); }, []);
-          const handleClearData = async () => { if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) { try { await db.keyValuePairs.delete('bullets'); const resetData = migrateBullets(initialData); setBullets(resetData); setZoomedBulletId(null); setSearchQuery(''); setIsSettingsModalOpen(false); addToast('All data has been reset', 'success'); } catch (error) { console.error("Failed to clear data", error); addToast('Failed to clear data', 'error'); } } };
+          const handleClearData = async () => { if (window.confirm("Are you sure you want to delete all data and reset the application? This action cannot be undone.")) { try { await db.keyValuePairs.delete('bullets'); const resetData = migrateBullets(initialData); setBullets(resetData); setZoomedBulletId(null); setSearchQuery(''); setIsSettingsModalOpen(false); setRecentBullets([]); setFavoriteBullets([]); addToast('All data has been reset', 'success'); } catch (error) { console.error("Failed to clear data", error); addToast('Failed to clear data', 'error'); } } };
 
           return (
               <div className="h-screen w-screen flex flex-col">
-                  <Toolbar onImport={handleImport} onExport={handleExport} breadcrumbs={breadcrumbs} onBreadcrumbClick={handleZoom} fileName={settings.fileName} onOpenSettings={() => setIsSettingsModalOpen(true)} onGoToToday={handleGoToJournal} theme={theme} onThemeToggle={handleThemeToggle} onOpenSearch={handleOpenSearch} />
-                  <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none">
-                      {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
-                          <div key={bullet.id}>
-                              <BulletItem bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null} onNavigateTo={handleNavigate} onMerge={handleMerge} />
-                          </div>
-                      )) : (
-                          <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
-                              <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{zoomedBulletId ? 'Add an item here' : 'Start with a new item'}</button>
-                          </div>
-                      )}
-                       {linkPopupState.isOpen && <LinkPopup suggestions={linkPopupState.suggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(bullet) => { if (linkSelectionHandler.handler) linkSelectionHandler.handler(bullet); }} position={linkPopupState.position} containerRef={linkPopupRef} />}
-                      {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(tag) => { if (tagSelectionHandler.handler) tagSelectionHandler.handler(tag); }} position={tagPopupState.position} containerRef={tagPopupRef} />}
-                  </main>
-                  <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center">
+                  <Toolbar onImport={handleImport} onExport={handleExport} breadcrumbs={breadcrumbs} onBreadcrumbClick={handleZoom} fileName={settings.fileName} onOpenSettings={() => setIsSettingsModalOpen(true)} onGoToToday={handleGoToJournal} theme={theme} onThemeToggle={handleThemeToggle} onOpenSearch={handleOpenSearch} isSidebarOpen={isSidebarOpen} onToggleSidebar={() => { const newState = !isSidebarOpen; setIsSidebarOpen(newState); db.keyValuePairs.put({ key: 'isSidebarOpen', value: newState }); }} isFavorite={isTargetFavorite} onToggleFavorite={handleToggleFavorite} canFavorite={targetFavoriteId !== null} />
+                  
+                  <div className="flex flex-grow overflow-hidden relative">
+                    <LeftSidebar isOpen={isSidebarOpen} recents={recentBullets} favorites={favoriteBullets} onNavigate={handleNavigate} />
+
+                    <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none">
+                        {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
+                            <div key={bullet.id}>
+                                <BulletItem bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null} onNavigateTo={handleNavigate} onMerge={handleMerge} />
+                            </div>
+                        )) : (
+                            <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
+                                <button onClick={handleAddItemToCurrentView} className="border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{zoomedBulletId ? 'Add an item here' : 'Start with a new item'}</button>
+                            </div>
+                        )}
+                    </main>
+                  </div>
+
+                  {linkPopupState.isOpen && <LinkPopup suggestions={linkPopupState.suggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(bullet) => { if (linkSelectionHandler.handler) linkSelectionHandler.handler(bullet); }} position={linkPopupState.position} containerRef={linkPopupRef} />}
+                  {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(tag) => { if (tagSelectionHandler.handler) tagSelectionHandler.handler(tag); }} position={tagPopupState.position} containerRef={tagPopupRef} />}
+                  
+                  <footer className="flex-shrink-0 p-1 px-4 text-xs text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
                       <div className="flex items-center gap-2 min-w-0">
                           <img src="./jr_logo.png" alt="Logo" className="w-4 h-4 object-contain" />
                           <span title={settings.fileName} className="truncate">{settings.fileName}</span>
                       </div>
-                      <span className="flex-shrink-0 ml-2">Version 0.1.13</span>
+                      <span className="flex-shrink-0 ml-2">Version 0.1.16</span>
                   </footer>
                    <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
                   <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />

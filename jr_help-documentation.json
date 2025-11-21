@@ -79,6 +79,25 @@
         "text": "Changelog",
         "children": [
             {
+                "id": "cl-28",
+                "text": "2024-11-07: Sidebar Improvements",
+                "children": [
+                    { "id": "cl-28-a", "text": "The sidebar is now resizable. Drag the right edge to adjust width.", "children": [], "isCollapsed": false },
+                    { "id": "cl-28-b", "text": "Renamed 'Recently Modified' to 'Recent' and made the section collapsible.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-27",
+                "text": "2024-11-05: Recently Modified Sidebar",
+                "children": [
+                    { "id": "cl-27-a", "text": "Added a collapsible left sidebar that displays the 12 most recently modified items for quick navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-27-b", "text": "The sidebar state (open/closed) is now saved automatically.", "children": [], "isCollapsed": false },
+                    { "id": "cl-27-c", "text": "Updated application version to 0.1.15.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
                 "id": "cl-26",
                 "text": "2024-11-04: Visual & Branding Updates",
                 "children": [
