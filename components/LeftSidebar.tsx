@@ -15,21 +15,6 @@ interface LeftSidebarProps {
     onNavigate: (id: string) => void;
 }
 
-const formatTimeAgo = (timestamp: number): string => {
-    const now = Date.now();
-    const diffInSeconds = Math.floor((now - timestamp) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    
-    return new Date(timestamp).toLocaleDateString();
-};
-
 export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, recents, favorites, onNavigate }) => {
     const [width, setWidth] = useState(256);
     const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
@@ -145,9 +130,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                                             >
                                                 <div className="text-gray-800 dark:text-gray-200 truncate font-medium">
                                                     {item.text || <em className="text-gray-400">Untitled</em>}
-                                                </div>
-                                                <div className="text-[0.85em] text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300">
-                                                    {item.updatedAt ? formatTimeAgo(item.updatedAt) : ''}
                                                 </div>
                                             </button>
                                         </li>

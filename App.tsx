@@ -290,30 +290,6 @@ export const App = () => {
         root.classList.toggle('dark', isDark);
     }, [theme]);
 
-    // --- Recent & Favorite Bullets Logic ---
-    
-    useEffect(() => {
-        if (dataLoadedRef.current && recentBullets.length === 0 && favoriteBullets.length === 0) {
-            const allItems: {id: string, text: string, updatedAt: number}[] = [];
-            const favs: {id: string, text: string}[] = [];
-            
-            const traverse = (nodes: Bullet[]) => {
-                for (const node of nodes) {
-                    allItems.push({ id: node.id, text: node.text, updatedAt: node.updatedAt || 0 });
-                    if (node.isFavorite) {
-                        favs.push({ id: node.id, text: node.text });
-                    }
-                    if (node.children.length > 0) traverse(node.children);
-                }
-            };
-            traverse(bullets);
-            
-            allItems.sort((a, b) => b.updatedAt - a.updatedAt);
-            setRecentBullets(allItems.slice(0, 12));
-            setFavoriteBullets(favs);
-        }
-    }, [dataLoadedRef.current]); 
-
     // Helper to update recent list in-memory
     const updateRecentList = useCallback((id: string, text: string | undefined, updatedAt: number) => {
         setRecentBullets(prev => {
@@ -357,6 +333,21 @@ export const App = () => {
                 console.error("Failed to load sidebar state", e);
             }
             
+            // Load Recents & Favorites from DB directly
+            try {
+                const savedRecents = await db.keyValuePairs.get('recentBullets');
+                if (savedRecents?.value) {
+                    setRecentBullets(savedRecents.value);
+                }
+                
+                const savedFavorites = await db.keyValuePairs.get('favoriteBullets');
+                if (savedFavorites?.value) {
+                    setFavoriteBullets(savedFavorites.value);
+                }
+            } catch (e) {
+                console.error("Failed to load sidebar lists", e);
+            }
+
             let loadedSettings;
             const defaultSettings = {
                 mainColor: '#60a5fa',
@@ -416,12 +407,23 @@ export const App = () => {
         db.keyValuePairs.put({ key: 'bullets', value: bullets });
         
         const currentCoreData = getCoreDataString(bullets);
-        // Logic to detect change if needed for other purposes, kept for consistency
         if (currentCoreData !== prevCoreDataRef.current) {
              prevCoreDataRef.current = currentCoreData;
         }
 
     }, [settings, bullets, getCoreDataString]);
+    
+    // Save Recents and Favorites separately when they change
+    useEffect(() => {
+        if (!dataLoadedRef.current) return;
+        db.keyValuePairs.put({ key: 'recentBullets', value: recentBullets });
+    }, [recentBullets]);
+
+    useEffect(() => {
+        if (!dataLoadedRef.current) return;
+        db.keyValuePairs.put({ key: 'favoriteBullets', value: favoriteBullets });
+    }, [favoriteBullets]);
+
     
     const findBulletAndParent = useCallback((
         id: string,
