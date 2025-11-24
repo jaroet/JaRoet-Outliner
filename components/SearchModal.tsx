@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { SearchIcon } from './Icons.tsx';
 import { TagPopup } from './TagPopup.tsx';
@@ -9,11 +10,12 @@ interface SearchModalProps {
     onClose: () => void;
     bullets: Bullet[];
     onNavigate: (id: string) => void;
+    initialQuery?: string;
 }
 
 type Tab = 'search' | 'edited' | 'created';
 
-export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate }) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bullets, onNavigate, initialQuery }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>('search');
@@ -67,12 +69,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, bulle
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
-      setQuery('');
+      setQuery(initialQuery || '');
       setSelectedIndex(0);
       setActiveTab('search');
       handleCloseTagPopup();
     }
-  }, [isOpen]);
+  }, [isOpen, initialQuery]);
   
   useEffect(() => {
     setSelectedIndex(0);

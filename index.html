@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -109,17 +107,17 @@
         ]
       });
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
+      }
+    }
+    </script>
 </head>
   <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased transition-colors duration-200">
     <div id="root"></div>
@@ -141,11 +139,56 @@
         };
       }
     </script>
+
     <script type="text/babel" data-type="module">
       import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
       import { createRoot } from 'react-dom/client';
 
-      // --- Icons ---
+      // ==========================================
+      // 1. TYPES
+      // ==========================================
+      
+      export interface Bullet {
+        id: string;
+        text: string;
+        children: Bullet[];
+        isCollapsed: boolean;
+        isReadOnly?: boolean;
+        isFavorite?: boolean;
+        originalId?: string;
+        createdAt?: number;
+        updatedAt?: number;
+      }
+
+      export interface FlatBullet {
+        id: string;
+        text: string;
+        path: string[];
+        createdAt?: number;
+        updatedAt?: number;
+      }
+
+      export interface Settings {
+        mainColor: string;
+        fileName: string;
+        fontFamily: string;
+        fontSize: number;
+      }
+
+      export type CoreBullet = {
+        id: string;
+        text: string;
+        children: CoreBullet[];
+        isFavorite?: boolean;
+        originalId?: string;
+        createdAt?: number;
+        updatedAt?: number;
+      };
+
+      // ==========================================
+      // 2. ICONS
+      // ==========================================
+
       const ChevronRightIcon = ({ className = 'w-4 h-4' }) => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -233,14 +276,18 @@
       );
 
       const StarIcon = ({ className = 'w-5 h-5', filled = false }) => (
-        <svg xmlns="http://www.w3.org/2000/svg" fill={filled ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-        </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill={filled ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+          </svg>
       );
 
-      // --- Toast ---
+      // ==========================================
+      // 3. TOAST COMPONENT
+      // ==========================================
+
       const useToast = () => {
           const [toasts, setToasts] = useState([]);
+
           const addToast = useCallback((message, type = 'info') => {
               const id = crypto.randomUUID();
               setToasts(prev => [...prev, { id, message, type }]);
@@ -248,9 +295,11 @@
                   setToasts(prev => prev.filter(t => t.id !== id));
               }, 3000);
           }, []);
+
           const removeToast = useCallback((id) => {
               setToasts(prev => prev.filter(t => t.id !== id));
           }, []);
+
           return { toasts, addToast, removeToast };
       };
 
@@ -274,120 +323,24 @@
           );
       };
 
-      // --- LeftSidebar ---
-      const LeftSidebar = React.memo(({ isOpen, recents, favorites, onNavigate }) => {
-        const [width, setWidth] = useState(256);
-        const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
-        const [isFavoritesCollapsed, setIsFavoritesCollapsed] = useState(false);
-        const [isResizing, setIsResizing] = useState(false);
+      // ==========================================
+      // 4. HELPER COMPONENTS
+      // ==========================================
 
-        const startResizing = useCallback((mouseDownEvent) => {
-            mouseDownEvent.preventDefault();
-            setIsResizing(true);
-            const startX = mouseDownEvent.clientX;
-            const startWidth = width;
-
-            const doDrag = (mouseMoveEvent) => {
-                const newWidth = startWidth + (mouseMoveEvent.clientX - startX);
-                if (newWidth > 150 && newWidth < 600) {
-                    setWidth(newWidth);
-                }
-            };
-
-            const stopDrag = () => {
-                setIsResizing(false);
-                document.removeEventListener('mousemove', doDrag);
-                document.removeEventListener('mouseup', stopDrag);
-            };
-
-            document.addEventListener('mousemove', doDrag);
-            document.addEventListener('mouseup', stopDrag);
-        }, [width]);
-
-        if (!isOpen) return null;
-
-        return (
-          <div 
-            className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full relative group/sidebar"
-            style={{ width: `${width}px`, fontSize: 'calc(var(--font-size) * 0.87)' }}
-          >
-             <div className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize z-10 hover:bg-blue-400/50 transition-colors ${isResizing ? 'bg-blue-400/50' : ''}`} onMouseDown={startResizing} />
-             <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden">
-                {/* Favorites */}
-                <div>
-                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}>
-                        <div className="flex items-center gap-2"><StarIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Favorites</span></div>
-                        <button className="text-gray-400">{isFavoritesCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
-                    </div>
-                    {!isFavoritesCollapsed && (
-                        <div className="p-2">
-                            {favorites.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No favorites yet</div> : (
-                                <ul className="space-y-0">{favorites.map(item => (
-                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
-                                ))}</ul>
-                            )}
-                        </div>
-                    )}
-                </div>
-                {/* Recents */}
-                <div className="border-t border-gray-200 dark:border-gray-700">
-                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}>
-                        <div className="flex items-center gap-2"><ClockIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Recents</span></div>
-                        <button className="text-gray-400">{isRecentsCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
-                    </div>
-                    {!isRecentsCollapsed && (
-                        <div className="p-2">
-                            {recents.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No recent changes</div> : (
-                                <ul className="space-y-0">{recents.map(item => (
-                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
-                                ))}</ul>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-          </div>
-        );
-      });
-
-      // --- Tag Popup ---
-      const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
-        const selectedItemRef = useRef(null);
-        useEffect(() => {
-          if (selectedItemRef.current) {
-              selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+      const navigateSuggestions = (prevState, direction) => {
+          const { suggestions, selectedIndex } = prevState; 
+          const count = suggestions.length; 
+          if (count === 0) return selectedIndex;
+          if (direction === 'down') {
+              return (selectedIndex + 1) % count;
+          } else { 
+              return (selectedIndex - 1 + count) % count;
           }
-        }, [selectedIndex]);
-
-        if (suggestions.length === 0) return null;
-
-        return (
-          <div
-            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-auto min-w-[150px]"
-            style={{ top: position.top, left: position.left }}
-          >
-            <ul ref={containerRef}>
-              {suggestions.map((tag, index) => (
-                <li key={tag} ref={index === selectedIndex ? selectedItemRef : null}>
-                  <button
-                    onClick={() => onSelect(tag)}
-                    className={`w-full text-left px-3 py-2 text-sm ${
-                      index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                     title={tag}
-                  >
-                    <span className="truncate block">{tag}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
       };
 
-      // --- Link Popup ---
       const LinkPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
         const selectedItemRef = useRef(null);
+        
         useEffect(() => {
           if (selectedItemRef.current) {
               selectedItemRef.current.scrollIntoView({ block: 'nearest' });
@@ -425,7 +378,43 @@
         );
       };
 
-      // --- Import Selection Modal ---
+      const TagPopup = ({ suggestions, selectedIndex, onSelect, position, containerRef }) => {
+        const selectedItemRef = useRef(null);
+        
+        useEffect(() => {
+          if (selectedItemRef.current) {
+              selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+          }
+        }, [selectedIndex]);
+
+        if (suggestions.length === 0) {
+          return null;
+        }
+
+        return (
+          <div
+            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto w-auto min-w-[150px]"
+            style={{ top: position.top, left: position.left }}
+          >
+            <ul ref={containerRef}>
+              {suggestions.map((tag, index) => (
+                <li key={tag} ref={index === selectedIndex ? selectedItemRef : null}>
+                  <button
+                    onClick={() => onSelect(tag)}
+                    className={`w-full text-left px-3 py-2 text-sm ${
+                      index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                     title={tag}
+                  >
+                    <span className="truncate block">{tag}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      };
+
       const ImportSelectionModal = ({ isOpen, onClose, onConfirm, bullets }) => {
           const [searchQuery, setSearchQuery] = useState('');
           const [selectedId, setSelectedId] = useState(null);
@@ -434,7 +423,7 @@
           useEffect(() => {
               if (isOpen) {
                   setSearchQuery('');
-                  setSelectedId(null);
+                  setSelectedId(null); 
                   setTimeout(() => {
                       searchInputRef.current?.focus();
                   }, 50);
@@ -471,12 +460,21 @@
           if (!isOpen) return null;
 
           return (
-              <div className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center" onClick={onClose}>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+              <div 
+                  className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center"
+                  onClick={onClose}
+              >
+                  <div 
+                      className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh]"
+                      onClick={e => e.stopPropagation()}
+                  >
                       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Import Content</h2>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Where do you want to place the imported items?</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Where do you want to place the imported items?
+                          </p>
                       </div>
+
                       <div className="p-4 overflow-y-auto flex-grow">
                           <div 
                               onClick={() => setSelectedId(null)}
@@ -486,7 +484,11 @@
                                       : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                           >
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedId === null ? 'border-[var(--main-color)]' : 'border-gray-400'}`}>
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  selectedId === null 
+                                      ? 'border-[var(--main-color)]' 
+                                      : 'border-gray-400'
+                              }`}>
                                   {selectedId === null && <div className="w-2 h-2 rounded-full bg-[var(--main-color)]" />}
                               </div>
                               <div>
@@ -494,36 +496,65 @@
                                   <span className="text-xs text-gray-500 dark:text-gray-400">Add as new items at the bottom of your outline</span>
                               </div>
                           </div>
+
                           <div className="relative">
                               <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or select a specific item:</div>
-                              <input ref={searchInputRef} type="text" placeholder="Search for an item..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"/>
+                              <input
+                                  ref={searchInputRef}
+                                  type="text"
+                                  placeholder="Search for an item..."
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                                  className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)] mb-2"
+                              />
+                              
                               <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                                   {filteredBullets.length > 0 ? (
                                       <ul>
                                           {filteredBullets.map(bullet => (
-                                              <li key={bullet.id} onClick={() => setSelectedId(bullet.id)} className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${selectedId === bullet.id ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                              <li 
+                                                  key={bullet.id}
+                                                  onClick={() => setSelectedId(bullet.id)}
+                                                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 text-sm ${
+                                                      selectedId === bullet.id 
+                                                          ? 'selected-item-bg text-white' 
+                                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
+                                                  }`}
+                                              >
                                                   <CircleIcon className="w-1.5 h-1.5 flex-shrink-0" />
                                                   <span className="truncate">{bullet.text || <em>Untitled</em>}</span>
                                               </li>
                                           ))}
                                       </ul>
                                   ) : (
-                                      <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">{searchQuery ? 'No items found' : 'Type to search...'}</div>
+                                      <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                                          {searchQuery ? 'No items found' : 'Type to search...'}
+                                      </div>
                                   )}
                               </div>
                           </div>
                       </div>
+
                       <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
-                          <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">Cancel</button>
-                          <button onClick={() => onConfirm(selectedId)} className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90">Import</button>
+                          <button 
+                              onClick={onClose}
+                              className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                              onClick={() => onConfirm(selectedId)}
+                              className="px-4 py-2 rounded-md bg-[var(--main-color)] text-white hover:opacity-90"
+                          >
+                              Import
+                          </button>
                       </div>
                   </div>
               </div>
           );
       };
 
-      // --- Search Modal ---
-      const SearchModal = ({ isOpen, onClose, bullets, onNavigate }) => {
+      const SearchModal = ({ isOpen, onClose, bullets, onNavigate, initialQuery }) => {
           const [query, setQuery] = useState('');
           const [selectedIndex, setSelectedIndex] = useState(0);
           const [activeTab, setActiveTab] = useState('search');
@@ -531,6 +562,7 @@
           const listRef = useRef(null);
           const selectedItemRef = useRef(null);
           const tagPopupRef = useRef(null);
+
           const [tagPopupState, setTagPopupState] = useState({
             isOpen: false,
             suggestions: [],
@@ -574,35 +606,51 @@
           useEffect(() => {
             if (isOpen) {
               inputRef.current?.focus();
-              setQuery('');
+              setQuery(initialQuery || '');
               setSelectedIndex(0);
               setActiveTab('search');
-              setTagPopupState(prev => ({...prev, isOpen: false}));
+              setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
             }
-          }, [isOpen]);
-
-          useEffect(() => { setSelectedIndex(0); }, [query, activeTab]);
+          }, [isOpen, initialQuery]);
+          
+          useEffect(() => {
+            setSelectedIndex(0);
+          }, [query, activeTab]);
 
           const listContent = useMemo(() => {
             let sourceList;
-            if (activeTab === 'edited') sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-            else if (activeTab === 'created') sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-            else sourceList = flatBullets;
+            if (activeTab === 'edited') {
+                sourceList = [...flatBullets].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            } else if (activeTab === 'created') {
+                sourceList = [...flatBullets].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            } else {
+                sourceList = flatBullets;
+            }
 
             const trimmedQuery = query.trim();
-            if (!trimmedQuery) return sourceList;
+            if (!trimmedQuery) {
+              return sourceList;
+            }
 
             const lowerCaseQuery = trimmedQuery.toLowerCase();
             const orClauses = lowerCaseQuery.split(/\s+or\s+/i);
-            const searchConditionGroups = orClauses.map(clause => clause.split(/\s+/).filter(term => term));
+            const searchConditionGroups = orClauses.map(clause => 
+                clause.split(/\s+/).filter(term => term)
+            );
 
             return sourceList.filter(bullet => {
                 const lowerCaseText = bullet.text.toLowerCase();
-                return searchConditionGroups.some(andTerms => andTerms.every(term => lowerCaseText.includes(term)));
+                return searchConditionGroups.some(andTerms => {
+                    return andTerms.every(term => lowerCaseText.includes(term));
+                });
             });
           }, [query, flatBullets, activeTab]);
 
-          useEffect(() => { selectedItemRef.current?.scrollIntoView({ block: 'nearest' }); }, [selectedIndex]);
+          useEffect(() => {
+            if (selectedItemRef.current) {
+              selectedItemRef.current.scrollIntoView({ block: 'nearest' });
+            }
+          }, [selectedIndex]);
 
           const handleCloseTagPopup = useCallback(() => {
             setTagPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
@@ -611,15 +659,19 @@
           const handleTagSelection = useCallback((selectedTag) => {
             const input = inputRef.current;
             if (!input) return;
+
             const text = input.value;
             const cursor = input.selectionStart ?? text.length;
+
             const textBeforeCursor = text.substring(0, cursor);
             const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+
             if (match) {
                 const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
                 const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
                 setQuery(newText);
                 handleCloseTagPopup();
+
                 setTimeout(() => {
                     const newCursorPos = startIndex + selectedTag.length + 1;
                     input.focus();
@@ -632,100 +684,322 @@
             const text = e.target.value;
             const cursor = e.target.selectionStart;
             setQuery(text);
-            if (cursor === null) { handleCloseTagPopup(); return; }
+
+            if (cursor === null) {
+              handleCloseTagPopup();
+              return;
+            }
+
             const textBeforeCursor = text.substring(0, cursor);
             const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
+            
             if (tagMatch) {
                 const query = tagMatch[1];
-                const suggestions = allTags.filter(tag => tag.toLowerCase().includes(query.toLowerCase()));
-                if (suggestions.length > 0) setTagPopupState({ isOpen: true, suggestions: suggestions.slice(0, 100), selectedIndex: 0 });
-                else handleCloseTagPopup();
-            } else handleCloseTagPopup();
+                const lowerCaseQuery = query.toLowerCase();
+                const suggestions = allTags.filter(tag => tag.toLowerCase().includes(lowerCaseQuery));
+
+                if (suggestions.length > 0) {
+                    setTagPopupState({
+                        isOpen: true,
+                        suggestions: suggestions.slice(0, 100),
+                        selectedIndex: 0,
+                    });
+                } else {
+                    handleCloseTagPopup();
+                }
+            } else {
+                handleCloseTagPopup();
+            }
           };
 
           const handleKeyDown = (e) => {
             if (tagPopupState.isOpen && tagPopupState.suggestions.length > 0) {
                 let handled = true;
                 switch (e.key) {
-                    case 'ArrowUp': setTagPopupState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + prev.suggestions.length) % prev.suggestions.length })); break;
-                    case 'ArrowDown': setTagPopupState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % prev.suggestions.length })); break;
-                    case 'Tab': handleTagSelection(tagPopupState.suggestions[tagPopupState.selectedIndex]); break;
-                    case 'Escape': handleCloseTagPopup(); break;
-                    default: handled = false;
+                    case 'ArrowUp':
+                        setTagPopupState(prev => ({
+                            ...prev,
+                            selectedIndex: (prev.selectedIndex - 1 + prev.suggestions.length) % prev.suggestions.length,
+                        }));
+                        break;
+                    case 'ArrowDown':
+                        setTagPopupState(prev => ({
+                            ...prev,
+                            selectedIndex: (prev.selectedIndex + 1) % prev.suggestions.length,
+                        }));
+                        break;
+                    case 'Tab':
+                        const selectedTag = tagPopupState.suggestions[tagPopupState.selectedIndex];
+                        handleTagSelection(selectedTag);
+                        break;
+                    case 'Escape':
+                        handleCloseTagPopup();
+                        break;
+                    default:
+                        handled = false;
                 }
-                if (handled) { e.preventDefault(); return; }
+                if (handled) {
+                    e.preventDefault();
+                    return;
+                }
             }
+
             if (e.ctrlKey) {
                 const tabs = ['search', 'edited', 'created'];
                 const currentIndex = tabs.indexOf(activeTab);
                 let handled = true;
-                if (e.key === 'ArrowRight') setActiveTab(tabs[(currentIndex + 1) % tabs.length]);
-                else if (e.key === 'ArrowLeft') setActiveTab(tabs[(currentIndex - 1 + tabs.length) % tabs.length]);
-                else handled = false;
-                if (handled) { e.preventDefault(); return; }
+
+                if (e.key === 'ArrowRight') {
+                    const nextIndex = (currentIndex + 1) % tabs.length;
+                    setActiveTab(tabs[nextIndex]);
+                } else if (e.key === 'ArrowLeft') {
+                    const nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                    setActiveTab(tabs[nextIndex]);
+                } else {
+                    handled = false;
+                }
+
+                if (handled) {
+                    e.preventDefault();
+                    return;
+                }
             }
+
             const count = listContent.length;
-            if (e.key === 'Escape') { onClose(); return; }
+            if (e.key === 'Escape') {
+              onClose();
+              return;
+            }
+
             if (count === 0 && e.key !== 'Enter') return;
-            if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(prev => (prev + 1) % count); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(prev => (prev - 1 + count) % count); }
-            else if (e.key === 'Enter') { e.preventDefault(); if (listContent.length > 0 && listContent[selectedIndex]) onNavigate(listContent[selectedIndex].id); }
+
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setSelectedIndex(prev => (prev + 1) % count);
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setSelectedIndex(prev => (prev - 1 + count) % count);
+            } else if (e.key === 'Enter') {
+              e.preventDefault();
+              if (listContent.length > 0 && listContent[selectedIndex]) {
+                onNavigate(listContent[selectedIndex].id);
+              }
+            }
           };
 
           const highlightMatch = (text, q) => {
               const trimmedQuery = q.trim();
               if (!trimmedQuery || !text) return text;
-              const terms = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
-              const uniqueTerms = [...new Set(terms)];
+              const termsToHighlight = trimmedQuery.toLowerCase().replace(/\s+or\s+/gi, ' ').split(/\s+/).filter(Boolean);
+              const uniqueTerms = [...new Set(termsToHighlight)];
               if (uniqueTerms.length === 0) return text;
               const regex = new RegExp(`(${uniqueTerms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
               const parts = text.split(regex);
-              return (<span>{parts.map((part, i) => (part && uniqueTerms.some(term => term === part.toLowerCase())) ? <span key={i} className="bg-yellow-400/40 dark:bg-yellow-600/40 rounded-sm">{part}</span> : part)}</span>);
+              return (
+                  <span>
+                      {parts.map((part, i) => {
+                          if (part && uniqueTerms.some(term => term === part.toLowerCase())) {
+                              return <span key={i} className="bg-yellow-400/40 dark:bg-yellow-600/40 rounded-sm">{part}</span>;
+                          }
+                          return part;
+                      })}
+                  </span>
+              );
           };
-          const formatDateTime = (ts) => ts ? new Date(ts).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: false }) : '';
 
-          if (!isOpen) return null;
+          const formatDateTime = (timestamp) => {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString(undefined, {
+              year: 'numeric', month: 'short', day: 'numeric',
+              hour: 'numeric', minute: '2-digit', hour12: false,
+            });
+          };
+
+          if (!isOpen) {
+            return null;
+          }
 
           return (
-            <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-30 flex justify-center items-start pt-20" onClick={onClose}>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div
+              className="fixed inset-0 bg-black/40 dark:bg-black/60 z-30 flex justify-center items-start pt-20"
+              onClick={onClose}
+            >
+              <div
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[70vh] flex flex-col"
+                onClick={e => e.stopPropagation()}
+              >
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 text-[var(--main-color)]">
                     <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3"><SearchIcon /></span>
-                        <input ref={inputRef} type="text" placeholder="Quick find... (use #tag, AND, OR)" value={query} onChange={handleQueryChange} onKeyDown={handleKeyDown} className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]" />
-                         {tagPopupState.isOpen && inputRef.current && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={handleTagSelection} position={{ top: inputRef.current.offsetHeight + 4, left: 0 }} containerRef={tagPopupRef} />}
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                            <SearchIcon />
+                        </span>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            placeholder="Quick find... (use #tag, AND, OR)"
+                            value={query}
+                            onChange={handleQueryChange}
+                            onKeyDown={handleKeyDown}
+                            className="w-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--main-color)]"
+                        />
+                         {tagPopupState.isOpen && inputRef.current && (
+                            <TagPopup
+                                suggestions={tagPopupState.suggestions}
+                                selectedIndex={tagPopupState.selectedIndex}
+                                onSelect={handleTagSelection}
+                                position={{
+                                    top: inputRef.current.offsetHeight + 4,
+                                    left: 0
+                                }}
+                                containerRef={tagPopupRef}
+                            />
+                        )}
                     </div>
                     <div className="mt-3 flex border-b border-gray-200 dark:border-gray-700 text-sm">
                         {['search', 'edited', 'created'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 capitalize -mb-px border-b-2 transition-colors ${activeTab === tab ? 'border-[var(--main-color)] text-[var(--main-color)]' : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'}`}>{tab === 'edited' ? 'Recently modified' : (tab === 'created' ? 'Recently created' : 'Search')}</button>
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2 capitalize -mb-px border-b-2 transition-colors ${
+                                    activeTab === tab 
+                                        ? 'border-[var(--main-color)] text-[var(--main-color)]' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                                }`}
+                            >
+                                {tab === 'edited' ? 'Recently modified' : (tab === 'created' ? 'Recently created' : 'Search')}
+                            </button>
                         ))}
                     </div>
                 </div>
+
                 <div className="overflow-y-auto">
                   {listContent.length > 0 ? (
                     <ul ref={listRef}>
                       {listContent.map((bullet, index) => (
-                        <li key={bullet.id} ref={index === selectedIndex ? selectedItemRef : null} className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`} onClick={() => onNavigate(bullet.id)}>
+                        <li
+                          key={bullet.id}
+                          ref={index === selectedIndex ? selectedItemRef : null}
+                          className={`cursor-pointer transition-colors duration-75 ${index === selectedIndex ? 'selected-item-bg text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                          onClick={() => onNavigate(bullet.id)}
+                        >
                           <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
                             <div className="flex justify-between items-start gap-4">
-                                <div className={`text-sm font-medium truncate mb-1 flex-grow ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>{highlightMatch(bullet.text, query) || <em>Untitled</em>}</div>
-                                <div className={`text-xs flex-shrink-0 whitespace-nowrap ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{formatDateTime(activeTab === 'created' ? bullet.createdAt : bullet.updatedAt)}</div>
+                                <div className={`text-sm font-medium truncate mb-1 flex-grow ${index === selectedIndex ? 'text-white' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    {highlightMatch(bullet.text, query) || <em>Untitled</em>}
+                                </div>
+                                <div className={`text-xs flex-shrink-0 whitespace-nowrap ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    {formatDateTime(activeTab === 'created' ? bullet.createdAt : bullet.updatedAt)}
+                                </div>
                             </div>
-                            <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                                {bullet.path.length > 0 ? bullet.path.map((segment, i) => <React.Fragment key={i}><span className="truncate max-w-[200px]" title={segment}>{segment}</span>{i < bullet.path.length - 1 && <span className="opacity-50 flex-shrink-0">/</span>}</React.Fragment>) : <span className="italic opacity-50">Top level</span>}
+                            <div className={`text-xs flex flex-wrap items-center gap-1 leading-none ${
+                                index === selectedIndex ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'
+                            }`}>
+                                {bullet.path.length > 0 ? (
+                                    bullet.path.map((segment, i) => (
+                                        <React.Fragment key={i}>
+                                            <span className="truncate max-w-[200px]" title={segment}>{segment}</span>
+                                            {i < bullet.path.length - 1 && (
+                                                <span className="opacity-50 flex-shrink-0">/</span>
+                                            )}
+                                        </React.Fragment>
+                                    ))
+                                ) : (
+                                     <span className="italic opacity-50">Top level</span>
+                                )}
                             </div>
                           </div>
                         </li>
                       ))}
                     </ul>
-                  ) : <p className="text-gray-400 dark:text-gray-500 p-4 text-center">No results found.</p>}
+                  ) : (
+                    <p className="text-gray-400 dark:text-gray-500 p-4 text-center">No results found.</p>
+                  )}
                 </div>
               </div>
             </div>
           );
       };
 
-      // --- Toolbar ---
+      // ==========================================
+      // 5. SIDEBAR & TOOLBAR
+      // ==========================================
+
+      const LeftSidebar = React.memo(({ isOpen, recents, favorites, onNavigate }) => {
+        const [width, setWidth] = useState(256);
+        const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
+        const [isFavoritesCollapsed, setIsFavoritesCollapsed] = useState(false);
+        const [isResizing, setIsResizing] = useState(false);
+
+        const startResizing = useCallback((mouseDownEvent) => {
+            mouseDownEvent.preventDefault();
+            setIsResizing(true);
+            const startX = mouseDownEvent.clientX;
+            const startWidth = width;
+
+            const doDrag = (mouseMoveEvent) => {
+                const newWidth = startWidth + (mouseMoveEvent.clientX - startX);
+                if (newWidth > 150 && newWidth < 600) {
+                    setWidth(newWidth);
+                }
+            };
+
+            const stopDrag = () => {
+                setIsResizing(false);
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }, [width]);
+
+        if (!isOpen) return null;
+
+        return (
+          <div 
+            className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full relative group/sidebar"
+            style={{ width: `${width}px`, fontSize: 'calc(var(--font-size) * 0.87)' }}
+          >
+             <div className={`absolute right-[-2px] top-0 bottom-0 w-1 cursor-col-resize z-10 hover:bg-blue-400/50 transition-colors ${isResizing ? 'bg-blue-400/50' : ''}`} onMouseDown={startResizing} />
+             <div className="flex flex-col h-full overflow-y-auto overflow-x-hidden">
+                {/* Favorites */}
+                <div>
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}>
+                        <div className="flex items-center gap-2"><StarIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Favorites</span></div>
+                        <button className="text-gray-400">{isFavoritesCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
+                    </div>
+                    {!isFavoritesCollapsed && (
+                        <div className="p-2">
+                            {favorites.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No favorites yet</div> : (
+                                <ul className="space-y-0">{favorites.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
+                                ))}</ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+                {/* Recents */}
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none" onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}>
+                        <div className="flex items-center gap-2"><ClockIcon className="w-4 h-4" /><span className="font-bold text-[length:var(--font-size)]">Recents</span></div>
+                        <button className="text-gray-400">{isRecentsCollapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}</button>
+                    </div>
+                    {!isRecentsCollapsed && (
+                        <div className="p-2">
+                            {recents.length === 0 ? <div className="text-xs text-gray-400 dark:text-gray-500 text-center my-2 italic">No recent changes</div> : (
+                                <ul className="space-y-0">{recents.map(item => (
+                                    <li key={item.id}><button onClick={() => onNavigate(item.id)} className="w-full text-left px-3 py-0 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"><div className="text-gray-800 dark:text-gray-200 truncate font-medium">{item.text || <em className="text-gray-400">Untitled</em>}</div></button></li>
+                                ))}</ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+          </div>
+        );
+      });
+
       const Toolbar = React.memo(({ onImport, onExport, breadcrumbs, onBreadcrumbClick, fileName, onOpenSettings, onGoToToday, theme, onThemeToggle, onOpenSearch, isSidebarOpen, onToggleSidebar, isFavorite, onToggleFavorite, canFavorite }) => {
           const fileInputRef = useRef(null);
           const handleImportClick = () => fileInputRef.current?.click();
@@ -769,7 +1043,10 @@
           );
       });
 
-      // --- BulletItem ---
+      // ==========================================
+      // 6. BULLET ITEM & TEXT RENDERING
+      // ==========================================
+
       const highlightText = (text, highlight) => {
           if (!text) return text;
           const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
@@ -802,22 +1079,38 @@
               {parts.map((part, index) => {
                   if (!part) return null;
                   if (part.startsWith('#') && /#\w+/.test(part)) return <span key={index} className="tag-span">{highlightText(part, highlight)}</span>;
-                  if (part.startsWith('[[') && part.endsWith(']]')) { const linkText = part.slice(2, -2); return <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>{highlightText(linkText, highlight)}</button>; }
+                  if (part.startsWith('[[') && part.endsWith(']]')) { const linkText = part.slice(2, -2); return <button key={index} onClick={(e) => { e.stopPropagation(); onLinkClick(linkText); }} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>{highlightText(linkText, highlight)}</button>; }
                   const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-                  if (mdLinkMatch) { const [, text, url] = mdLinkMatch; let href = url.trim(); if (!/^(https?|ftp|mailto):/i.test(href)) href = `https://${href}`; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(text, highlight)}</a>; }
-                  if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) { const href = part.startsWith('www.') ? `https://${part}` : part; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>; }
-                  if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) return <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>;
+                  if (mdLinkMatch) { const [, text, url] = mdLinkMatch; let href = url.trim(); if (!/^(https?|ftp|mailto):/i.test(href)) href = `https://${href}`; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(text, highlight)}</a>; }
+                  if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) { const href = part.startsWith('www.') ? `https://${part}` : part; return <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>; }
+                  if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) return <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">{highlightText(part, highlight)}</a>;
                   return highlightText(part, highlight);
               })}
             </React.Fragment>
           );
       };
 
-      const BulletItemImpl = ({ bullet, level, onUpdate, onAddSibling, onDelete, onIndent, onOutdent, onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFoldAll, onMoveBullet, currentFocusId, focusPosition, searchQuery, onLinkClick, onTriggerLinkPopup, onCloseLinkPopup, onLinkNavigate, onLinkSelect, isLinkPopupOpen, linkPopupTargetId, onTriggerTagPopup, onCloseTagPopup, onTagNavigate, onTagSelect, isTagPopupOpen, tagPopupTargetId, isJournalRoot, onNavigateTo, onMerge }) => {
+      const BulletItemImpl = ({ bullet, level, onUpdate, onAddSibling, onDelete, onIndent, onOutdent, onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFoldAll, onMoveBullet, currentFocusId, focusPosition, focusMode, searchQuery, onLinkClick, onTriggerLinkPopup, onCloseLinkPopup, onLinkNavigate, onLinkSelect, isLinkPopupOpen, linkPopupTargetId, onTriggerTagPopup, onCloseTagPopup, onTagNavigate, onTagSelect, isTagPopupOpen, tagPopupTargetId, isJournalRoot, onNavigateTo, onMerge }) => {
         const [isEditing, setIsEditing] = useState(false);
         const textInputRef = useRef(null);
+        const viewRef = useRef(null);
         const isFocused = currentFocusId === bullet.id;
-        useEffect(() => { if (isFocused) setIsEditing(true); else { setIsEditing(false); onCloseLinkPopup(); onCloseTagPopup(); } }, [isFocused, onCloseLinkPopup, onCloseTagPopup]);
+        
+        useEffect(() => { 
+            if (isFocused) {
+                if(focusMode === 'edit') {
+                    setIsEditing(true);
+                } else {
+                    setIsEditing(false);
+                    if(viewRef.current) viewRef.current.focus();
+                }
+            } else { 
+                setIsEditing(false); 
+                onCloseLinkPopup(); 
+                onCloseTagPopup(); 
+            } 
+        }, [isFocused, focusMode, onCloseLinkPopup, onCloseTagPopup]);
+
         useEffect(() => {
           if (isEditing && textInputRef.current) {
               textInputRef.current.focus();
@@ -843,6 +1136,7 @@
               setTimeout(() => { const newCursorPos = (text.substring(0, lastOpen) + `[[${selectedBullet.text}]]`).length; input.focus(); input.setSelectionRange(newCursorPos, newCursorPos); }, 0);
           }
         }, [bullet.id, onUpdate, onCloseLinkPopup]);
+        
         const handleTagSelection = useCallback((selectedTag) => {
           const input = textInputRef.current;
           if (!input) return;
@@ -858,6 +1152,7 @@
               setTimeout(() => { const newCursorPos = startIndex + selectedTag.length + 1; input.focus(); input.setSelectionRange(newCursorPos, newCursorPos); }, 0);
           }
         }, [bullet.id, onUpdate, onCloseTagPopup]);
+        
         const handleTextChange = (e) => {
           const text = e.target.value;
           const cursor = e.target.selectionStart;
@@ -873,30 +1168,29 @@
           if (tagMatch) { onTriggerTagPopup(bullet.id, tagMatch[1], textInputRef, handleTagSelection); return; }
           onCloseLinkPopup(); onCloseTagPopup();
         };
-        const handleTextKeyDown = (e) => {
+
+        const handleViewKeyDown = (e) => {
+            if (bullet.isReadOnly) return;
+            let handled = true;
+            if (e.altKey) {
+                if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
+                if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
+            }
+            switch(e.key) {
+                case 'ArrowUp': onFocusMove('up', undefined, 'view'); break;
+                case 'ArrowDown': onFocusMove('down', undefined, 'view'); break;
+                case 'ArrowLeft': if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }); else if (level > 0) onFocusParent(bullet.id); break;
+                case 'ArrowRight': if (hasChildren && bullet.isCollapsed) { onUpdate(bullet.id, { isCollapsed: false }); setTimeout(() => onFocusChild(bullet.id), 0); } else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id); break;
+                case 'Enter': e.preventDefault(); onFocusChange(bullet.id, 'end', 'edit'); break;
+                case 'Tab': e.preventDefault(); if (e.shiftKey) onOutdent(bullet.id); else onIndent(bullet.id); break;
+                default: handled = false;
+            }
+            if (handled) e.preventDefault();
+        };
+
+        const handleEditKeyDown = (e) => {
           const input = e.target;
-          if (bullet.isReadOnly) {
-              let handled = true;
-              if (e.ctrlKey) {
-                  switch (e.key) {
-                      case 'ArrowLeft': if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }); else if (level > 0) onFocusParent(bullet.id); break;
-                      case 'ArrowRight': if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }); break;
-                      case 'ArrowDown': onZoom(bullet.id); break;
-                      default: handled = false;
-                  }
-              } else {
-                  switch(e.key) {
-                      case 'Enter': if (bullet.originalId) onNavigateTo(bullet.originalId); else if (hasChildren) onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }); break;
-                      case 'ArrowUp': onFocusMove('up'); break;
-                      case 'ArrowDown': onFocusMove('down'); break;
-                      case 'ArrowLeft': onFocusParent(bullet.id); break;
-                      case 'ArrowRight': if(hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id); else onFocusMove('down', 'start'); break;
-                      default: handled = false;
-                  }
-              }
-              if (handled) e.preventDefault();
-              return;
-          }
+          if (bullet.isReadOnly) return;
           if (isTagPopupOpen && tagPopupTargetId === bullet.id) {
               let handled = true;
               switch (e.key) {
@@ -938,33 +1232,26 @@
               if (e.key === 'ArrowLeft') { e.preventDefault(); onFoldAll(bullet.id, true); return; }
               if (e.key === 'ArrowRight') { e.preventDefault(); onFoldAll(bullet.id, false); return; }
           }
-          if (e.ctrlKey) {
-              let handled = true;
-              switch (e.key) {
-                  case 'ArrowLeft': if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true }); else if (level > 0) onFocusParent(bullet.id); break;
-                  case 'ArrowRight': if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false }); else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id); break;
-                  case 'ArrowDown': onZoom(bullet.id); break;
-                  default: handled = false;
-              }
-              if (handled) { e.preventDefault(); return; }
-          }
+          
           switch (e.key) {
+            case 'Escape': e.preventDefault(); onFocusChange(bullet.id, undefined, 'view'); break;
             case 'Enter': e.preventDefault(); if (e.shiftKey) { const { value, selectionStart, selectionEnd } = input; const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd); onUpdate(bullet.id, { text: newValue }); setTimeout(() => { if (textInputRef.current) { const newCursorPos = selectionStart + 1; textInputRef.current.focus(); textInputRef.current.setSelectionRange(newCursorPos, newCursorPos); } }, 0); } else { const { value, selectionStart } = input; const textBeforeCursor = value.substring(0, selectionStart); const textAfterCursor = value.substring(selectionStart); onUpdate(bullet.id, { text: textBeforeCursor }); onAddSibling(bullet.id, textAfterCursor); } break;
             case 'Tab': e.preventDefault(); if (e.shiftKey) onOutdent(bullet.id); else onIndent(bullet.id); break;
             case 'Backspace': if (input.selectionStart === 0 && input.selectionEnd === 0) { e.preventDefault(); onMerge(bullet.id); } break;
-            case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
-            case 'ArrowDown': e.preventDefault(); onFocusMove('down'); break;
-            case 'ArrowLeft': if (input.selectionStart === 0) { e.preventDefault(); onFocusParent(bullet.id); } break;
-            case 'ArrowRight': if (input.selectionStart === input.value.length) { e.preventDefault(); onFocusMove('down', 'start'); } break;
           }
         };
+
         const toggleCollapse = () => { if (hasChildren) onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed }); };
         const matchesSearch = (b, q) => { if (!q) return true; const query = q.toLowerCase(); const textMatch = b.text.toLowerCase().includes(query); const childrenMatch = b.children.some(child => matchesSearch(child, q)); return textMatch || childrenMatch; };
+        
         const renderedRichText = useMemo(() => renderRichTextContent(bullet.text, searchQuery, onLinkClick), [bullet.text, searchQuery, onLinkClick]);
         const renderedRichTextSimple = useMemo(() => renderRichTextContent(bullet.text, undefined, () => {}, { renderTagsOnly: true }), [bullet.text]);
+        
         if (searchQuery && !matchesSearch(bullet, searchQuery)) return null;
-        const handleTextClick = () => { if (bullet.isReadOnly) { if (bullet.originalId) onNavigateTo(bullet.originalId); else onFocusChange(bullet.id); } else onFocusChange(bullet.id); };
+        
+        const handleTextClick = () => { if (bullet.isReadOnly) { if (bullet.originalId) onNavigateTo(bullet.originalId); else onFocusChange(bullet.id, undefined, 'view'); } else onFocusChange(bullet.id, undefined, 'edit'); };
         const renderBulletIcon = () => isJournalRoot ? <AppointmentIcon className="w-4 h-4" /> : <CircleIcon className="w-2 h-2" color='var(--main-color)' />;
+        
         return (
           <div className="flex flex-col group">
               <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
@@ -980,10 +1267,10 @@
                               {isEditing ? (
                                   <div className="relative">
                                       <div className="absolute top-0 left-0 w-full h-full pointer-events-none leading-[1.5] whitespace-pre-wrap break-words" aria-hidden="true">{renderedRichTextSimple}</div>
-                                      <textarea ref={textInputRef} value={bullet.text} onChange={handleTextChange} onKeyDown={handleTextKeyDown} readOnly={bullet.isReadOnly} className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]" rows={1} aria-label="Edit item" />
+                                      <textarea ref={textInputRef} value={bullet.text} onChange={handleTextChange} onKeyDown={handleEditKeyDown} readOnly={bullet.isReadOnly} className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]" rows={1} aria-label="Edit item" />
                                   </div>
                               ) : (
-                                  <div onClick={handleTextClick} className={`w-full min-h-[1.5em] leading-[1.5] break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
+                                  <div ref={viewRef} tabIndex={0} onClick={handleTextClick} onKeyDown={handleViewKeyDown} className={`w-full min-h-[1.5em] leading-[1.5] break-words outline-none ${isFocused ? 'ring-2 ring-opacity-50 ring-[var(--main-color)] rounded-sm' : ''} ${bullet.isReadOnly ? 'cursor-pointer' : 'cursor-text'}`}>
                                   {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                                   </div>
                               )}
@@ -994,7 +1281,7 @@
             {!bullet.isCollapsed && hasChildren && (
               <div className="border-l border-gray-300 dark:border-gray-700/50">
                 {bullet.children.map((child) => (
-                  <BulletItem key={child.id} bullet={child} level={level + 1} onUpdate={onUpdate} onAddSibling={onAddSibling} onDelete={onDelete} onIndent={onIndent} onOutdent={onOutdent} onFocusChange={onFocusChange} onZoom={onZoom} onFocusMove={onFocusMove} onFocusParent={onFocusParent} onFocusChild={onFocusChild} onFoldAll={onFoldAll} onMoveBullet={onMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={onLinkClick} onTriggerLinkPopup={onTriggerLinkPopup} onCloseLinkPopup={onCloseLinkPopup} onLinkNavigate={onLinkNavigate} onLinkSelect={onLinkSelect} isLinkPopupOpen={isLinkPopupOpen} linkPopupTargetId={linkPopupTargetId} onTriggerTagPopup={onTriggerTagPopup} onCloseTagPopup={onCloseTagPopup} onTagNavigate={onTagNavigate} onTagSelect={onTagSelect} isTagPopupOpen={isTagPopupOpen} tagPopupTargetId={tagPopupTargetId} isJournalRoot={false} onNavigateTo={onNavigateTo} onMerge={onMerge} />
+                  <BulletItem key={child.id} bullet={child} level={level + 1} onUpdate={onUpdate} onAddSibling={onAddSibling} onDelete={onDelete} onIndent={onIndent} onOutdent={onOutdent} onFocusChange={onFocusChange} onZoom={onZoom} onFocusMove={onFocusMove} onFocusParent={onFocusParent} onFocusChild={onFocusChild} onFoldAll={onFoldAll} onMoveBullet={onMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} focusMode={focusMode} searchQuery={searchQuery} onLinkClick={onLinkClick} onTriggerLinkPopup={onTriggerLinkPopup} onCloseLinkPopup={onCloseLinkPopup} onLinkNavigate={onLinkNavigate} onLinkSelect={onLinkSelect} isLinkPopupOpen={isLinkPopupOpen} linkPopupTargetId={linkPopupTargetId} onTriggerTagPopup={onTriggerTagPopup} onCloseTagPopup={onCloseTagPopup} onTagNavigate={onTagNavigate} onTagSelect={onTagSelect} isTagPopupOpen={isTagPopupOpen} tagPopupTargetId={tagPopupTargetId} isJournalRoot={false} onNavigateTo={onNavigateTo} onMerge={onMerge} />
                 ))}
               </div>
             )}
@@ -1004,7 +1291,10 @@
 
       const BulletItem = React.memo(BulletItemImpl);
 
-      // --- App ---
+      // ==========================================
+      // 7. APP LOGIC
+      // ==========================================
+
       // DB Setup
       class JaroetDatabase extends Dexie {
           constructor() {
@@ -1024,6 +1314,7 @@
       const createNewBullet = (text = '') => { const now = Date.now(); return { id: crypto.randomUUID(), text, children: [], isCollapsed: false, createdAt: now, updatedAt: now }; };
       const migrateBullets = (nodes) => { if (!Array.isArray(nodes)) return []; const now = Date.now(); return nodes.map(node => ({ ...node, createdAt: node.createdAt || now, updatedAt: node.updatedAt || now, children: migrateBullets(node.children || []) })); };
       const regenerateIds = (nodes) => { if (!Array.isArray(nodes)) return []; return nodes.map(node => ({ ...node, id: crypto.randomUUID(), children: regenerateIds(node.children || []) })); };
+      
       const mapBullets = (nodes, callback) => {
           let changed = false;
           const newNodes = nodes.map(node => {
@@ -1035,12 +1326,9 @@
           });
           return changed ? newNodes : nodes;
       };
-      const navigateSuggestions = (prevState, direction) => {
-          const { suggestions, selectedIndex } = prevState; const count = suggestions.length; if (count === 0) return selectedIndex;
-          if (direction === 'down') return (selectedIndex + 1) % count; else return (selectedIndex - 1 + count) % count;
-      };
 
       const FONT_LIST = ['Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 'Times New Roman', 'Georgia', 'Garamond', 'Courier New', 'Brush Script MT', 'sans-serif', 'serif', 'monospace'];
+      
       const SettingsModal = ({ isOpen, onClose, onSave, currentSettings, onClearData }) => {
           const [settings, setSettings] = useState(currentSettings);
           useEffect(() => setSettings(currentSettings), [isOpen, currentSettings]);
@@ -1076,7 +1364,7 @@
           const [bullets, setBullets] = useState(initialData);
           const [zoomedBulletId, setZoomedBulletId] = useState(null);
           const [searchQuery, setSearchQuery] = useState('');
-          const [focusOptions, setFocusOptions] = useState({ id: null, position: 'end' });
+          const [focusOptions, setFocusOptions] = useState({ id: null, position: 'end', mode: 'view' });
           const isInitialFocusSet = useRef(false);
           const linkPopupRef = useRef(null);
           const tagPopupRef = useRef(null);
@@ -1103,7 +1391,8 @@
 
           const currentFocusId = focusOptions.id;
           const focusPosition = focusOptions.position;
-          const handleFocusChange = useCallback((id, position = 'end') => setFocusOptions({ id, position }), []);
+          const focusMode = focusOptions.mode;
+          const handleFocusChange = useCallback((id, position = 'end', mode = 'view') => setFocusOptions({ id, position, mode }), []);
 
           const getCoreDataString = useCallback((nodes) => {
               const removeUiState = (b) => ({ id: b.id, text: b.text, children: b.children.map(removeUiState), originalId: b.originalId, createdAt: b.createdAt, updatedAt: b.updatedAt, isFavorite: b.isFavorite });
@@ -1260,7 +1549,7 @@
                   const parent = path.length > 1 ? path[path.length - 2] : null;
                   setZoomedBulletId(parent ? parent.id : null);
                   setIsSearchModalOpen(false);
-                  setTimeout(() => handleFocusChange(bulletId, 'end'), 0);
+                  setTimeout(() => handleFocusChange(bulletId, 'end', 'view'), 0);
               }
           }, [bullets, handleFocusChange]);
 
@@ -1316,15 +1605,15 @@
           const bulletsRef = useRef(bullets); const visibleBulletIdsRef = useRef(visibleBulletIds); const zoomedBulletIdRef = useRef(zoomedBulletId); const focusOptionsRef = useRef(focusOptions); const breadcrumbsRef = useRef(breadcrumbs);
           useEffect(() => { bulletsRef.current = bullets; }, [bullets]); useEffect(() => { visibleBulletIdsRef.current = visibleBulletIds; }, [visibleBulletIds]); useEffect(() => { zoomedBulletIdRef.current = zoomedBulletId; }, [zoomedBulletId]); useEffect(() => { focusOptionsRef.current = focusOptions; }, [focusOptions]); useEffect(() => { breadcrumbsRef.current = breadcrumbs; }, [breadcrumbs]);
 
-          useEffect(() => { if (!isInitialFocusSet.current && visibleBulletIds.length > 0) { handleFocusChange(visibleBulletIds[0], 'end'); isInitialFocusSet.current = true; } }, [visibleBulletIds, handleFocusChange]);
+          useEffect(() => { if (!isInitialFocusSet.current && visibleBulletIds.length > 0) { handleFocusChange(visibleBulletIds[0], 'end', 'view'); isInitialFocusSet.current = true; } }, [visibleBulletIds, handleFocusChange]);
 
           const handleZoom = useCallback((id) => {
               const currentBullets = bulletsRef.current; const oldZoomedBulletId = zoomedBulletIdRef.current; const currentBreadcrumbs = breadcrumbsRef.current;
               const isZoomingOut = (id === null && oldZoomedBulletId !== null) || (id !== null && currentBreadcrumbs.some(b => b.id === id));
               if (id === null) {
                   setZoomedBulletId(null);
-                  if (oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-                  else { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const rootVisibleIds = getVisibleIds(currentBullets); if (rootVisibleIds.length > 0) handleFocusChange(rootVisibleIds[0]); }
+                  if (oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId, 'end', 'view'), 0);
+                  else { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const rootVisibleIds = getVisibleIds(currentBullets); if (rootVisibleIds.length > 0) handleFocusChange(rootVisibleIds[0], 'end', 'view'); }
                   return;
               }
               const find = (nodes) => { for(const node of nodes) { if (node.id === id) return node; const f = find(node.children); if (f) return f; } return null; };
@@ -1342,12 +1631,12 @@
                       return prevBullets; 
                   });
                   setZoomedBulletId(id);
-                  setTimeout(() => handleFocusChange(newBullet.id), 0);
+                  setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
                   updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
               } else if (bulletToZoom) {
                   setZoomedBulletId(id);
-                  if (isZoomingOut && oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
-                  else if (bulletToZoom.children.length > 0) { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const visibleChildrenIds = getVisibleIds(bulletToZoom.children); if (visibleChildrenIds.length > 0) handleFocusChange(visibleChildrenIds[0]); }
+                  if (isZoomingOut && oldZoomedBulletId) setTimeout(() => handleFocusChange(oldZoomedBulletId, 'end', 'view'), 0);
+                  else if (bulletToZoom.children.length > 0) { const getVisibleIds = (nodes) => { let ids = []; for (const node of nodes) { ids.push(node.id); if (!node.isCollapsed && node.children.length > 0) ids = ids.concat(getVisibleIds(node.children)); } return ids; }; const visibleChildrenIds = getVisibleIds(bulletToZoom.children); if (visibleChildrenIds.length > 0) handleFocusChange(visibleChildrenIds[0], 'end', 'view'); }
               }
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
@@ -1370,7 +1659,7 @@
                    let dayNode = monthNode.children.find((b) => b.text === dayText); if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
                    return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
               };
-              setBullets(prev => { const result = ensureJournalPath(prev); setTimeout(() => { setZoomedBulletId(result.monthId); setTimeout(() => handleFocusChange(result.dayId), 0); }, 0); return result.nodes; });
+              setBullets(prev => { const result = ensureJournalPath(prev); setTimeout(() => { setZoomedBulletId(result.monthId); setTimeout(() => handleFocusChange(result.dayId, 'end', 'view'), 0); }, 0); return result.nodes; });
               addToast('Opened Daily Log', 'success');
           }, [handleFocusChange, addToast]);
 
@@ -1395,10 +1684,10 @@
           useEffect(() => {
               const handleGlobalKeyDown = (e) => {
                   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') { e.preventDefault(); handleOpenSearch(); }
-                  else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') { e.preventDefault(); handleZoom(null); setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true }))); setTimeout(() => { const currentBullets = bulletsRef.current; if (currentBullets.length > 0) handleFocusChange(currentBullets[0].id, 'start'); }, 10); }
+                  else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') { e.preventDefault(); handleZoom(null); setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true }))); setTimeout(() => { const currentBullets = bulletsRef.current; if (currentBullets.length > 0) handleFocusChange(currentBullets[0].id, 'start', 'view'); }, 10); }
                   else if (e.ctrlKey && e.key.toLowerCase() === 'j') { e.preventDefault(); handleGoToJournal(); }
                   else if (e.ctrlKey && e.key === 'ArrowUp') { e.preventDefault(); const zoomedId = zoomedBulletIdRef.current; const crumbs = breadcrumbsRef.current; if (zoomedId) { const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null; handleZoom(parentId); } }
-                  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId && visibleIds.length > 0) { const target = e.target; if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') { e.preventDefault(); handleFocusChange(visibleIds[0]); } } }
+                  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId && visibleIds.length > 0) { const target = e.target; if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') { e.preventDefault(); handleFocusChange(visibleIds[0], 'end', 'view'); } } }
               };
               window.addEventListener('keydown', handleGlobalKeyDown);
               return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
@@ -1417,7 +1706,7 @@
                   } 
                   return prevBullets; 
               });
-              setTimeout(() => handleFocusChange(newBullet.id), 0);
+              setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
               updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
@@ -1437,7 +1726,7 @@
                   return prevBullets; 
               });
               removeFromRecentList(id);
-              setTimeout(() => handleFocusChange(prevSiblingId), 0);
+              setTimeout(() => handleFocusChange(prevSiblingId, 'end', 'view'), 0);
           }, [handleFocusChange, findBulletAndParent, removeFromRecentList]);
 
           const handleMerge = useCallback((id) => {
@@ -1457,7 +1746,7 @@
                       updateRecentList(prevSibling.id, prevSibling.text, prevSibling.updatedAt || Date.now());
                       setFavoriteBullets(prev => prev.map(f => f.id === prevSibling.id ? { ...f, text: prevSibling.text } : f));
 
-                      setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition), 0); return newBullets;
+                      setTimeout(() => handleFocusChange(prevSibling.id, cursorPosition, 'edit'), 0); return newBullets;
                   } else {
                       if (foundTarget.node.text === '') { 
                           const newBullets = structuredClone(prevBullets); 
@@ -1468,7 +1757,7 @@
                           
                           removeFromRecentList(found.node.id);
                           
-                          setTimeout(() => handleFocusChange(parentId, 'end'), 0); 
+                          setTimeout(() => handleFocusChange(parentId, 'end', 'view'), 0); 
                           return newBullets; 
                       }
                   }
@@ -1494,7 +1783,7 @@
                   return prevBullets; 
               }); 
               updateRecentList(id, undefined, Date.now());
-              setTimeout(() => handleFocusChange(id), 0); 
+              setTimeout(() => handleFocusChange(id, 'end', 'edit'), 0); 
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleOutdent = useCallback((id) => { 
@@ -1517,7 +1806,7 @@
                   return prevBullets; 
               }); 
               updateRecentList(id, undefined, Date.now());
-              setTimeout(() => handleFocusChange(id), 0); 
+              setTimeout(() => handleFocusChange(id, 'end', 'edit'), 0); 
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
           const handleFoldAll = useCallback((id, collapse) => {
@@ -1547,10 +1836,10 @@
               const findInScope = (nodes, targetId) => { for (const node of nodes) { if (node.id === targetId) return node; const f = findInScope(node.children, targetId); if (f) return f; } return null; };
               let scope = currentBullets; if (zoomedId) { const zoomedNode = findInScope(currentBullets, zoomedId); if (zoomedNode) scope = zoomedNode.children; else scope = []; }
               const findParent = (bulletId, nodes, parent = null) => { for (const node of nodes) { if (node.id === bulletId) return { node, parent }; const found = findParent(bulletId, node.children, node); if (found) return found; } return null; };
-              const found = findParent(id, scope); if (found?.parent) handleFocusChange(found.parent.id);
+              const found = findParent(id, scope); if (found?.parent) handleFocusChange(found.parent.id, 'end', 'view');
           }, [handleFocusChange]);
 
-          const handleFocusChild = useCallback((id) => { const currentBullets = bulletsRef.current; const find = (nodes) => { for(const node of nodes) { if (node.id === id) return node; const f = find(node.children); if(f) return f; } return null; }; const foundNode = find(currentBullets); if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) handleFocusChange(foundNode.children[0].id, 'start'); }, [handleFocusChange]);
+          const handleFocusChild = useCallback((id) => { const currentBullets = bulletsRef.current; const find = (nodes) => { for(const node of nodes) { if (node.id === id) return node; const f = find(node.children); if(f) return f; } return null; }; const foundNode = find(currentBullets); if (foundNode && foundNode.children.length > 0 && !foundNode.isCollapsed) handleFocusChange(foundNode.children[0].id, 'start', 'view'); }, [handleFocusChange]);
 
           const handleExport = () => {
               const dataStr = JSON.stringify(bullets, null, 2); const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -1600,18 +1889,36 @@
                   }); 
               }
               else { setBullets(prev => [...prev, newBullet]); }
-              setTimeout(() => handleFocusChange(newBullet.id), 0);
+              setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
               updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
-          const handleFocusMove = useCallback((direction, position = 'end') => { const currentFocusId = focusOptionsRef.current.id; const visibleIds = visibleBulletIdsRef.current; if (!currentFocusId) { if (visibleIds.length > 0) handleFocusChange(visibleIds[0], position); return; } const currentIndex = visibleIds.indexOf(currentFocusId); if (currentIndex === -1) return; let nextIndex; if (direction === 'down') { nextIndex = currentIndex + 1; if (nextIndex < visibleIds.length) handleFocusChange(visibleIds[nextIndex], position); } else { nextIndex = currentIndex - 1; if (nextIndex >= 0) handleFocusChange(visibleIds[nextIndex], position); } }, [handleFocusChange]);
+          const handleFocusMove = useCallback((direction, position = 'end', mode = 'view') => { 
+            const currentFocusId = focusOptionsRef.current.id; 
+            const visibleIds = visibleBulletIdsRef.current; 
+            if (!currentFocusId) { 
+              if (visibleIds.length > 0) handleFocusChange(visibleIds[0], position, mode); 
+              return; 
+            } 
+            const currentIndex = visibleIds.indexOf(currentFocusId); 
+            if (currentIndex === -1) return; 
+            let nextIndex; 
+            if (direction === 'down') { 
+              nextIndex = currentIndex + 1; 
+              if (nextIndex < visibleIds.length) handleFocusChange(visibleIds[nextIndex], position, mode); 
+            } else { 
+              nextIndex = currentIndex - 1; 
+              if (nextIndex >= 0) handleFocusChange(visibleIds[nextIndex], position, mode); 
+            } 
+          }, [handleFocusChange]);
+
           const handleOpenSearch = () => { focusBeforeModalRef.current = currentFocusId; setIsSearchModalOpen(true); };
-          const handleCloseSearch = () => { setIsSearchModalOpen(false); if (focusBeforeModalRef.current) { const idToRestore = focusBeforeModalRef.current; handleFocusChange(idToRestore, 'start'); setTimeout(() => handleFocusChange(idToRestore, 'end'), 0); focusBeforeModalRef.current = null; } };
+          const handleCloseSearch = () => { setIsSearchModalOpen(false); if (focusBeforeModalRef.current) { const idToRestore = focusBeforeModalRef.current; handleFocusChange(idToRestore, 'start', 'view'); setTimeout(() => handleFocusChange(idToRestore, 'end', 'view'), 0); focusBeforeModalRef.current = null; } };
           const handleTriggerLinkPopup = useCallback((bulletId, query, inputRef, selectionHandler) => { if (!inputRef.current) return; const rect = inputRef.current.getBoundingClientRect(); setLinkSelectionHandler({ handler: selectionHandler }); const POPUP_MAX_WIDTH_PX = 768; const VIEWPORT_PADDING_PX = 16; let left = rect.left + window.scrollX; if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX; left = Math.max(VIEWPORT_PADDING_PX, left); const currentBullets = bulletsRef.current; const results = []; const traverse = (nodes, currentPath) => { for (const node of nodes) { results.push({ id: node.id, text: node.text, path: currentPath, createdAt: node.createdAt, updatedAt: node.updatedAt }); if (node.children && node.children.length > 0) traverse(node.children, [...currentPath, node.text || 'Untitled']); } }; traverse(currentBullets, []); const suggestions = !query ? results.slice(0, 50) : results.map(bullet => { const lowerText = bullet.text.toLowerCase(); const lowerQuery = query.toLowerCase(); let score = 0; if (lowerText.startsWith(lowerQuery)) score = 2; else if (lowerText.includes(lowerQuery)) score = 1; return { ...bullet, score }; }).filter(bullet => bullet.score > 0 && bullet.id !== bulletId).sort((a, b) => b.score - a.score); setLinkPopupState({ isOpen: true, targetId: bulletId, query: query, position: { top: rect.bottom + window.scrollY, left: left }, suggestions: suggestions.slice(0, 100), selectedIndex: 0 }); }, []);
           const handleCloseLinkPopup = useCallback(() => { setLinkPopupState(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev)); setLinkSelectionHandler({ handler: null }); }, []);
           const handleLinkNavigate = useCallback((direction) => { if (!linkPopupState.isOpen) return; setLinkPopupState(prev => ({ ...prev, selectedIndex: navigateSuggestions(prev, direction) })); }, [linkPopupState.isOpen]);
           const handleLinkSelect = useCallback((callback) => { setLinkPopupState(prev => { if (!prev.isOpen || prev.suggestions.length === 0) return prev; const selectedBullet = prev.suggestions[prev.selectedIndex]; callback(selectedBullet); return prev; }); }, []);
-          const handleLinkClick = useCallback((linkText) => { const currentBullets = bulletsRef.current; let targetBullet = null; const find = (nodes) => { for (const node of nodes) { if (node.text === linkText) { targetBullet = node; return true; } if (find(node.children)) return true; } return false; }; find(currentBullets); if (targetBullet) { const path = []; const findPath = (nodes, currentPath) => { for (const node of nodes) { const newPath = [...currentPath, node]; if (node.id === targetBullet.id) { path.push(...newPath); return true; } if (findPath(node.children, newPath)) return true; } return false; }; findPath(currentBullets, []); const parent = path.length > 1 ? path[path.length - 2] : null; setZoomedBulletId(parent ? parent.id : null); setTimeout(() => handleFocusChange(targetBullet.id, 'end'), 0); } else { console.warn(`Link target not found: "${linkText}"`); addToast(`Link target "${linkText}" not found`, 'error'); } }, [handleFocusChange, addToast]);
+          const handleLinkClick = useCallback((linkText) => { const currentBullets = bulletsRef.current; let targetBullet = null; const find = (nodes) => { for (const node of nodes) { if (node.text === linkText) { targetBullet = node; return true; } if (find(node.children)) return true; } return false; }; find(currentBullets); if (targetBullet) { const path = []; const findPath = (nodes, currentPath) => { for (const node of nodes) { const newPath = [...currentPath, node]; if (node.id === targetBullet.id) { path.push(...newPath); return true; } if (findPath(node.children, newPath)) return true; } return false; }; findPath(currentBullets, []); const parent = path.length > 1 ? path[path.length - 2] : null; setZoomedBulletId(parent ? parent.id : null); setTimeout(() => handleFocusChange(targetBullet.id, 'end', 'view'), 0); } else { console.warn(`Link target not found: "${linkText}"`); addToast(`Link target "${linkText}" not found`, 'error'); } }, [handleFocusChange, addToast]);
           const handleTriggerTagPopup = useCallback((bulletId, query, inputRef, selectionHandler) => { if (!inputRef.current) return; const rect = inputRef.current.getBoundingClientRect(); setTagSelectionHandler({ handler: selectionHandler }); const POPUP_MAX_WIDTH_PX = 768; const VIEWPORT_PADDING_PX = 16; let left = rect.left + window.scrollX; if (left + POPUP_MAX_WIDTH_PX > window.innerWidth - VIEWPORT_PADDING_PX) left = window.innerWidth - POPUP_MAX_WIDTH_PX - VIEWPORT_PADDING_PX; left = Math.max(VIEWPORT_PADDING_PX, left); const currentBullets = bulletsRef.current; const tagSet = new Set(); const tagRegex = /#\w+/g; const traverse = (nodes) => { for(const node of nodes) { const matches = node.text.match(tagRegex); if(matches) matches.forEach(t => tagSet.add(t)); traverse(node.children); } }; traverse(currentBullets); const allTagsList = Array.from(tagSet).sort(); const lowerCaseQuery = query.toLowerCase(); const suggestions = allTagsList.filter(tag => tag.toLowerCase().includes(lowerCaseQuery)); setTagPopupState({ isOpen: true, targetId: bulletId, query: query, position: { top: rect.bottom + window.scrollY, left: left }, suggestions: suggestions.slice(0, 100), selectedIndex: 0 }); }, []);
           const handleCloseTagPopup = useCallback(() => { setTagPopupState(prev => prev.isOpen ? { ...prev, isOpen: false } : prev); setTagSelectionHandler({ handler: null }); }, []);
           const handleTagNavigate = useCallback((direction) => { if (!tagPopupState.isOpen) return; setTagPopupState(prev => ({ ...prev, selectedIndex: navigateSuggestions(prev, direction) })); }, [tagPopupState.isOpen]);
@@ -1628,7 +1935,7 @@
                     <main className="flex-grow overflow-y-auto p-4 md:px-8 lg:px-16 xl:px-32 outline-none">
                         {displayedBullets.length > 0 ? displayedBullets.map(bullet => (
                             <div key={bullet.id}>
-                                <BulletItem bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null} onNavigateTo={handleNavigate} onMerge={handleMerge} />
+                                <BulletItem bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} focusMode={focusMode} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT && zoomedBulletId === null} onNavigateTo={handleNavigate} onMerge={handleMerge} />
                             </div>
                         )) : (
                             <div className="flex justify-center items-center h-full text-gray-400 dark:text-gray-500">
@@ -1652,10 +1959,10 @@
                           className="flex-shrink-0 ml-2 hover:underline"
                           title="View Release Notes"
                       >
-                          Version 0.1.21
+                          Version 0.1.25
                       </a>
                   </footer>
-                   <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} />
+                   <SearchModal isOpen={isSearchModalOpen} onClose={handleCloseSearch} bullets={bullets} onNavigate={handleNavigate} initialQuery={searchQuery} />
                   <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />
                   <ImportSelectionModal isOpen={isImportModalOpen} onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }} onConfirm={handleConfirmImport} bullets={bullets} />
                   <ToastContainer toasts={toasts} removeToast={removeToast} />

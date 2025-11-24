@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Bullet, Settings, CoreBullet } from './types.ts';
+import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
 import { LeftSidebar } from './components/LeftSidebar.tsx';
 import { BulletItem } from './components/BulletItem.tsx';
@@ -213,12 +213,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
 export const App = () => {
     const [bullets, setBullets] = useState<Bullet[]>(initialData);
     const [zoomedBulletId, setZoomedBulletId] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [focusOptions, setFocusOptions] = useState<{ id: string | null; position: 'start' | 'end' | number }>({ id: null, position: 'end' });
+    const [focusOptions, setFocusOptions] = useState<{ id: string | null; position: 'start' | 'end' | number; mode: 'view' | 'edit' }>({ id: null, position: 'end', mode: 'view' });
     const isInitialFocusSet = useRef(false);
     const linkPopupRef = useRef(null);
     const tagPopupRef = useRef(null);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [linkSelectionHandler, setLinkSelectionHandler] = useState<{ handler: ((bullet: any) => void) | null }>({ handler: null });
     const [tagSelectionHandler, setTagSelectionHandler] = useState<{ handler: ((tag: string) => void) | null }>({ handler: null });
     const prevFocusId = useRef<string | null>(null);
@@ -256,9 +256,10 @@ export const App = () => {
 
     const currentFocusId = focusOptions.id;
     const focusPosition = focusOptions.position;
+    const focusMode = focusOptions.mode;
 
-    const handleFocusChange = useCallback((id: string | null, position: 'start' | 'end' | number = 'end') => {
-        setFocusOptions({ id, position });
+    const handleFocusChange = useCallback((id: string | null, position: 'start' | 'end' | number = 'end', mode: 'view' | 'edit' = 'view') => {
+        setFocusOptions({ id, position, mode });
     }, []);
 
     const getCoreDataString = useCallback((nodes: Bullet[]) => {
@@ -499,8 +500,9 @@ export const App = () => {
             const parent = path.length > 1 ? path[path.length - 2] : null;
             setZoomedBulletId(parent ? parent.id : null);
             setIsSearchModalOpen(false);
+            setSearchQuery('');
             setTimeout(() => {
-                handleFocusChange(bulletId, 'end');
+                handleFocusChange(bulletId, 'end', 'view'); // Default to view when navigating
             }, 0);
         }
     }, [bullets, handleFocusChange]);
@@ -599,7 +601,7 @@ export const App = () => {
 
     useEffect(() => {
         if (!isInitialFocusSet.current && visibleBulletIds.length > 0) {
-            handleFocusChange(visibleBulletIds[0], 'end');
+            handleFocusChange(visibleBulletIds[0], 'end', 'view'); // Start in view mode
             isInitialFocusSet.current = true;
         }
     }, [visibleBulletIds, handleFocusChange]);
@@ -615,7 +617,7 @@ export const App = () => {
         if (id === null) { 
             setZoomedBulletId(null);
             if (oldZoomedBulletId) {
-                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+                setTimeout(() => handleFocusChange(oldZoomedBulletId, 'end', 'view'), 0);
             } else {
                 // Calculate visible IDs for root from current state
                 const getVisibleIds = (nodes: Bullet[]): string[] => {
@@ -630,7 +632,7 @@ export const App = () => {
                 };
                 const rootVisibleIds = getVisibleIds(currentBullets);
                 if (rootVisibleIds.length > 0) {
-                    handleFocusChange(rootVisibleIds[0]);
+                    handleFocusChange(rootVisibleIds[0], 'end', 'view');
                 }
             }
             return;
@@ -656,22 +658,19 @@ export const App = () => {
                 if (found) {
                     found.node.children.push(newBullet);
                     found.node.isCollapsed = false;
-                    // Do not update updatedAt for parent just for adding child? 
-                    // Usually yes, but let's keep consistent with other ops
-                    // found.node.updatedAt = Date.now(); 
                     return newBullets;
                 }
                 return prevBullets;
             });
             setZoomedBulletId(id);
             setTimeout(() => {
-                handleFocusChange(newBullet.id);
+                handleFocusChange(newBullet.id, 'start', 'edit'); // Start editing new child
             }, 0);
             updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
         } else if (bulletToZoom) {
             setZoomedBulletId(id);
             if (isZoomingOut && oldZoomedBulletId) {
-                setTimeout(() => handleFocusChange(oldZoomedBulletId), 0);
+                setTimeout(() => handleFocusChange(oldZoomedBulletId, 'end', 'view'), 0);
             } else if (bulletToZoom.children.length > 0) {
                  const getVisibleIds = (nodes: Bullet[]): string[] => {
                     let ids: string[] = [];
@@ -685,7 +684,7 @@ export const App = () => {
                 };
                 const visibleChildrenIds = getVisibleIds(bulletToZoom.children);
                 if (visibleChildrenIds.length > 0) {
-                    handleFocusChange(visibleChildrenIds[0]);
+                    handleFocusChange(visibleChildrenIds[0], 'end', 'view');
                 }
             }
         }
@@ -762,7 +761,7 @@ export const App = () => {
                     const newBullet = createNewBullet(text);
                     const newNodes = [...nodes];
                     newNodes.splice(index + 1, 0, newBullet);
-                    setTimeout(() => handleFocusChange(newBullet.id, 'start'), 0); 
+                    setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0); 
                     return newNodes;
                 }
                 return nodes.map(node => {
@@ -777,594 +776,497 @@ export const App = () => {
         });
     }, [handleFocusChange]);
 
-    const handleDelete = useCallback((id: string) => {
+    const handleMoveBullet = useCallback((id: string, direction: 'up' | 'down') => {
         setBullets(prev => {
-            let parentOfDeleted: Bullet | null = null;
-            let indexDeleted = -1;
-            
-            const deleteNode = (nodes: Bullet[], parent: Bullet | null): Bullet[] => {
+            const move = (nodes: Bullet[]): Bullet[] => {
                 const index = nodes.findIndex(n => n.id === id);
                 if (index !== -1) {
-                    parentOfDeleted = parent;
-                    indexDeleted = index;
-                    return nodes.filter(n => n.id !== id);
-                }
-                return nodes.map(node => {
-                    const newChildren = deleteNode(node.children, node);
-                    if (newChildren !== node.children) return { ...node, children: newChildren };
-                    return node;
-                });
-            };
-            
-            const newBullets = deleteNode(prev, null);
-            
-            // Focus management after delete
-            if (indexDeleted !== -1) {
-                setTimeout(() => {
-                    // Try to focus prev sibling, then parent
-                    const siblings = parentOfDeleted ? parentOfDeleted.children : newBullets; // NOTE: parentOfDeleted is from OLD state
-                    // But we need to find where we are in NEW state.
-                    // Simpler: if we had siblings, focus index-1, else focus parent
-                    // This is a simplification. Proper implementation requires finding the context in new tree.
-                    // Let's just rely on stabilization or default.
-                    if (indexDeleted > 0) {
-                         // Need to find the sibling in the new structure to get its ID?
-                         // Actually, siblings array in `deleteNode` (before filter) had the IDs.
-                         // We can't easily get the ID of index-1 without more logic.
-                         // Handled by `handleFocusChange(null)` if ID missing? No.
-                         // Let's skip auto-focus here for simplicity, or user presses arrow keys.
-                    } else if (parentOfDeleted) {
-                        handleFocusChange(parentOfDeleted.id);
+                    const newNodes = [...nodes];
+                    if (direction === 'up' && index > 0) {
+                        [newNodes[index], newNodes[index - 1]] = [newNodes[index - 1], newNodes[index]];
+                    } else if (direction === 'down' && index < nodes.length - 1) {
+                        [newNodes[index], newNodes[index + 1]] = [newNodes[index + 1], newNodes[index]];
                     }
-                }, 0);
-                removeFromRecentList(id);
-            }
-            return newBullets;
+                    return newNodes;
+                }
+                return nodes.map(node => ({ ...node, children: move(node.children) }));
+            };
+            return move(prev);
         });
-    }, [handleFocusChange, removeFromRecentList]);
+    }, []);
 
     const handleIndent = useCallback((id: string) => {
         setBullets(prev => {
             const indent = (nodes: Bullet[]): Bullet[] => {
                 const index = nodes.findIndex(n => n.id === id);
                 if (index > 0) {
-                    const nodeToIndent = nodes[index];
                     const prevSibling = nodes[index - 1];
+                    const nodeToMove = nodes[index];
                     const newPrevSibling = {
                         ...prevSibling,
-                        children: [...prevSibling.children, nodeToIndent],
+                        children: [...prevSibling.children, nodeToMove],
                         isCollapsed: false 
                     };
                     const newNodes = [...nodes];
                     newNodes.splice(index - 1, 2, newPrevSibling);
                     return newNodes;
                 }
-                return nodes.map(node => {
-                    if(node.children.length > 0) {
-                        const newChildren = indent(node.children);
-                        if(newChildren !== node.children) return { ...node, children: newChildren };
-                    }
-                    return node;
-                });
+                return nodes.map(n => ({ ...n, children: indent(n.children) }));
             };
             return indent(prev);
         });
     }, []);
 
     const handleOutdent = useCallback((id: string) => {
-         setBullets(prev => {
-            let nodeToOutdent: Bullet | null = null;
-            
-            // Remove node from its current position
-            const removeNode = (nodes: Bullet[]): Bullet[] => {
-                const idx = nodes.findIndex(n => n.id === id);
-                if (idx !== -1) {
-                    nodeToOutdent = nodes[idx];
-                    return nodes.filter((_, i) => i !== idx);
-                }
-                return nodes.map(n => ({ ...n, children: removeNode(n.children) }));
-            };
-            
-            // We need a 2-pass or complex recursive approach to insert it into parent's parent.
-            // Simplified: find parent, if parent exists, move node to after parent.
-            
-            const outdentNode = (nodes: Bullet[]): { nodes: Bullet[], success: boolean } => {
-                for (let i = 0; i < nodes.length; i++) {
-                    const node = nodes[i];
-                    // Check if child contains the target
-                    if (node.children.some(c => c.id === id)) {
-                        const childIdx = node.children.findIndex(c => c.id === id);
-                        const child = node.children[childIdx];
-                        const newChildren = [...node.children];
-                        newChildren.splice(childIdx, 1);
-                        
-                        // Insert after current node `nodes[i]`
-                        const newNodes = [...nodes];
-                        const newNode = { ...node, children: newChildren };
-                        newNodes[i] = newNode;
-                        newNodes.splice(i + 1, 0, child);
-                        
-                        return { nodes: newNodes, success: true };
-                    }
-                    
-                    const res = outdentNode(node.children);
-                    if (res.success) {
-                        const newNodes = [...nodes];
-                        newNodes[i] = { ...node, children: res.nodes };
-                        return { nodes: newNodes, success: true };
-                    }
-                }
-                return { nodes, success: false };
-            };
-            
-            const result = outdentNode(prev);
-            return result.success ? result.nodes : prev;
-        });
-    }, []);
-    
-    const handleMoveBullet = useCallback((id: string, direction: 'up' | 'down') => {
         setBullets(prev => {
-             const move = (nodes: Bullet[]): Bullet[] => {
-                const index = nodes.findIndex(n => n.id === id);
-                if (index !== -1) {
-                    if (direction === 'up' && index > 0) {
-                        const newNodes = [...nodes];
-                        [newNodes[index], newNodes[index - 1]] = [newNodes[index - 1], newNodes[index]];
-                        return newNodes;
-                    }
-                    if (direction === 'down' && index < nodes.length - 1) {
-                        const newNodes = [...nodes];
-                        [newNodes[index], newNodes[index + 1]] = [newNodes[index + 1], newNodes[index]];
-                        return newNodes;
-                    }
-                    return nodes;
-                }
-                return nodes.map(n => {
-                     const newChildren = move(n.children);
-                     if (newChildren !== n.children) return { ...n, children: newChildren };
-                     return n;
-                });
+             const process = (nodes: Bullet[]): { nodes: Bullet[], pulled: Bullet | null } => {
+                 for(let i = 0; i < nodes.length; i++) {
+                     const node = nodes[i];
+                     if (node.children.some(c => c.id === id)) {
+                         const childIndex = node.children.findIndex(c => c.id === id);
+                         const child = node.children[childIndex];
+                         const newChildren = [...node.children];
+                         newChildren.splice(childIndex, 1);
+                         
+                         const newParent = { ...node, children: newChildren };
+                         const pulled = child;
+                         
+                         const newNodes = [...nodes];
+                         newNodes[i] = newParent;
+                         newNodes.splice(i + 1, 0, pulled);
+                         return { nodes: newNodes, pulled: null }; 
+                     }
+                     
+                     const result = process(node.children);
+                     if (result.nodes !== node.children) {
+                         const newNodes = [...nodes];
+                         newNodes[i] = { ...node, children: result.nodes };
+                         return { nodes: newNodes, pulled: null };
+                     }
+                 }
+                 return { nodes, pulled: null };
              };
-             return move(prev);
+             
+             return process(prev).nodes;
         });
     }, []);
-    
+
     const handleMerge = useCallback((id: string) => {
-         setBullets(prev => {
-            let mergedText = '';
-            let prevId: string | null = null;
-            
+        setBullets(prev => {
             const merge = (nodes: Bullet[]): Bullet[] => {
                 const index = nodes.findIndex(n => n.id === id);
                 if (index > 0) {
-                    const current = nodes[index];
-                    const previous = nodes[index - 1];
-                    mergedText = previous.text + current.text;
-                    prevId = previous.id;
-                    const cursorPosition = previous.text.length;
-                    
-                    const newPrevious = {
-                        ...previous,
+                    const prevSibling = nodes[index - 1];
+                    const nodeToMerge = nodes[index];
+                    const mergedText = prevSibling.text + nodeToMerge.text;
+                    const newPrevSibling = {
+                        ...prevSibling,
                         text: mergedText,
-                        children: [...previous.children, ...current.children],
-                        updatedAt: Date.now()
+                        children: [...prevSibling.children, ...nodeToMerge.children]
                     };
                     
-                    // Focus management
-                    setTimeout(() => handleFocusChange(previous.id, cursorPosition), 0);
-
                     const newNodes = [...nodes];
-                    newNodes.splice(index - 1, 2, newPrevious);
+                    newNodes.splice(index - 1, 2, newPrevSibling);
+                    
+                    setTimeout(() => {
+                        handleFocusChange(prevSibling.id, prevSibling.text.length, 'edit');
+                    }, 0);
+                    
                     return newNodes;
-                } else if (index === 0) {
-                     // Can't merge with nothing above in same level
-                     return nodes;
                 }
-                
-                return nodes.map(n => {
-                     const newChildren = merge(n.children);
-                     if (newChildren !== n.children) return { ...n, children: newChildren };
-                     return n;
-                });
+                return nodes.map(n => ({ ...n, children: merge(n.children) }));
             };
             return merge(prev);
-         });
+        });
+    }, [handleFocusChange]);
+
+    const handleDelete = useCallback((id: string) => {
+        const visibleIds = visibleBulletIdsRef.current;
+        const currentIndex = visibleIds.indexOf(id);
+        let nextFocusId = null;
+        if (currentIndex > 0) {
+            nextFocusId = visibleIds[currentIndex - 1];
+        } else if (currentIndex < visibleIds.length - 1) {
+            nextFocusId = visibleIds[currentIndex + 1];
+        }
+        
+        setBullets(prev => {
+             const deleteNode = (nodes: Bullet[]): Bullet[] => {
+                return nodes.filter(n => n.id !== id).map(n => ({
+                    ...n,
+                    children: deleteNode(n.children)
+                }));
+             };
+             return deleteNode(prev);
+        });
+        
+        if (nextFocusId) {
+            handleFocusChange(nextFocusId, 'end', 'edit');
+        } else {
+             handleFocusChange(null);
+        }
+        removeFromRecentList(id);
+    }, [handleFocusChange, removeFromRecentList]);
+
+    const handleFocusMove = useCallback((direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => {
+        const visibleIds = visibleBulletIdsRef.current;
+        if (!visibleIds.length) return;
+
+        const currentId = focusOptionsRef.current.id;
+        const currentIndex = currentId ? visibleIds.indexOf(currentId) : -1;
+        
+        let nextIndex;
+        if (currentIndex === -1) {
+            nextIndex = 0;
+        } else if (direction === 'up') {
+            nextIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+        } else {
+            nextIndex = currentIndex < visibleIds.length - 1 ? currentIndex + 1 : currentIndex;
+        }
+
+        const nextId = visibleIds[nextIndex];
+        if (nextId) {
+            handleFocusChange(nextId, position, mode || focusOptionsRef.current.mode);
+        }
     }, [handleFocusChange]);
 
     const handleFocusParent = useCallback((id: string) => {
-        const found = findBulletAndParent(id, bullets);
-        if (found && found.parent) {
-            handleFocusChange(found.parent.id);
+        const findParent = (nodes: Bullet[], parentId: string | null): string | null => {
+            for(const node of nodes) {
+                if (node.id === id) return parentId;
+                const found = findParent(node.children, node.id);
+                if (found) return found;
+            }
+            return null;
+        };
+        const parentId = findParent(bullets, null);
+        // If parent is not root (zoomed root or null), focus it
+        if (parentId && parentId !== zoomedBulletId) {
+            handleFocusChange(parentId, undefined, 'view');
         }
-    }, [bullets, findBulletAndParent, handleFocusChange]);
+    }, [bullets, zoomedBulletId, handleFocusChange]);
 
     const handleFocusChild = useCallback((id: string) => {
-        const found = findBulletAndParent(id, bullets);
-        if (found && found.node.children.length > 0) {
-            handleFocusChange(found.node.children[0].id, 'start');
+        const findNode = (nodes: Bullet[]): Bullet | null => {
+             for(const node of nodes) {
+                 if(node.id === id) return node;
+                 const found = findNode(node.children);
+                 if(found) return found;
+             }
+             return null;
+        };
+        const node = findNode(bullets);
+        if (node && node.children.length > 0) {
+            handleFocusChange(node.children[0].id, undefined, 'view');
         }
-    }, [bullets, findBulletAndParent, handleFocusChange]);
+    }, [bullets, handleFocusChange]);
 
     const handleFoldAll = useCallback((id: string, collapse: boolean) => {
-         setBullets(prev => {
-             const toggle = (nodes: Bullet[]): Bullet[] => {
-                 return nodes.map(n => {
-                     if (n.id === id) {
+        setBullets(prev => {
+            const fold = (nodes: Bullet[]): Bullet[] => {
+                return nodes.map(n => {
+                    if (n.id === id) {
                          return { ...n, isCollapsed: collapse };
-                     }
-                     if (n.children.length > 0) {
-                         return { ...n, children: toggle(n.children) };
-                     }
-                     return n;
-                 });
-             };
-             return toggle(prev);
-         });
+                    }
+                    return { ...n, children: fold(n.children) };
+                });
+            };
+            return fold(prev);
+        });
     }, []);
 
-    const getFlatVisibleBullets = useCallback(() => {
-        const visible: string[] = [];
-        const traverse = (nodes: Bullet[]) => {
-            for (const node of nodes) {
-                visible.push(node.id);
-                if (!node.isCollapsed && node.children.length > 0) {
-                    traverse(node.children);
-                }
-            }
-        };
-        traverse(displayedBullets);
-        return visible;
-    }, [displayedBullets]);
-
-    const handleFocusMove = useCallback((direction: 'up' | 'down', position: 'start' | 'end' = 'end') => {
-        if (!currentFocusId) return;
-        const visibleIds = getFlatVisibleBullets();
-        const idx = visibleIds.indexOf(currentFocusId);
-        if (idx === -1) return;
-        
-        let nextIdx = direction === 'up' ? idx - 1 : idx + 1;
-        if (nextIdx >= 0 && nextIdx < visibleIds.length) {
-            handleFocusChange(visibleIds[nextIdx], position);
-        }
-    }, [currentFocusId, getFlatVisibleBullets, handleFocusChange]);
-
-    // --- Popup Logic ---
-    const handleTriggerLinkPopup = (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => {
+    const handleTriggerLinkPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: (selectedBullet: any) => void) => {
         const rect = inputRef.current?.getBoundingClientRect();
         if (rect) {
-             // Basic suggestion search
-             const flat = [];
-             const traverse = (nodes: Bullet[]) => {
-                 for(const n of nodes) {
-                     if(n.text.toLowerCase().includes(query.toLowerCase())) {
-                         flat.push({ id: n.id, text: n.text, path: [] }); // simplified path
-                     }
-                     traverse(n.children);
-                 }
-             };
-             traverse(bullets);
-             
-             setLinkPopupState({
-                 isOpen: true,
-                 targetId: bulletId,
-                 query,
-                 position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
-                 suggestions: flat.slice(0, 10),
-                 selectedIndex: 0
-             });
-             setLinkSelectionHandler({ handler: selectionHandler });
+            setLinkPopupState({
+                isOpen: true,
+                targetId: bulletId,
+                query,
+                position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
+                suggestions: [],
+                selectedIndex: 0
+            });
+            setLinkSelectionHandler({ handler });
         }
-    };
+    }, []);
 
     const handleCloseLinkPopup = useCallback(() => {
         setLinkPopupState(prev => ({ ...prev, isOpen: false }));
+        setLinkSelectionHandler({ handler: null });
     }, []);
 
-    const handleLinkNavigate = (direction: 'up' | 'down') => {
-        setLinkPopupState(prev => ({
-            ...prev,
-            selectedIndex: navigateSuggestions(prev, direction)
-        }));
-    };
-
-    const handleLinkSelect = () => {
-        if (linkPopupState.suggestions.length > 0 && linkSelectionHandler.handler) {
-            linkSelectionHandler.handler(linkPopupState.suggestions[linkPopupState.selectedIndex]);
-            handleCloseLinkPopup();
-        }
-    };
-    
-    const handleTriggerTagPopup = (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (tag: string) => void) => {
+    const handleTriggerTagPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: (selectedTag: string) => void) => {
         const rect = inputRef.current?.getBoundingClientRect();
-         if (rect) {
-             // Collect all tags
-             const tags = new Set<string>();
-             const traverse = (nodes: Bullet[]) => {
-                 for(const n of nodes) {
-                     const matches = n.text.match(/#\w+/g);
-                     if(matches) matches.forEach(t => tags.add(t));
-                     traverse(n.children);
-                 }
-             };
-             traverse(bullets);
-             const suggestions = Array.from(tags).filter(t => t.toLowerCase().includes('#' + query.toLowerCase()));
-
+        if (rect) {
              setTagPopupState({
-                 isOpen: true,
-                 targetId: bulletId,
-                 query,
-                 position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
-                 suggestions: suggestions.slice(0, 10),
-                 selectedIndex: 0
-             });
-             setTagSelectionHandler({ handler: selectionHandler });
-         }
-    };
-
+                isOpen: true,
+                targetId: bulletId,
+                query,
+                position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
+                suggestions: [],
+                selectedIndex: 0
+            });
+            setTagSelectionHandler({ handler });
+        }
+    }, []);
+    
     const handleCloseTagPopup = useCallback(() => {
         setTagPopupState(prev => ({ ...prev, isOpen: false }));
+        setTagSelectionHandler({ handler: null });
     }, []);
     
-    const handleTagNavigate = (direction: 'up' | 'down') => {
+    // Derived state for popups
+    const linkSuggestions = useMemo(() => {
+        if (!linkPopupState.isOpen || !linkPopupState.query) return [];
+        const flat: FlatBullet[] = [];
+        const traverse = (nodes: Bullet[], path: string[]) => {
+            for(const n of nodes) {
+                flat.push({ id: n.id, text: n.text, path });
+                traverse(n.children, [...path, n.text]);
+            }
+        };
+        traverse(bullets, []);
+        return flat.filter(b => b.text.toLowerCase().includes(linkPopupState.query.toLowerCase())).slice(0, 50);
+    }, [bullets, linkPopupState.isOpen, linkPopupState.query]);
+    
+    const tagSuggestions = useMemo(() => {
+        if (!tagPopupState.isOpen) return [];
+        const tags = new Set<string>();
+        const traverse = (nodes: Bullet[]) => {
+            for(const n of nodes) {
+                const matches = n.text.match(/#\w+/g);
+                if (matches) matches.forEach(t => tags.add(t));
+                traverse(n.children);
+            }
+        };
+        traverse(bullets);
+        return Array.from(tags).filter(t => t.toLowerCase().includes(tagPopupState.query.toLowerCase())).sort().slice(0, 50);
+    }, [bullets, tagPopupState.isOpen, tagPopupState.query]);
+
+    const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
+        setLinkPopupState(prev => ({
+            ...prev,
+            selectedIndex: navigateSuggestions({ suggestions: linkSuggestions, selectedIndex: prev.selectedIndex }, direction)
+        }));
+    }, [linkSuggestions]);
+
+     const handleTagNavigate = useCallback((direction: 'up' | 'down') => {
         setTagPopupState(prev => ({
             ...prev,
-            selectedIndex: navigateSuggestions(prev, direction)
+            selectedIndex: navigateSuggestions({ suggestions: tagSuggestions, selectedIndex: prev.selectedIndex }, direction)
         }));
-    };
+    }, [tagSuggestions]);
 
-    const handleTagSelect = () => {
-        if (tagPopupState.suggestions.length > 0 && tagSelectionHandler.handler) {
-            tagSelectionHandler.handler(tagPopupState.suggestions[tagPopupState.selectedIndex]);
-            handleCloseTagPopup();
+    const handleLinkSelect = useCallback((callback: (b: any) => void) => {
+        if (linkSuggestions[linkPopupState.selectedIndex]) {
+            callback(linkSuggestions[linkPopupState.selectedIndex]);
         }
-    };
+    }, [linkSuggestions, linkPopupState.selectedIndex]);
 
-    const onLinkClick = useCallback((linkText: string) => {
-         // Try to find bullet with that text
-         const find = (nodes: Bullet[]): Bullet | null => {
-             for(const n of nodes) {
-                 if(n.text === linkText) return n;
-                 const f = find(n.children);
-                 if(f) return f;
-             }
-             return null;
-         };
-         const target = find(bullets);
-         if(target) handleNavigate(target.id);
-         else {
-             setIsSearchModalOpen(true);
-             setSearchQuery(linkText);
-         }
-    }, [bullets, handleNavigate]);
+    const handleTagSelect = useCallback((callback: (t: string) => void) => {
+        if (tagSuggestions[tagPopupState.selectedIndex]) {
+            callback(tagSuggestions[tagPopupState.selectedIndex]);
+        }
+    }, [tagSuggestions, tagPopupState.selectedIndex]);
 
 
-    // --- Import/Export ---
     const handleExport = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bullets, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", (settings.fileName || "outline") + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        const dataStr = JSON.stringify(bullets, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${settings.fileName || 'outline'}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
-    const onImport = (data: any) => {
-        setPendingImportData(data);
+    const handleImportFile = (data: any) => {
+        setPendingImportData(regenerateIds(migrateBullets(data)));
         setIsImportModalOpen(true);
     };
-    
+
     const handleConfirmImport = (targetId: string | null) => {
-        if (!pendingImportData) return;
-        
-        const imported = regenerateIds(migrateBullets(pendingImportData));
-        
-        setBullets(prev => {
-            if (targetId === null) {
-                return [...prev, ...imported];
-            }
-            
-            const addToTarget = (nodes: Bullet[]): Bullet[] => {
-                return nodes.map(n => {
-                    if (n.id === targetId) {
-                        return {
-                             ...n,
-                             children: [...n.children, ...imported],
-                             isCollapsed: false
-                        };
-                    }
-                    return { ...n, children: addToTarget(n.children) };
-                });
-            };
-            return addToTarget(prev);
-        });
-        
+        if (pendingImportData) {
+            setBullets(prev => {
+                if (targetId === null) {
+                    return [...prev, ...pendingImportData];
+                }
+                const addToTarget = (nodes: Bullet[]): Bullet[] => {
+                    return nodes.map(n => {
+                        if (n.id === targetId) {
+                            return { ...n, children: [...n.children, ...pendingImportData] };
+                        }
+                        return { ...n, children: addToTarget(n.children) };
+                    });
+                };
+                return addToTarget(prev);
+            });
+            addToast(`Imported ${pendingImportData.length} items`, 'success');
+        }
         setIsImportModalOpen(false);
         setPendingImportData(null);
-        addToast('Import successful', 'success');
+    };
+
+    const handleClearData = () => {
+        if (confirm("Are you sure you want to delete all data? This cannot be undone.")) {
+            setBullets(initialData);
+            setRecentBullets([]);
+            setFavoriteBullets([]);
+            addToast('Application data reset', 'info');
+            setIsSettingsModalOpen(false);
+        }
     };
 
 
     return (
-      <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-colors duration-200">
-        <LeftSidebar 
-            isOpen={isSidebarOpen} 
-            recents={recentBullets} 
-            favorites={favoriteBullets}
-            onNavigate={handleNavigate}
-        />
-        <div className="flex-grow flex flex-col h-full overflow-hidden relative">
-            <Toolbar
-                onImport={onImport}
-                onExport={handleExport}
-                breadcrumbs={breadcrumbs}
-                onBreadcrumbClick={handleZoom}
-                fileName={settings.fileName}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
-                onGoToToday={handleGoToJournal}
-                theme={theme}
-                onThemeToggle={handleThemeToggle}
-                onOpenSearch={() => setIsSearchModalOpen(true)}
-                isSidebarOpen={isSidebarOpen}
-                onToggleSidebar={() => {
-                    const newState = !isSidebarOpen;
-                    setIsSidebarOpen(newState);
-                    db.keyValuePairs.put({ key: 'isSidebarOpen', value: newState });
-                }}
-                isFavorite={isTargetFavorite}
-                onToggleFavorite={handleToggleFavorite}
-                canFavorite={!!(zoomedBulletId || currentFocusId)}
+        <div className="flex h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
+            <LeftSidebar 
+                isOpen={isSidebarOpen} 
+                recents={recentBullets} 
+                favorites={favoriteBullets} 
+                onNavigate={handleNavigate} 
             />
             
-            <div className="flex-grow overflow-y-auto p-4" onClick={() => {
-                 // Click on empty space focuses last item or root
-                 if (displayedBullets.length > 0 && !currentFocusId) {
-                     // handleFocusChange(displayedBullets[displayedBullets.length-1].id);
-                 }
-            }}>
-                {displayedBullets.map(bullet => (
-                    <BulletItem
-                        key={bullet.id}
-                        bullet={bullet}
-                        level={0}
-                        onUpdate={handleUpdate}
-                        onAddSibling={handleAddSibling}
-                        onDelete={handleDelete}
-                        onIndent={handleIndent}
-                        onOutdent={handleOutdent}
-                        onFocusChange={handleFocusChange}
-                        onZoom={handleZoom}
-                        onFocusMove={handleFocusMove}
-                        onFocusParent={handleFocusParent}
-                        onFocusChild={handleFocusChild}
-                        onFoldAll={handleFoldAll}
-                        onMoveBullet={handleMoveBullet}
-                        currentFocusId={currentFocusId}
-                        focusPosition={focusPosition}
-                        searchQuery={searchQuery}
-                        onLinkClick={onLinkClick}
-                        onTriggerLinkPopup={handleTriggerLinkPopup}
-                        onCloseLinkPopup={handleCloseLinkPopup}
-                        onLinkNavigate={handleLinkNavigate}
-                        onLinkSelect={handleLinkSelect}
-                        isLinkPopupOpen={linkPopupState.isOpen}
-                        linkPopupTargetId={linkPopupState.targetId}
-                        onTriggerTagPopup={handleTriggerTagPopup}
-                        onCloseTagPopup={handleCloseTagPopup}
-                        onTagNavigate={handleTagNavigate}
-                        onTagSelect={handleTagSelect}
-                        isTagPopupOpen={tagPopupState.isOpen}
-                        tagPopupTargetId={tagPopupState.targetId}
-                        isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT}
-                        onNavigateTo={handleNavigate}
-                        onMerge={handleMerge}
-                    />
-                ))}
-                
-                <div 
-                    className="h-32 cursor-text opacity-0" 
-                    onClick={(e) => {
-                         e.stopPropagation();
-                         // Add to end logic could go here
-                         if (displayedBullets.length === 0) {
-                             const newB = createNewBullet();
-                             setBullets(prev => {
-                                 if (zoomedBulletId) {
-                                     // Add to zoomed parent
-                                     const add = (nodes: Bullet[]): Bullet[] => {
-                                         return nodes.map(n => {
-                                             if(n.id === zoomedBulletId) return { ...n, children: [...n.children, newB] };
-                                             return { ...n, children: add(n.children) };
-                                         });
-                                     };
-                                     return add(prev);
-                                 }
-                                 return [...prev, newB];
-                             });
-                             setTimeout(() => handleFocusChange(newB.id), 0);
-                         } else {
-                             // Append to current list
-                             const last = displayedBullets[displayedBullets.length - 1];
-                             handleAddSibling(last.id, '');
-                         }
-                    }} 
-                />
-            </div>
-
-            <ToastContainer toasts={toasts} removeToast={removeToast} />
-            
-            <SettingsModal 
-                isOpen={isSettingsModalOpen} 
-                onClose={() => setIsSettingsModalOpen(false)} 
-                onSave={setSettings}
-                currentSettings={settings}
-                onClearData={async () => {
-                    if (confirm("Are you sure you want to delete all data? This cannot be undone.")) {
-                        await db.delete();
-                        window.location.reload();
-                    }
-                }}
-            />
-            
-            <SearchModal 
-                isOpen={isSearchModalOpen}
-                onClose={() => setIsSearchModalOpen(false)}
-                bullets={bullets}
-                onNavigate={handleNavigate}
-            />
-            
-            <ImportSelectionModal 
-                isOpen={isImportModalOpen}
-                onClose={() => setIsImportModalOpen(false)}
-                onConfirm={handleConfirmImport}
-                bullets={bullets}
-            />
-
-            {linkPopupState.isOpen && (
-                <LinkPopup 
-                    suggestions={linkPopupState.suggestions}
-                    selectedIndex={linkPopupState.selectedIndex}
-                    onSelect={(item) => {
-                         if (linkSelectionHandler.handler) {
-                             linkSelectionHandler.handler(item);
-                             handleCloseLinkPopup();
-                         }
+            <div className="flex-grow flex flex-col h-full overflow-hidden relative">
+                <Toolbar
+                    onImport={handleImportFile}
+                    onExport={handleExport}
+                    breadcrumbs={breadcrumbs}
+                    onBreadcrumbClick={handleZoom}
+                    fileName={settings.fileName}
+                    onOpenSettings={() => setIsSettingsModalOpen(true)}
+                    onGoToToday={handleGoToJournal}
+                    theme={theme}
+                    onThemeToggle={handleThemeToggle}
+                    onOpenSearch={() => setIsSearchModalOpen(true)}
+                    isSidebarOpen={isSidebarOpen}
+                    onToggleSidebar={() => {
+                        setIsSidebarOpen(prev => {
+                            db.keyValuePairs.put({ key: 'isSidebarOpen', value: !prev });
+                            return !prev;
+                        });
                     }}
-                    position={linkPopupState.position}
-                    containerRef={linkPopupRef}
+                    isFavorite={isTargetFavorite}
+                    onToggleFavorite={handleToggleFavorite}
+                    canFavorite={!!targetFavoriteId}
                 />
-            )}
-            
-            {tagPopupState.isOpen && (
-                <TagPopup 
-                    suggestions={tagPopupState.suggestions}
-                    selectedIndex={tagPopupState.selectedIndex}
-                    onSelect={(tag) => {
-                        if (tagSelectionHandler.handler) {
-                            tagSelectionHandler.handler(tag);
-                            handleCloseTagPopup();
-                        }
-                    }}
-                    position={tagPopupState.position}
-                    containerRef={tagPopupRef}
-                />
-            )}
-            
-            <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10">
-                <div className="flex items-center gap-2 min-w-0">
-                    <span title={settings.fileName} className="truncate">{settings.fileName}</span>
+
+                <div className="flex-grow overflow-y-auto p-4 sm:p-8" onClick={() => handleFocusChange(null)}>
+                    <div className="max-w-4xl mx-auto pb-40">
+                         {displayedBullets.length === 0 ? (
+                            <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => {
+                                e.stopPropagation();
+                                const newBullet = createNewBullet();
+                                setBullets(prev => {
+                                    if (zoomedBulletId) {
+                                         return prev.map(n => n.id === zoomedBulletId ? { ...n, children: [newBullet] } : n); 
+                                         // Note: deep search needed if zoomed not root, but for simplicity assuming root or handleZoom logic handles empty state creation usually.
+                                         // Let's use handleZoom logic for adding child to empty zoomed parent actually.
+                                    }
+                                    return [...prev, newBullet];
+                                });
+                                setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
+                            }}>
+                                Click to add a bullet
+                            </div>
+                         ) : (
+                             displayedBullets.map(bullet => (
+                                <BulletItem
+                                    key={bullet.id}
+                                    bullet={bullet}
+                                    level={0}
+                                    onUpdate={handleUpdate}
+                                    onAddSibling={handleAddSibling}
+                                    onDelete={handleDelete}
+                                    onIndent={handleIndent}
+                                    onOutdent={handleOutdent}
+                                    onFocusChange={handleFocusChange}
+                                    onZoom={handleZoom}
+                                    onFocusMove={handleFocusMove}
+                                    onFocusParent={handleFocusParent}
+                                    onFocusChild={handleFocusChild}
+                                    onFoldAll={handleFoldAll}
+                                    onMoveBullet={handleMoveBullet}
+                                    currentFocusId={currentFocusId}
+                                    focusPosition={focusPosition}
+                                    focusMode={focusMode}
+                                    searchQuery={searchQuery}
+                                    onLinkClick={(text) => {
+                                         // Find bullet with that text? Or just navigate search?
+                                         setSearchQuery(text); 
+                                         setIsSearchModalOpen(true);
+                                    }}
+                                    onTriggerLinkPopup={handleTriggerLinkPopup}
+                                    onCloseLinkPopup={handleCloseLinkPopup}
+                                    onLinkNavigate={handleLinkNavigate}
+                                    onLinkSelect={handleLinkSelect}
+                                    isLinkPopupOpen={linkPopupState.isOpen}
+                                    linkPopupTargetId={linkPopupState.targetId}
+                                    onTriggerTagPopup={handleTriggerTagPopup}
+                                    onCloseTagPopup={handleCloseTagPopup}
+                                    onTagNavigate={handleTagNavigate}
+                                    onTagSelect={handleTagSelect}
+                                    isTagPopupOpen={tagPopupState.isOpen}
+                                    tagPopupTargetId={tagPopupState.targetId}
+                                    isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT}
+                                    onNavigateTo={handleNavigate}
+                                    onMerge={handleMerge}
+                                />
+                             ))
+                         )}
+                    </div>
                 </div>
-                <a 
-                    href="https://github.com/jaroet/JaRoet-Outliner/releases" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex-shrink-0 ml-2 hover:underline"
-                    title="View Release Notes"
-                >
-                    Version 0.1.21
-                </a>
-            </footer>
+
+                <SearchModal 
+                    isOpen={isSearchModalOpen} 
+                    onClose={() => {
+                        setIsSearchModalOpen(false);
+                        setSearchQuery('');
+                    }} 
+                    bullets={bullets} 
+                    onNavigate={handleNavigate}
+                    initialQuery={searchQuery}
+                />
+
+                <SettingsModal
+                    isOpen={isSettingsModalOpen}
+                    onClose={() => setIsSettingsModalOpen(false)}
+                    onSave={setSettings}
+                    currentSettings={settings}
+                    onClearData={handleClearData}
+                />
+
+                <ImportSelectionModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }}
+                    onConfirm={handleConfirmImport}
+                    bullets={bullets}
+                />
+
+                <ToastContainer toasts={toasts} removeToast={removeToast} />
+                
+                {linkPopupState.isOpen && (
+                    <LinkPopup
+                        suggestions={linkSuggestions}
+                        selectedIndex={linkPopupState.selectedIndex}
+                        onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)}
+                        position={linkPopupState.position}
+                        containerRef={linkPopupRef}
+                    />
+                )}
+
+                {tagPopupState.isOpen && (
+                    <TagPopup
+                        suggestions={tagSuggestions}
+                        selectedIndex={tagPopupState.selectedIndex}
+                        onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)}
+                        position={tagPopupState.position}
+                        containerRef={tagPopupRef}
+                    />
+                )}
+            </div>
         </div>
-      </div>
     );
 };

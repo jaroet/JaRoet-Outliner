@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons.tsx';
 import type { Bullet } from '../types.ts';
@@ -89,7 +90,7 @@ const renderRichTextContent = (
             if (part.startsWith('[[') && part.endsWith(']]')) {
                 const linkText = part.slice(2, -2);
                 return (
-                    <button key={index} onClick={() => onLinkClick(linkText)} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
+                    <button key={index} onClick={(e) => { e.stopPropagation(); onLinkClick(linkText); }} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
                         {highlightText(linkText, highlight)}
                     </button>
                 );
@@ -103,7 +104,7 @@ const renderRichTextContent = (
                    href = `https://${href}`;
                 }
                 return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
                        {highlightText(text, highlight)}
                     </a>
                 );
@@ -112,7 +113,7 @@ const renderRichTextContent = (
             if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
                 const href = part.startsWith('www.') ? `https://${part}` : part;
                 return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
                         {highlightText(part, highlight)}
                     </a>
                 );
@@ -120,7 +121,7 @@ const renderRichTextContent = (
 
             if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
                 return (
-                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
+                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
                         {highlightText(part, highlight)}
                     </a>
                 );
@@ -141,15 +142,16 @@ interface BulletItemProps {
     onDelete: (id: string) => void;
     onIndent: (id: string) => void;
     onOutdent: (id: string) => void;
-    onFocusChange: (id: string, position?: 'start' | 'end') => void;
+    onFocusChange: (id: string, position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
     onZoom: (id: string) => void;
-    onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end') => void;
+    onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
     onFocusParent: (id: string) => void;
     onFocusChild: (id: string) => void;
     onFoldAll: (id: string, collapse: boolean) => void;
     onMoveBullet: (id: string, direction: 'up' | 'down') => void;
     currentFocusId: string | null;
     focusPosition: 'start' | 'end' | number;
+    focusMode: 'view' | 'edit';
     searchQuery: string;
     onLinkClick: (linkText: string) => void;
     onTriggerLinkPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => void;
@@ -186,6 +188,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
   onMoveBullet,
   currentFocusId,
   focusPosition,
+  focusMode,
   searchQuery,
   onLinkClick,
   onTriggerLinkPopup,
@@ -206,18 +209,24 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textInputRef = useRef<HTMLTextAreaElement>(null);
+  const viewRef = useRef<HTMLDivElement>(null);
 
   const isFocused = currentFocusId === bullet.id;
   
   useEffect(() => {
     if (isFocused) {
-      setIsEditing(true);
+      if (focusMode === 'edit') {
+          setIsEditing(true);
+      } else {
+          setIsEditing(false);
+          if(viewRef.current) viewRef.current.focus();
+      }
     } else {
       setIsEditing(false);
       onCloseLinkPopup();
       onCloseTagPopup();
     }
-  }, [isFocused, onCloseLinkPopup, onCloseTagPopup]);
+  }, [isFocused, focusMode, onCloseLinkPopup, onCloseTagPopup]);
 
   useEffect(() => {
     if (isEditing && textInputRef.current) {
@@ -314,53 +323,63 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
     onCloseTagPopup();
   };
 
-  const handleTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleViewKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (bullet.isReadOnly) return;
+      
+      let handled = true;
+      if (e.altKey) {
+          if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
+          if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
+      }
+
+      switch(e.key) {
+          case 'ArrowUp': 
+              onFocusMove('up', undefined, 'view'); 
+              break;
+          case 'ArrowDown': 
+              onFocusMove('down', undefined, 'view'); 
+              break;
+          case 'ArrowLeft':
+              if (hasChildren && !bullet.isCollapsed) {
+                  onUpdate(bullet.id, { isCollapsed: true });
+              } else if (level > 0) {
+                  onFocusParent(bullet.id);
+              }
+              break;
+          case 'ArrowRight':
+              if (hasChildren && bullet.isCollapsed) {
+                  onUpdate(bullet.id, { isCollapsed: false });
+                  // Focus first child after expansion requires ensuring child is rendered. 
+                  // App state update will trigger re-render, then onFocusChild can find it.
+                  setTimeout(() => onFocusChild(bullet.id), 0);
+              } else if (hasChildren && !bullet.isCollapsed) {
+                  onFocusChild(bullet.id);
+              }
+              break;
+          case 'Enter':
+              e.preventDefault();
+              onFocusChange(bullet.id, 'end', 'edit');
+              break;
+          case 'Tab': // Optional: Allow indent/outdent in view mode too?
+                e.preventDefault();
+                if (e.shiftKey) onOutdent(bullet.id);
+                else onIndent(bullet.id);
+                break;
+          default:
+              handled = false;
+      }
+      
+      if (handled) {
+          e.preventDefault();
+      }
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const input = e.target as HTMLTextAreaElement;
     const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
     const isTagPopupActive = isTagPopupOpen && tagPopupTargetId === bullet.id;
     
-    if (bullet.isReadOnly) {
-        let handled = true;
-        if (e.ctrlKey) {
-            switch (e.key) {
-                case 'ArrowLeft':
-                    if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
-                    else if (level > 0) onFocusParent(bullet.id);
-                    break;
-                case 'ArrowRight':
-                    if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
-                    break;
-                case 'ArrowDown':
-                    onZoom(bullet.id);
-                    break;
-                default:
-                    handled = false;
-            }
-        } else {
-            switch(e.key) {
-                case 'Enter':
-                    if (bullet.originalId) {
-                        onNavigateTo(bullet.originalId);
-                    } else if (hasChildren) {
-                        onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
-                    }
-                    break;
-                case 'ArrowUp': onFocusMove('up'); break;
-                case 'ArrowDown': onFocusMove('down'); break;
-                case 'ArrowLeft': onFocusParent(bullet.id); break;
-                case 'ArrowRight': 
-                    if(hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
-                    else onFocusMove('down', 'start'); 
-                    break;
-                default: handled = false;
-            }
-        }
-
-        if (handled) {
-            e.preventDefault();
-        }
-        return;
-    }
+    if (bullet.isReadOnly) return; // Should not be in edit mode if read only
 
     if (isTagPopupActive) {
         let handled = true;
@@ -440,30 +459,20 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
         if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
         if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
     }
-
+    
+    // In edit mode, standard text editor behavior for arrows is desired.
+    // However, if we want to retain folding shortcuts:
     if (e.ctrlKey && e.shiftKey) {
         if (e.key === 'ArrowLeft') { e.preventDefault(); onFoldAll(bullet.id, true); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); onFoldAll(bullet.id, false); return; }
     }
-
-    if (e.ctrlKey) {
-        let handled = true;
-        switch (e.key) {
-            case 'ArrowLeft':
-                if (hasChildren && !bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: true });
-                else if (level > 0) onFocusParent(bullet.id);
-                break;
-            case 'ArrowRight':
-                if (hasChildren && bullet.isCollapsed) onUpdate(bullet.id, { isCollapsed: false });
-                else if (hasChildren && !bullet.isCollapsed) onFocusChild(bullet.id);
-                break;
-            case 'ArrowDown': onZoom(bullet.id); break;
-            default: handled = false;
-        }
-        if (handled) { e.preventDefault(); return; }
-    }
-
+    
+    // Edit mode specific shortcuts
     switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        onFocusChange(bullet.id, undefined, 'view');
+        break;
       case 'Enter':
         e.preventDefault();
         if (e.shiftKey) {
@@ -498,14 +507,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
           onMerge(bullet.id);
         }
         break;
-      case 'ArrowUp': e.preventDefault(); onFocusMove('up'); break;
-      case 'ArrowDown': e.preventDefault(); onFocusMove('down'); break;
-      case 'ArrowLeft':
-        if (input.selectionStart === 0) { e.preventDefault(); onFocusParent(bullet.id); }
-        break;
-      case 'ArrowRight':
-        if (input.selectionStart === input.value.length) { e.preventDefault(); onFocusMove('down', 'start'); }
-        break;
+      // Do not handle Arrow keys here to allow text navigation
     }
   };
 
@@ -542,10 +544,11 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
         if (bullet.originalId) {
             onNavigateTo(bullet.originalId);
         } else {
-            onFocusChange(bullet.id);
+            onFocusChange(bullet.id, undefined, 'view');
         }
     } else {
-        onFocusChange(bullet.id);
+        // Switch to edit mode on click
+        onFocusChange(bullet.id, undefined, 'edit');
     }
   };
 
@@ -587,7 +590,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                                     ref={textInputRef}
                                     value={bullet.text}
                                     onChange={handleTextChange}
-                                    onKeyDown={handleTextKeyDown}
+                                    onKeyDown={handleEditKeyDown}
                                     readOnly={bullet.isReadOnly}
                                     className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]"
                                     rows={1}
@@ -595,7 +598,13 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                                 />
                             </div>
                         ) : (
-                            <div onClick={handleTextClick} className={`w-full min-h-[1.5em] leading-[1.5] break-words ${bullet.isReadOnly ? 'cursor-text' : ''}`}>
+                            <div 
+                                ref={viewRef}
+                                tabIndex={0}
+                                onClick={handleTextClick} 
+                                onKeyDown={handleViewKeyDown}
+                                className={`w-full min-h-[1.5em] leading-[1.5] break-words outline-none ${isFocused ? 'ring-2 ring-opacity-50 ring-[var(--main-color)] rounded-sm' : ''} ${bullet.isReadOnly ? 'cursor-pointer' : 'cursor-text'}`}
+                            >
                             {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                             </div>
                         )}
@@ -624,6 +633,7 @@ const BulletItemImpl: React.FC<BulletItemProps> = ({
                 onMoveBullet={onMoveBullet}
                 currentFocusId={currentFocusId}
                 focusPosition={focusPosition}
+                focusMode={focusMode}
                 searchQuery={searchQuery}
                 onLinkClick={onLinkClick}
                 onTriggerLinkPopup={onTriggerLinkPopup}
