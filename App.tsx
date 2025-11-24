@@ -1,5 +1,14 @@
 
 
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -1120,153 +1129,209 @@ export const App = () => {
     };
 
 
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setIsSearchModalOpen(true);
+            } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+                e.preventDefault();
+                handleZoom(null);
+                setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
+                setTimeout(() => {
+                    const currentBullets = bulletsRef.current;
+                    if (currentBullets.length > 0) handleFocusChange(currentBullets[0].id, 'start', 'view');
+                }, 10);
+            } else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
+                e.preventDefault();
+                handleGoToJournal();
+            } else if (e.ctrlKey && e.key === 'ArrowUp') {
+                 // Global Zoom Out
+                 e.preventDefault();
+                 const zoomedId = zoomedBulletIdRef.current;
+                 const crumbs = breadcrumbsRef.current;
+                 if (zoomedId) {
+                     const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null;
+                     handleZoom(parentId);
+                 }
+            } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                // Focus Restoration fallback
+                const currentFocusId = focusOptionsRef.current.id;
+                const visibleIds = visibleBulletIdsRef.current;
+                if (!currentFocusId && visibleIds.length > 0) {
+                     const target = e.target as HTMLElement;
+                     if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                         e.preventDefault();
+                         handleFocusChange(visibleIds[0], 'end', 'view');
+                     }
+                }
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
+    }, [handleGoToJournal, handleZoom, handleFocusChange]);
+
+
     return (
-        <div className="flex h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
-            <LeftSidebar 
-                isOpen={isSidebarOpen} 
-                recents={recentBullets} 
-                favorites={favoriteBullets} 
-                onNavigate={handleNavigate} 
-            />
-            
-            <div className="flex-grow flex flex-col h-full overflow-hidden relative">
-                <Toolbar
-                    onImport={handleImportFile}
-                    onExport={handleExport}
-                    breadcrumbs={breadcrumbs}
-                    onBreadcrumbClick={handleZoom}
-                    fileName={settings.fileName}
-                    onOpenSettings={() => setIsSettingsModalOpen(true)}
-                    onGoToToday={handleGoToJournal}
-                    theme={theme}
-                    onThemeToggle={handleThemeToggle}
-                    onOpenSearch={() => setIsSearchModalOpen(true)}
-                    isSidebarOpen={isSidebarOpen}
-                    onToggleSidebar={() => {
-                        setIsSidebarOpen(prev => {
-                            db.keyValuePairs.put({ key: 'isSidebarOpen', value: !prev });
-                            return !prev;
-                        });
-                    }}
-                    isFavorite={isTargetFavorite}
-                    onToggleFavorite={handleToggleFavorite}
-                    canFavorite={!!targetFavoriteId}
+        <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
+            <div className="flex-grow flex overflow-hidden">
+                <LeftSidebar 
+                    isOpen={isSidebarOpen} 
+                    recents={recentBullets} 
+                    favorites={favoriteBullets} 
+                    onNavigate={handleNavigate} 
                 />
-
-                <div className="flex-grow overflow-y-auto p-4 sm:p-8" onClick={() => handleFocusChange(null)}>
-                    <div className="max-w-4xl mx-auto pb-40">
-                         {displayedBullets.length === 0 ? (
-                            <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => {
-                                e.stopPropagation();
-                                const newBullet = createNewBullet();
-                                setBullets(prev => {
-                                    if (zoomedBulletId) {
-                                         return prev.map(n => n.id === zoomedBulletId ? { ...n, children: [newBullet] } : n); 
-                                         // Note: deep search needed if zoomed not root, but for simplicity assuming root or handleZoom logic handles empty state creation usually.
-                                         // Let's use handleZoom logic for adding child to empty zoomed parent actually.
-                                    }
-                                    return [...prev, newBullet];
-                                });
-                                setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
-                            }}>
-                                Click to add a bullet
-                            </div>
-                         ) : (
-                             displayedBullets.map(bullet => (
-                                <BulletItem
-                                    key={bullet.id}
-                                    bullet={bullet}
-                                    level={0}
-                                    onUpdate={handleUpdate}
-                                    onAddSibling={handleAddSibling}
-                                    onDelete={handleDelete}
-                                    onIndent={handleIndent}
-                                    onOutdent={handleOutdent}
-                                    onFocusChange={handleFocusChange}
-                                    onZoom={handleZoom}
-                                    onFocusMove={handleFocusMove}
-                                    onFocusParent={handleFocusParent}
-                                    onFocusChild={handleFocusChild}
-                                    onFoldAll={handleFoldAll}
-                                    onMoveBullet={handleMoveBullet}
-                                    currentFocusId={currentFocusId}
-                                    focusPosition={focusPosition}
-                                    focusMode={focusMode}
-                                    searchQuery={searchQuery}
-                                    onLinkClick={(text) => {
-                                         // Find bullet with that text? Or just navigate search?
-                                         setSearchQuery(text); 
-                                         setIsSearchModalOpen(true);
-                                    }}
-                                    onTriggerLinkPopup={handleTriggerLinkPopup}
-                                    onCloseLinkPopup={handleCloseLinkPopup}
-                                    onLinkNavigate={handleLinkNavigate}
-                                    onLinkSelect={handleLinkSelect}
-                                    isLinkPopupOpen={linkPopupState.isOpen}
-                                    linkPopupTargetId={linkPopupState.targetId}
-                                    onTriggerTagPopup={handleTriggerTagPopup}
-                                    onCloseTagPopup={handleCloseTagPopup}
-                                    onTagNavigate={handleTagNavigate}
-                                    onTagSelect={handleTagSelect}
-                                    isTagPopupOpen={tagPopupState.isOpen}
-                                    tagPopupTargetId={tagPopupState.targetId}
-                                    isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT}
-                                    onNavigateTo={handleNavigate}
-                                    onMerge={handleMerge}
-                                />
-                             ))
-                         )}
-                    </div>
-                </div>
-
-                <SearchModal 
-                    isOpen={isSearchModalOpen} 
-                    onClose={() => {
-                        setIsSearchModalOpen(false);
-                        setSearchQuery('');
-                    }} 
-                    bullets={bullets} 
-                    onNavigate={handleNavigate}
-                    initialQuery={searchQuery}
-                />
-
-                <SettingsModal
-                    isOpen={isSettingsModalOpen}
-                    onClose={() => setIsSettingsModalOpen(false)}
-                    onSave={setSettings}
-                    currentSettings={settings}
-                    onClearData={handleClearData}
-                />
-
-                <ImportSelectionModal
-                    isOpen={isImportModalOpen}
-                    onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }}
-                    onConfirm={handleConfirmImport}
-                    bullets={bullets}
-                />
-
-                <ToastContainer toasts={toasts} removeToast={removeToast} />
                 
-                {linkPopupState.isOpen && (
-                    <LinkPopup
-                        suggestions={linkSuggestions}
-                        selectedIndex={linkPopupState.selectedIndex}
-                        onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)}
-                        position={linkPopupState.position}
-                        containerRef={linkPopupRef}
+                <div className="flex-grow flex flex-col h-full overflow-hidden relative">
+                    <Toolbar
+                        onImport={handleImportFile}
+                        onExport={handleExport}
+                        breadcrumbs={breadcrumbs}
+                        onBreadcrumbClick={handleZoom}
+                        fileName={settings.fileName}
+                        onOpenSettings={() => setIsSettingsModalOpen(true)}
+                        onGoToToday={handleGoToJournal}
+                        theme={theme}
+                        onThemeToggle={handleThemeToggle}
+                        onOpenSearch={() => setIsSearchModalOpen(true)}
+                        isSidebarOpen={isSidebarOpen}
+                        onToggleSidebar={() => {
+                            setIsSidebarOpen(prev => {
+                                db.keyValuePairs.put({ key: 'isSidebarOpen', value: !prev });
+                                return !prev;
+                            });
+                        }}
+                        isFavorite={isTargetFavorite}
+                        onToggleFavorite={handleToggleFavorite}
+                        canFavorite={!!targetFavoriteId}
                     />
-                )}
 
-                {tagPopupState.isOpen && (
-                    <TagPopup
-                        suggestions={tagSuggestions}
-                        selectedIndex={tagPopupState.selectedIndex}
-                        onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)}
-                        position={tagPopupState.position}
-                        containerRef={tagPopupRef}
+                    <div className="flex-grow overflow-y-auto p-4 sm:p-8" onClick={() => handleFocusChange(null)}>
+                        <div className="max-w-4xl mx-auto pb-40">
+                             {displayedBullets.length === 0 ? (
+                                <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newBullet = createNewBullet();
+                                    setBullets(prev => {
+                                        if (zoomedBulletId) {
+                                             return prev.map(n => n.id === zoomedBulletId ? { ...n, children: [newBullet] } : n); 
+                                        }
+                                        return [...prev, newBullet];
+                                    });
+                                    setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
+                                }}>
+                                    Click to add a bullet
+                                </div>
+                             ) : (
+                                 displayedBullets.map(bullet => (
+                                    <BulletItem
+                                        key={bullet.id}
+                                        bullet={bullet}
+                                        level={0}
+                                        onUpdate={handleUpdate}
+                                        onAddSibling={handleAddSibling}
+                                        onDelete={handleDelete}
+                                        onIndent={handleIndent}
+                                        onOutdent={handleOutdent}
+                                        onFocusChange={handleFocusChange}
+                                        onZoom={handleZoom}
+                                        onFocusMove={handleFocusMove}
+                                        onFocusParent={handleFocusParent}
+                                        onFocusChild={handleFocusChild}
+                                        onFoldAll={handleFoldAll}
+                                        onMoveBullet={handleMoveBullet}
+                                        currentFocusId={currentFocusId}
+                                        focusPosition={focusPosition}
+                                        focusMode={focusMode}
+                                        searchQuery={searchQuery}
+                                        onLinkClick={(text) => {
+                                             setSearchQuery(text); 
+                                             setIsSearchModalOpen(true);
+                                        }}
+                                        onTriggerLinkPopup={handleTriggerLinkPopup}
+                                        onCloseLinkPopup={handleCloseLinkPopup}
+                                        onLinkNavigate={handleLinkNavigate}
+                                        onLinkSelect={handleLinkSelect}
+                                        isLinkPopupOpen={linkPopupState.isOpen}
+                                        linkPopupTargetId={linkPopupState.targetId}
+                                        onTriggerTagPopup={handleTriggerTagPopup}
+                                        onCloseTagPopup={handleCloseTagPopup}
+                                        onTagNavigate={handleTagNavigate}
+                                        onTagSelect={handleTagSelect}
+                                        isTagPopupOpen={tagPopupState.isOpen}
+                                        tagPopupTargetId={tagPopupState.targetId}
+                                        isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT}
+                                        onNavigateTo={handleNavigate}
+                                        onMerge={handleMerge}
+                                    />
+                                 ))
+                             )}
+                        </div>
+                    </div>
+
+                    <SearchModal 
+                        isOpen={isSearchModalOpen} 
+                        onClose={() => {
+                            setIsSearchModalOpen(false);
+                            setSearchQuery('');
+                        }} 
+                        bullets={bullets} 
+                        onNavigate={handleNavigate}
+                        initialQuery={searchQuery}
                     />
-                )}
+
+                    <SettingsModal
+                        isOpen={isSettingsModalOpen}
+                        onClose={() => setIsSettingsModalOpen(false)}
+                        onSave={setSettings}
+                        currentSettings={settings}
+                        onClearData={handleClearData}
+                    />
+
+                    <ImportSelectionModal
+                        isOpen={isImportModalOpen}
+                        onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }}
+                        onConfirm={handleConfirmImport}
+                        bullets={bullets}
+                    />
+
+                    <ToastContainer toasts={toasts} removeToast={removeToast} />
+                    
+                    {linkPopupState.isOpen && (
+                        <LinkPopup
+                            suggestions={linkSuggestions}
+                            selectedIndex={linkPopupState.selectedIndex}
+                            onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)}
+                            position={linkPopupState.position}
+                            containerRef={linkPopupRef}
+                        />
+                    )}
+
+                    {tagPopupState.isOpen && (
+                        <TagPopup
+                            suggestions={tagSuggestions}
+                            selectedIndex={tagPopupState.selectedIndex}
+                            onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)}
+                            position={tagPopupState.position}
+                            containerRef={tagPopupRef}
+                        />
+                    )}
+                </div>
             </div>
+            <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10 w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                      <span title={settings.fileName} className="truncate">{settings.fileName}</span>
+                  </div>
+                  <a 
+                      href="https://github.com/jaroet/JaRoet-Outliner/releases" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="flex-shrink-0 ml-2 hover:underline"
+                      title="View Release Notes"
+                  >
+                      Version 0.1.29
+                  </a>
+            </footer>
         </div>
     );
 };

@@ -1,3 +1,5 @@
+
+
 [
   {
     "id": "doc-root",
@@ -75,6 +77,43 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-41",
+                "text": "Version 0.1.29: Fixes",
+                "children": [
+                    { "id": "cl-41-a", "text": "Fixed a script error caused by incomplete build generation.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-40",
+                "text": "Version 0.1.28: Layout & Hotkey Adjustments",
+                "children": [
+                    { "id": "cl-40-a", "text": "Reinstated `Ctrl+Down` (Zoom In) and `Ctrl+Up` (Zoom Out) hotkeys in View Mode.", "children": [], "isCollapsed": false },
+                    { "id": "cl-40-b", "text": "Moved the status bar to the bottom of the viewport, spanning the full width of the application.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-39",
+                "text": "Version 0.1.27: Focus & Stability Fixes",
+                "children": [
+                    { "id": "cl-39-a", "text": "Fixed a critical ReferenceError in the standalone application build.", "children": [], "isCollapsed": false },
+                    { "id": "cl-39-b", "text": "Improved focus restoration when switching from Edit to View mode.", "children": [], "isCollapsed": false },
+                    { "id": "cl-39-c", "text": "Added keyboard shortcuts (Arrows, Enter) to View mode for smoother navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-39-d", "text": "Prevented focus stealing by fold/zoom icons.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-38",
+                "text": "Version 0.1.26: Focus Fixes",
+                "children": [
+                    { "id": "cl-38-a", "text": "Fixed focus loss when switching from Edit to View mode.", "children": [], "isCollapsed": false },
+                    { "id": "cl-38-b", "text": "Prevented fold and zoom icons from receiving keyboard focus.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-37",
                 "text": "Version 0.1.25: Standalone Update",
@@ -169,7 +208,7 @@
                 "text": "Version 0.1.16: Sidebar Improvements",
                 "children": [
                     { "id": "cl-28-a", "text": "The sidebar is now resizable. Drag the right edge to adjust width.", "children": [], "isCollapsed": false },
-                    { "id": "cl-28-b", "text": "Renamed 'Recently Modified' to 'Recent' and made the section collapsible.", "children": [], "isCollapsed": false }
+                    { "id": "cl-28-b", "text": "Renamed 'Recently modified' to 'Recent' and made the section collapsible.", "children": [], "isCollapsed": false }
                 ],
                 "isCollapsed": false
             },
@@ -392,3 +431,4 @@
     ],
     "isCollapsed": false
   }
+]

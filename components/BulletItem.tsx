@@ -1,662 +1,462 @@
 
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronRightIcon, ChevronDownIcon, CircleIcon, AppointmentIcon } from './Icons.tsx';
 import type { Bullet } from '../types.ts';
 
 // --- Helper Functions for Rich Text Rendering ---
 
+// Helper to render [[Links]] and #tags
+const renderLinksAndTags = (text: string) => {
+     // Split by tags or wikilinks
+     const parts = text.split(/(\[\[.*?\]\]|#\w+)/g);
+     return parts.map((part, i) => {
+        if (part.startsWith('[[') && part.endsWith(']]')) {
+             return <span key={i} className="text-[var(--main-color)] opacity-80 cursor-pointer hover:underline">{part}</span>;
+        }
+        if (part.startsWith('#')) {
+             return <span key={i} className="text-[var(--main-color)] opacity-80 cursor-pointer hover:underline">{part}</span>;
+        }
+        
+        // Handle newlines
+        const lines = part.split('\n');
+        return lines.map((line, j) => (
+            <React.Fragment key={`${i}-${j}`}>
+                {line}
+                {j < lines.length - 1 && <br />}
+            </React.Fragment>
+        ));
+     });
+};
+
 /**
  * A helper to wrap matched search query terms in a highlighting span.
  */
 const highlightText = (text: string, highlight?: string) => {
     if (!text) return text;
-    const regex = highlight ? new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi') : null;
-    const parts = highlight ? text.split(regex) : [text];
+    
+    const parts = highlight ? text.split(new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')) : [text];
     
     return (
       <React.Fragment>
         {parts.map((part, i) => {
             if (!part) return null;
-            const lines = part.split('\n');
-            const partWithBreaks = lines.map((line, j) => (
-                <React.Fragment key={j}>
-                    {line}
-                    {j < lines.length - 1 && <br />}
-                </React.Fragment>
-            ));
 
             if (highlight && part.toLowerCase() === highlight.toLowerCase()) {
+                const lines = part.split('\n');
+                const partWithBreaks = lines.map((line, j) => (
+                    <React.Fragment key={j}>
+                        {line}
+                        {j < lines.length - 1 && <br />}
+                    </React.Fragment>
+                ));
                 return (
-                    <span key={i} className="bg-yellow-300/80 dark:bg-yellow-500/50 text-black dark:text-white rounded-sm">
+                    <span key={i} className="bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white rounded-sm">
                         {partWithBreaks}
                     </span>
                 );
             }
-            return <React.Fragment key={i}>{partWithBreaks}</React.Fragment>;
+            
+            // Render links/tags in non-highlighted parts
+            return <React.Fragment key={i}>{renderLinksAndTags(part)}</React.Fragment>;
         })}
       </React.Fragment>
     );
 };
-
-/**
- * A centralized function to render text with rich formatting (tags, links, etc.).
- * It can be configured to render a full or simplified version.
- */
-const renderRichTextContent = (
-    text: string, 
-    highlight: string | undefined, 
-    onLinkClick: (linkText: string) => void,
-    options: { renderTagsOnly?: boolean } = {}
-): React.ReactNode => {
-    const { renderTagsOnly = false } = options;
-    if (!text) return null;
-
-    if (renderTagsOnly) {
-        const tagRegex = /(#\w+)/g;
-        const parts = text.split(tagRegex);
-        return (
-            <React.Fragment>
-                {parts.map((part, index) => {
-                    if (part.startsWith('#') && /#\w+/.test(part)) {
-                        return (
-                            <span key={index} className="tag-span">
-                                {part}
-                            </span>
-                        );
-                    }
-                    return <span key={index}>{part}</span>;
-                })}
-            </React.Fragment>
-        );
-    }
-    
-    const combinedRegex = /(#\w+|\[\[.*?\]\]|\[[^\]]+?\]\([^)]+?\)|\b(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*|\bwww\.[^\s/$.?#].[^\s]*|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-    const parts = text.split(combinedRegex);
-    
-    return (
-      <React.Fragment>
-        {parts.map((part, index) => {
-            if (!part) return null;
-            
-            if (part.startsWith('#') && /#\w+/.test(part)) {
-                return (
-                    <span key={index} className="tag-span">
-                         {highlightText(part, highlight)}
-                    </span>
-                );
-            }
-
-            if (part.startsWith('[[') && part.endsWith(']]')) {
-                const linkText = part.slice(2, -2);
-                return (
-                    <button key={index} onClick={(e) => { e.stopPropagation(); onLinkClick(linkText); }} className="bg-[var(--main-color)]/20 hover:bg-[var(--main-color)]/30 text-[var(--main-color)] rounded-sm px-1 py-0 mx-px transition-colors" title={`Go to: ${linkText}`}>
-                        {highlightText(linkText, highlight)}
-                    </button>
-                );
-            }
-            
-            const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-            if (mdLinkMatch) {
-                const [, text, url] = mdLinkMatch;
-                let href = url.trim();
-                if (!/^(https?|ftp|mailto):/i.test(href)) {
-                   href = `https://${href}`;
-                }
-                return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                       {highlightText(text, highlight)}
-                    </a>
-                );
-            }
-
-            if (/^(https?|ftp):\/\//.test(part) || part.startsWith('www.')) {
-                const href = part.startsWith('www.') ? `https://${part}` : part;
-                return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer" title={`Opens: ${href}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                        {highlightText(part, highlight)}
-                    </a>
-                );
-            }
-
-            if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(part)) {
-                return (
-                    <a key={index} href={`mailto:${part}`} title={`Email: ${part}`} onClick={(e) => e.stopPropagation()} className="text-[var(--main-color)] underline decoration-dotted hover:decoration-solid">
-                        {highlightText(part, highlight)}
-                    </a>
-                );
-            }
-
-            return highlightText(part, highlight);
-        })}
-      </React.Fragment>
-    );
-};
-
 
 interface BulletItemProps {
-    bullet: Bullet;
-    level: number;
-    onUpdate: (id: string, updates: Partial<Bullet>) => void;
-    onAddSibling: (id: string, text?: string) => void;
-    onDelete: (id: string) => void;
-    onIndent: (id: string) => void;
-    onOutdent: (id: string) => void;
-    onFocusChange: (id: string, position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
-    onZoom: (id: string) => void;
-    onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
-    onFocusParent: (id: string) => void;
-    onFocusChild: (id: string) => void;
-    onFoldAll: (id: string, collapse: boolean) => void;
-    onMoveBullet: (id: string, direction: 'up' | 'down') => void;
-    currentFocusId: string | null;
-    focusPosition: 'start' | 'end' | number;
-    focusMode: 'view' | 'edit';
-    searchQuery: string;
-    onLinkClick: (linkText: string) => void;
-    onTriggerLinkPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedBullet: any) => void) => void;
-    onCloseLinkPopup: () => void;
-    onLinkNavigate: (direction: 'up' | 'down') => void;
-    onLinkSelect: (callback: (selectedBullet: any) => void) => void;
-    isLinkPopupOpen: boolean;
-    linkPopupTargetId: string | null;
-    onTriggerTagPopup: (bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, selectionHandler: (selectedTag: string) => void) => void;
-    onCloseTagPopup: () => void;
-    onTagNavigate: (direction: 'up' | 'down') => void;
-    onTagSelect: (callback: (selectedTag: string) => void) => void;
-    isTagPopupOpen: boolean;
-    tagPopupTargetId: string | null;
-    isJournalRoot: boolean;
-    onNavigateTo: (id: string) => void;
-    onMerge: (id: string) => void;
+  bullet: Bullet;
+  level: number;
+  onUpdate: (id: string, updates: Partial<Bullet>) => void;
+  onAddSibling: (id: string, text?: string) => void;
+  onDelete: (id: string) => void;
+  onIndent: (id: string) => void;
+  onOutdent: (id: string) => void;
+  onFocusChange: (id: string | null, position?: 'start' | 'end' | number, mode?: 'view' | 'edit') => void;
+  onZoom: (id: string | null) => void;
+  onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
+  onFocusParent: (id: string) => void;
+  onFocusChild: (id: string) => void;
+  onFoldAll: (id: string, collapse: boolean) => void;
+  onMoveBullet: (id: string, direction: 'up' | 'down') => void;
+  currentFocusId: string | null;
+  focusPosition: 'start' | 'end' | number;
+  focusMode: 'view' | 'edit';
+  searchQuery: string;
+  onLinkClick: (text: string) => void;
+  onTriggerLinkPopup: (id: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: any) => void;
+  onCloseLinkPopup: () => void;
+  onLinkNavigate: (direction: 'up' | 'down') => void;
+  onLinkSelect: (callback: (b: any) => void) => void;
+  isLinkPopupOpen: boolean;
+  linkPopupTargetId: string | null;
+  onTriggerTagPopup: (id: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: any) => void;
+  onCloseTagPopup: () => void;
+  onTagNavigate: (direction: 'up' | 'down') => void;
+  onTagSelect: (callback: (t: string) => void) => void;
+  isTagPopupOpen: boolean;
+  tagPopupTargetId: string | null;
+  isJournalRoot: boolean;
+  onNavigateTo: (id: string) => void;
+  onMerge: (id: string) => void;
 }
 
-const BulletItemImpl: React.FC<BulletItemProps> = ({
-  bullet,
-  level,
-  onUpdate,
-  onAddSibling,
-  onDelete,
-  onIndent,
-  onOutdent,
-  onFocusChange,
-  onZoom,
-  onFocusMove,
-  onFocusParent,
-  onFocusChild,
-  onFoldAll,
-  onMoveBullet,
-  currentFocusId,
-  focusPosition,
-  focusMode,
-  searchQuery,
-  onLinkClick,
-  onTriggerLinkPopup,
-  onCloseLinkPopup,
-  onLinkNavigate,
-  onLinkSelect,
-  isLinkPopupOpen,
-  linkPopupTargetId,
-  onTriggerTagPopup,
-  onCloseTagPopup,
-  onTagNavigate,
-  onTagSelect,
-  isTagPopupOpen,
-  tagPopupTargetId,
-  isJournalRoot,
-  onNavigateTo,
-  onMerge,
-}) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const textInputRef = useRef<HTMLTextAreaElement>(null);
-  const viewRef = useRef<HTMLDivElement>(null);
+export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
+    const {
+        bullet, level, onUpdate, onAddSibling, onDelete, onIndent, onOutdent,
+        onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFoldAll, onMoveBullet,
+        currentFocusId, focusPosition, focusMode, searchQuery,
+        onTriggerLinkPopup, onCloseLinkPopup, onLinkNavigate, onLinkSelect, isLinkPopupOpen, linkPopupTargetId,
+        onTriggerTagPopup, onCloseTagPopup, onTagNavigate, onTagSelect, isTagPopupOpen, tagPopupTargetId,
+        onLinkClick, onMerge
+    } = props;
 
-  const isFocused = currentFocusId === bullet.id;
-  
-  useEffect(() => {
-    if (isFocused) {
-      if (focusMode === 'edit') {
-          setIsEditing(true);
-      } else {
-          setIsEditing(false);
-          if(viewRef.current) viewRef.current.focus();
-      }
-    } else {
-      setIsEditing(false);
-      onCloseLinkPopup();
-      onCloseTagPopup();
-    }
-  }, [isFocused, focusMode, onCloseLinkPopup, onCloseTagPopup]);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const viewRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isFocused = currentFocusId === bullet.id;
+    const isEditing = isFocused && focusMode === 'edit';
 
-  useEffect(() => {
-    if (isEditing && textInputRef.current) {
-        textInputRef.current.focus();
-        if (focusPosition === 'start') {
-            textInputRef.current.setSelectionRange(0, 0);
-        } else if (focusPosition === 'end') {
-            const len = textInputRef.current.value.length;
-            textInputRef.current.setSelectionRange(len, len);
-        } else if (typeof focusPosition === 'number') {
-            textInputRef.current.setSelectionRange(focusPosition, focusPosition);
+    // Auto-resize textarea
+    useEffect(() => {
+        if (isEditing && textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
         }
-    }
-  }, [isEditing, focusPosition]);
-    
-  useEffect(() => {
-    if (isEditing && textInputRef.current) {
-      textInputRef.current.style.height = 'auto';
-      textInputRef.current.style.height = `${textInputRef.current.scrollHeight}px`;
-    }
-  }, [isEditing, bullet.text]);
+    }, [isEditing, bullet.text]);
 
-  const hasChildren = bullet.children.length > 0;
+    // Handle Focus
+    useEffect(() => {
+        if (isFocused) {
+            if (isEditing && textareaRef.current) {
+                textareaRef.current.focus();
+                if (typeof focusPosition === 'number') {
+                    textareaRef.current.setSelectionRange(focusPosition, focusPosition);
+                } else if (focusPosition === 'start') {
+                    textareaRef.current.setSelectionRange(0, 0);
+                } else if (focusPosition === 'end') {
+                    const len = textareaRef.current.value.length;
+                    textareaRef.current.setSelectionRange(len, len);
+                }
+                // Scroll into view if needed
+                textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else if (!isEditing && viewRef.current) {
+                // Ensure focus on the view element when in view mode
+                requestAnimationFrame(() => {
+                    viewRef.current?.focus();
+                });
+            }
+        }
+    }, [isFocused, isEditing, focusPosition]);
 
-  const handleLinkSelection = useCallback((selectedBullet: any) => {
-    const input = textInputRef.current;
-    if (!input) return;
-
-    const text = input.value;
-    const cursor = input.selectionStart ?? text.length;
-    
-    const textBeforeCursor = text.substring(0, cursor);
-    const lastOpen = textBeforeCursor.lastIndexOf('[[');
-
-    if (lastOpen !== -1) {
-        const newText = text.substring(0, lastOpen) + `[[${selectedBullet.text}]]` + text.substring(cursor);
-        onUpdate(bullet.id, { text: newText });
-        onCloseLinkPopup();
-
-        setTimeout(() => {
-            const newCursorPos = (text.substring(0, lastOpen) + `[[${selectedBullet.text}]]`).length;
-            input.focus();
-            input.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
-    }
-  }, [bullet.id, onUpdate, onCloseLinkPopup]);
-  
-  const handleTagSelection = useCallback((selectedTag: string) => {
-    const input = textInputRef.current;
-    if (!input) return;
-
-    const text = input.value;
-    const cursor = input.selectionStart ?? text.length;
-    
-    const textBeforeCursor = text.substring(0, cursor);
-    const match = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-
-    if (match) {
-        const startIndex = match.index + (match[0].startsWith(' ') ? 1 : 0);
-        const newText = text.substring(0, startIndex) + selectedTag + ' ' + text.substring(cursor);
-        onUpdate(bullet.id, { text: newText });
-        onCloseTagPopup();
-
-        setTimeout(() => {
-            const newCursorPos = startIndex + selectedTag.length + 1; // +1 for the space
-            input.focus();
-            input.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
-    }
-  }, [bullet.id, onUpdate, onCloseTagPopup]);
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    const cursor = e.target.selectionStart;
-    onUpdate(bullet.id, { text });
-
-    const textBeforeCursor = text.substring(0, cursor ?? 0);
-    
-    const lastOpenBracket = textBeforeCursor.lastIndexOf('[[');
-    if (lastOpenBracket !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpenBracket) {
-      const query = textBeforeCursor.substring(lastOpenBracket + 2);
-      onTriggerLinkPopup(bullet.id, query, textInputRef, handleLinkSelection);
-      return;
-    }
-
-    const tagMatch = textBeforeCursor.match(/(?:\s|^)#(\w*)$/);
-    if (tagMatch) {
-        const query = tagMatch[1];
-        onTriggerTagPopup(bullet.id, query, textInputRef, handleTagSelection);
-        return;
-    }
-
-    onCloseLinkPopup();
-    onCloseTagPopup();
-  };
-
-  const handleViewKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (bullet.isReadOnly) return;
-      
-      let handled = true;
-      if (e.altKey) {
-          if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
-          if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
-      }
-
-      switch(e.key) {
-          case 'ArrowUp': 
-              onFocusMove('up', undefined, 'view'); 
-              break;
-          case 'ArrowDown': 
-              onFocusMove('down', undefined, 'view'); 
-              break;
-          case 'ArrowLeft':
-              if (hasChildren && !bullet.isCollapsed) {
-                  onUpdate(bullet.id, { isCollapsed: true });
-              } else if (level > 0) {
-                  onFocusParent(bullet.id);
-              }
-              break;
-          case 'ArrowRight':
-              if (hasChildren && bullet.isCollapsed) {
-                  onUpdate(bullet.id, { isCollapsed: false });
-                  // Focus first child after expansion requires ensuring child is rendered. 
-                  // App state update will trigger re-render, then onFocusChild can find it.
-                  setTimeout(() => onFocusChild(bullet.id), 0);
-              } else if (hasChildren && !bullet.isCollapsed) {
-                  onFocusChild(bullet.id);
-              }
-              break;
-          case 'Enter':
-              e.preventDefault();
-              onFocusChange(bullet.id, 'end', 'edit');
-              break;
-          case 'Tab': // Optional: Allow indent/outdent in view mode too?
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // Popup Navigation
+        if ((isLinkPopupOpen && linkPopupTargetId === bullet.id) || (isTagPopupOpen && tagPopupTargetId === bullet.id)) {
+            if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (e.shiftKey) onOutdent(bullet.id);
-                else onIndent(bullet.id);
-                break;
-          default:
-              handled = false;
-      }
-      
-      if (handled) {
-          e.preventDefault();
-      }
-  };
-
-  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const input = e.target as HTMLTextAreaElement;
-    const isPopupActive = isLinkPopupOpen && linkPopupTargetId === bullet.id;
-    const isTagPopupActive = isTagPopupOpen && tagPopupTargetId === bullet.id;
-    
-    if (bullet.isReadOnly) return; // Should not be in edit mode if read only
-
-    if (isTagPopupActive) {
-        let handled = true;
-        switch (e.key) {
-            case 'ArrowUp': onTagNavigate('up'); break;
-            case 'ArrowDown': onTagNavigate('down'); break;
-            case 'Tab': onTagSelect(handleTagSelection); break;
-            case 'Escape': onCloseTagPopup(); break;
-            default: handled = false;
-        }
-        if (handled) { e.preventDefault(); return; }
-    }
-
-    if (isPopupActive) {
-        let handled = true;
-        switch (e.key) {
-            case 'ArrowUp': onLinkNavigate('up'); break;
-            case 'ArrowDown': onLinkNavigate('down'); break;
-            case 'Enter': onLinkSelect(handleLinkSelection); break;
-            case 'Tab': onLinkSelect(handleLinkSelection); break;
-            case 'Escape': {
-                onCloseLinkPopup();
-                const text = input.value;
-                const cursor = input.selectionStart ?? text.length;
-                const textBeforeCursor = text.substring(0, cursor);
-                const lastOpen = textBeforeCursor.lastIndexOf('[[');
-                if (lastOpen !== -1 && textBeforeCursor.lastIndexOf(']]') < lastOpen) {
-                    const newText = text.substring(0, lastOpen) + text.substring(cursor);
-                    onUpdate(bullet.id, { text: newText });
-                    setTimeout(() => {
-                        if(textInputRef.current) {
-                            textInputRef.current.focus();
-                            textInputRef.current.setSelectionRange(lastOpen, lastOpen);
-                        }
-                    }, 0);
-                }
-                break;
+                if(isLinkPopupOpen) onLinkNavigate('up');
+                else onTagNavigate('up');
+                return;
             }
-            default: handled = false;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if(isLinkPopupOpen) onLinkNavigate('down');
+                else onTagNavigate('down');
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                if(isLinkPopupOpen) {
+                     onLinkSelect((selected: any) => {
+                         insertTextAtCursor(`[[${selected.text}]]`);
+                         onCloseLinkPopup();
+                     });
+                } else {
+                     onTagSelect((selected: string) => {
+                         insertTextAtCursor(selected + ' '); // Add space after tag
+                         onCloseTagPopup();
+                     });
+                }
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                onCloseLinkPopup();
+                onCloseTagPopup();
+                return;
+            }
         }
-        if (handled) { e.preventDefault(); return; }
-    }
 
-    if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
-        e.preventDefault();
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onAddSibling(bullet.id);
+        } else if (e.key === 'Backspace' && bullet.text === '' && !bullet.children.length) {
+            e.preventDefault();
+            onDelete(bullet.id);
+        } else if (e.key === 'Backspace' && textareaRef.current?.selectionStart === 0 && textareaRef.current?.selectionEnd === 0) {
+            e.preventDefault();
+            onMerge(bullet.id);
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                onOutdent(bullet.id);
+            } else {
+                onIndent(bullet.id);
+            }
+        } else if (e.key === 'ArrowUp') {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                onMoveBullet(bullet.id, 'up');
+            } else {
+                 e.preventDefault();
+                 onFocusMove('up', 'end', 'edit');
+            }
+        } else if (e.key === 'ArrowDown') {
+            if (e.ctrlKey) {
+                 e.preventDefault();
+                 onMoveBullet(bullet.id, 'down');
+            } else {
+                 e.preventDefault();
+                 onFocusMove('down', 'end', 'edit');
+            }
+        } else if (e.key === 'Escape') {
+             e.preventDefault();
+             onFocusChange(bullet.id, undefined, 'view');
+        }
+    };
+
+    const handleViewKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+         if (bullet.isReadOnly) return;
+         
+         if (e.key === 'Enter') {
+             e.preventDefault();
+             onFocusChange(bullet.id, 'end', 'edit');
+             return;
+         }
+         
+         if (e.key === 'ArrowUp') {
+             if (e.altKey) {
+                 e.preventDefault();
+                 onMoveBullet(bullet.id, 'up');
+             } else if (e.ctrlKey || e.metaKey) {
+                 // Allow bubbling to handle global Zoom Out
+                 return;
+             } else {
+                 e.preventDefault();
+                 onFocusMove('up', undefined, 'view');
+             }
+             return;
+         }
+         
+         if (e.key === 'ArrowDown') {
+             if (e.altKey) {
+                 e.preventDefault();
+                 onMoveBullet(bullet.id, 'down');
+             } else if (e.ctrlKey || e.metaKey) {
+                 e.preventDefault();
+                 onZoom(bullet.id);
+             } else {
+                 e.preventDefault();
+                 onFocusMove('down', undefined, 'view');
+             }
+             return;
+         }
+
+         if (e.key === 'ArrowLeft') {
+             e.preventDefault();
+             if (!bullet.isCollapsed && bullet.children.length > 0) {
+                 onFoldAll(bullet.id, true);
+             } else {
+                 onFocusParent(bullet.id);
+             }
+             return;
+         }
+
+         if (e.key === 'ArrowRight') {
+             e.preventDefault();
+             if (bullet.isCollapsed && bullet.children.length > 0) {
+                 onFoldAll(bullet.id, false);
+             } else if (!bullet.isCollapsed && bullet.children.length > 0) {
+                 onFocusChild(bullet.id);
+             }
+             return;
+         }
+         
+         if (e.key === 'Backspace' && bullet.text === '' && bullet.children.length === 0) {
+             e.preventDefault();
+             onDelete(bullet.id);
+         }
+    };
+
+    const insertTextAtCursor = (textToInsert: string) => {
+        if (!textareaRef.current) return;
+        const input = textareaRef.current;
         const text = input.value;
-        const selectedText = text.substring(start, end);
+        const cursor = input.selectionStart;
+        
+        const textBefore = text.substring(0, cursor);
+        const linkMatch = textBefore.match(/\[\[([^\]]*)$/);
+        const tagMatch = textBefore.match(/#(\w*)$/);
 
-        let newText;
-        let newCursorPosStart;
-        let newCursorPosEnd;
+        let newText = text;
+        let newCursor = cursor;
 
-        if (selectedText) {
-            newText = `${text.substring(0, start)}[${selectedText}]()${text.substring(end)}`;
-            newCursorPosStart = newCursorPosEnd = start + selectedText.length + 3;
+        if (isLinkPopupOpen && linkMatch) {
+             const start = linkMatch.index!;
+             newText = text.substring(0, start) + textToInsert + text.substring(cursor);
+             newCursor = start + textToInsert.length;
+        } else if (isTagPopupOpen && tagMatch) {
+             const start = tagMatch.index!;
+             newText = text.substring(0, start) + textToInsert + text.substring(cursor);
+             newCursor = start + textToInsert.length;
         } else {
-            newText = `${text.substring(0, start)}[link text]()${text.substring(end)}`;
-            newCursorPosStart = start + 1;
-            newCursorPosEnd = start + 1 + 'link text'.length;
+             newText = text.substring(0, cursor) + textToInsert + text.substring(cursor);
+             newCursor = cursor + textToInsert.length;
         }
 
         onUpdate(bullet.id, { text: newText });
-
         setTimeout(() => {
-            if (textInputRef.current) {
-                textInputRef.current.focus();
-                textInputRef.current.setSelectionRange(newCursorPosStart, newCursorPosEnd);
-            }
+             if(textareaRef.current) {
+                 textareaRef.current.setSelectionRange(newCursor, newCursor);
+             }
         }, 0);
-        return;
-    }
+    };
 
 
-    if (e.altKey) {
-        if (e.key === 'ArrowUp') { e.preventDefault(); onMoveBullet(bullet.id, 'up'); return; }
-        if (e.key === 'ArrowDown') { e.preventDefault(); onMoveBullet(bullet.id, 'down'); return; }
-    }
-    
-    // In edit mode, standard text editor behavior for arrows is desired.
-    // However, if we want to retain folding shortcuts:
-    if (e.ctrlKey && e.shiftKey) {
-        if (e.key === 'ArrowLeft') { e.preventDefault(); onFoldAll(bullet.id, true); return; }
-        if (e.key === 'ArrowRight') { e.preventDefault(); onFoldAll(bullet.id, false); return; }
-    }
-    
-    // Edit mode specific shortcuts
-    switch (e.key) {
-      case 'Escape':
-        e.preventDefault();
-        onFocusChange(bullet.id, undefined, 'view');
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (e.shiftKey) {
-            const { value, selectionStart, selectionEnd } = input;
-            const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd);
-            onUpdate(bullet.id, { text: newValue });
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newText = e.target.value;
+        onUpdate(bullet.id, { text: newText });
 
-            setTimeout(() => {
-                if (textInputRef.current) {
-                    const newCursorPos = selectionStart + 1;
-                    textInputRef.current.focus();
-                    textInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
-                }
-            }, 0);
+        const cursor = e.target.selectionStart;
+        const textBefore = newText.substring(0, cursor);
+
+        const linkMatch = textBefore.match(/\[\[([^\]]*)$/);
+        const tagMatch = textBefore.match(/#(\w*)$/);
+
+        if (linkMatch) {
+             onTriggerLinkPopup(bullet.id, linkMatch[1], textareaRef, (selected: any) => {
+                 insertTextAtCursor(`[[${selected.text}]]`);
+                 onCloseLinkPopup();
+             });
         } else {
-            const { value, selectionStart } = input;
-            const textBeforeCursor = value.substring(0, selectionStart);
-            const textAfterCursor = value.substring(selectionStart);
-            
-            onUpdate(bullet.id, { text: textBeforeCursor });
-            onAddSibling(bullet.id, textAfterCursor);
+             onCloseLinkPopup();
         }
-        break;
-      case 'Tab':
-        e.preventDefault();
-        if (e.shiftKey) onOutdent(bullet.id);
-        else onIndent(bullet.id);
-        break;
-      case 'Backspace':
-        if (input.selectionStart === 0 && input.selectionEnd === 0) {
-          e.preventDefault();
-          onMerge(bullet.id);
-        }
-        break;
-      // Do not handle Arrow keys here to allow text navigation
-    }
-  };
 
-  const toggleCollapse = () => {
-    if (hasChildren) {
-      onUpdate(bullet.id, { isCollapsed: !bullet.isCollapsed });
-    }
-  };
-
-  const matchesSearch = (b: Bullet, q: string): boolean => {
-      if (!q) return true;
-      const query = q.toLowerCase();
-      const textMatch = b.text.toLowerCase().includes(query);
-      const childrenMatch = b.children.some(child => matchesSearch(child, q));
-      return textMatch || childrenMatch;
-  };
-
-  const renderedRichText = useMemo(() => {
-    return renderRichTextContent(bullet.text, searchQuery, onLinkClick);
-  }, [bullet.text, searchQuery, onLinkClick]);
-  
-  const renderedRichTextSimple = useMemo(() => {
-    return renderRichTextContent(bullet.text, undefined, () => {}, { renderTagsOnly: true });
-  }, [bullet.text]);
-
-  if (searchQuery && !matchesSearch(bullet, searchQuery)) {
-      return null;
-  }
-
-  const circleColor = 'var(--main-color)';
-  
-  const handleTextClick = () => {
-    if (bullet.isReadOnly) {
-        if (bullet.originalId) {
-            onNavigateTo(bullet.originalId);
+        if (tagMatch) {
+            onTriggerTagPopup(bullet.id, tagMatch[1], textareaRef, (selected: string) => {
+                insertTextAtCursor(selected + ' ');
+                onCloseTagPopup();
+            });
         } else {
-            onFocusChange(bullet.id, undefined, 'view');
+            onCloseTagPopup();
         }
-    } else {
-        // Switch to edit mode on click
-        onFocusChange(bullet.id, undefined, 'edit');
-    }
-  };
+    };
+    
+    const handleViewClick = (e: React.MouseEvent) => {
+         const target = e.target as HTMLElement;
+         if (target.tagName === 'SPAN' && (target.innerText.startsWith('[[') || target.innerText.startsWith('#'))) {
+             onLinkClick(target.innerText.replace(/[\[\]]/g, ''));
+             return;
+         }
+         
+         if (!isEditing && !bullet.isReadOnly) {
+             onFocusChange(bullet.id, undefined, 'edit');
+         }
+    };
 
-  const renderBulletIcon = () => {
-    if (isJournalRoot) return <AppointmentIcon className="w-4 h-4" />;
-    return <CircleIcon className="w-2 h-2" color={circleColor} />;
-  }
 
-  return (
-    <div className="flex flex-col group">
-        <div className={`flex items-start py-1 relative ${isFocused ? 'bg-blue-100 dark:bg-gray-800/[.6] rounded' : ''}`}>
-            <div
-                style={{ marginLeft: `${level * 1.5}em` }}
-                className="flex-shrink-0 flex items-center h-[1.5em] text-[var(--main-color)]"
-            >
-                <button
-                    onClick={toggleCollapse}
-                    className={`transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ${hasChildren ? 'opacity-100 cursor-pointer' : 'opacity-0 cursor-default'}`}
-                    aria-label={bullet.isCollapsed ? 'Expand' : 'Collapse'}
-                >
-                    {bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
-                </button>
-                <button onClick={() => onZoom(bullet.id)} className="ml-1 w-[1.5em] h-[1.5em] flex items-center justify-center transition-colors" aria-label="Zoom in">
-                    {renderBulletIcon()}
-                </button>
-            </div>
-            <div className="flex-grow ml-2">
-                <div className="flex items-center">
-                    <div className="flex-grow">
-                        {isEditing ? (
-                            <div className="relative">
-                                <div
-                                    className="absolute top-0 left-0 w-full h-full pointer-events-none leading-[1.5] whitespace-pre-wrap break-words"
-                                    aria-hidden="true"
-                                >
-                                    {renderedRichTextSimple}
-                                </div>
-                                <textarea
-                                    ref={textInputRef}
-                                    value={bullet.text}
-                                    onChange={handleTextChange}
-                                    onKeyDown={handleEditKeyDown}
-                                    readOnly={bullet.isReadOnly}
-                                    className="w-full bg-transparent outline-none text-transparent caret-gray-800 dark:caret-gray-200 resize-none overflow-hidden leading-[1.5]"
-                                    rows={1}
-                                    aria-label="Edit item"
-                                />
-                            </div>
-                        ) : (
-                            <div 
-                                ref={viewRef}
-                                tabIndex={0}
-                                onClick={handleTextClick} 
-                                onKeyDown={handleViewKeyDown}
-                                className={`w-full min-h-[1.5em] leading-[1.5] break-words outline-none ${isFocused ? 'ring-2 ring-opacity-50 ring-[var(--main-color)] rounded-sm' : ''} ${bullet.isReadOnly ? 'cursor-pointer' : 'cursor-text'}`}
-                            >
-                            {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
-                            </div>
+    return (
+        <div className="relative group" ref={containerRef}>
+            <div className={`flex items-start py-1 rounded transition-colors ${isFocused && !isEditing ? 'bg-blue-50 dark:bg-gray-800' : ''}`}>
+                <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center mr-1 mt-0.5 relative z-10 select-none">
+                    <div 
+                        className="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full p-0.5 transition-colors focus:outline-none"
+                        onClick={(e) => { e.stopPropagation(); onZoom(bullet.id); }}
+                        onMouseDown={(e) => e.preventDefault()} // Prevent focus stealing
+                        tabIndex={-1}
+                    >
+                         <CircleIcon className="w-2 h-2 text-[var(--main-color)]" />
+                    </div>
+                     <div 
+                        className="absolute -left-6 cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 focus:outline-none"
+                        onClick={(e) => { e.stopPropagation(); onFoldAll(bullet.id, !bullet.isCollapsed); }}
+                        onMouseDown={(e) => e.preventDefault()} // Prevent focus stealing
+                        tabIndex={-1}
+                    >
+                        {bullet.children.length > 0 && (
+                            bullet.isCollapsed ? <ChevronRightIcon /> : <ChevronDownIcon />
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
-      {!bullet.isCollapsed && hasChildren && (
-        <div className="border-l border-gray-300 dark:border-gray-700/50">
-          {bullet.children.map((child) => (
-            <BulletItem
-                key={child.id}
-                bullet={child}
-                level={level + 1}
-                onUpdate={onUpdate}
-                onAddSibling={onAddSibling}
-                onDelete={onDelete}
-                onIndent={onIndent}
-                onOutdent={onOutdent}
-                onFocusChange={onFocusChange}
-                onZoom={onZoom}
-                onFocusMove={onFocusMove}
-                onFocusParent={onFocusParent}
-                onFocusChild={onFocusChild}
-                onFoldAll={onFoldAll}
-                onMoveBullet={onMoveBullet}
-                currentFocusId={currentFocusId}
-                focusPosition={focusPosition}
-                focusMode={focusMode}
-                searchQuery={searchQuery}
-                onLinkClick={onLinkClick}
-                onTriggerLinkPopup={onTriggerLinkPopup}
-                onCloseLinkPopup={onCloseLinkPopup}
-                onLinkNavigate={onLinkNavigate}
-                onLinkSelect={onLinkSelect}
-                isLinkPopupOpen={isLinkPopupOpen}
-                linkPopupTargetId={linkPopupTargetId}
-                onTriggerTagPopup={onTriggerTagPopup}
-                onCloseTagPopup={onCloseTagPopup}
-                onTagNavigate={onTagNavigate}
-                onTagSelect={onTagSelect}
-                isTagPopupOpen={isTagPopupOpen}
-                tagPopupTargetId={tagPopupTargetId}
-                isJournalRoot={false}
-                onNavigateTo={onNavigateTo}
-                onMerge={onMerge}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
-export const BulletItem = React.memo(BulletItemImpl);
+                <div className="flex-grow min-w-0 relative">
+                    {isEditing ? (
+                        <textarea
+                            ref={textareaRef}
+                            value={bullet.text}
+                            onChange={handleChange}
+                            onKeyDown={handleKeyDown}
+                            className="w-full resize-none bg-transparent outline-none p-0 m-0 text-base leading-relaxed text-gray-900 dark:text-gray-100 font-[family-name:var(--font-family)]"
+                            rows={1}
+                            placeholder="Type here..."
+                            readOnly={bullet.isReadOnly}
+                        />
+                    ) : (
+                        <div 
+                            ref={viewRef}
+                            className={`text-base leading-relaxed text-gray-900 dark:text-gray-100 min-h-[24px] cursor-text break-words font-[family-name:var(--font-family)] outline-none ${isFocused ? 'ring-2 ring-opacity-20 ring-[var(--main-color)] rounded-sm' : ''}`}
+                            onClick={handleViewClick}
+                            onKeyDown={handleViewKeyDown}
+                            tabIndex={0}
+                        >
+                            {highlightText(bullet.text, searchQuery) || <span className="text-gray-400 italic">Empty</span>}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {!bullet.isCollapsed && bullet.children.length > 0 && (
+                <div className="ml-6 border-l border-gray-200 dark:border-gray-700 pl-2">
+                    {bullet.children.map(child => (
+                        <BulletItem
+                            key={child.id}
+                            bullet={child}
+                            level={level + 1}
+                            onUpdate={onUpdate}
+                            onAddSibling={onAddSibling}
+                            onDelete={onDelete}
+                            onIndent={onIndent}
+                            onOutdent={onOutdent}
+                            onFocusChange={onFocusChange}
+                            onZoom={onZoom}
+                            onFocusMove={onFocusMove}
+                            onFocusParent={onFocusParent}
+                            onFocusChild={onFocusChild}
+                            onFoldAll={onFoldAll}
+                            onMoveBullet={onMoveBullet}
+                            currentFocusId={currentFocusId}
+                            focusPosition={focusPosition}
+                            focusMode={focusMode}
+                            searchQuery={searchQuery}
+                            onLinkClick={onLinkClick}
+                            onTriggerLinkPopup={onTriggerLinkPopup}
+                            onCloseLinkPopup={onCloseLinkPopup}
+                            onLinkNavigate={onLinkNavigate}
+                            onLinkSelect={onLinkSelect}
+                            isLinkPopupOpen={isLinkPopupOpen}
+                            linkPopupTargetId={linkPopupTargetId}
+                            onTriggerTagPopup={onTriggerTagPopup}
+                            onCloseTagPopup={onCloseTagPopup}
+                            onTagNavigate={onTagNavigate}
+                            onTagSelect={onTagSelect}
+                            isTagPopupOpen={isTagPopupOpen}
+                            tagPopupTargetId={tagPopupTargetId}
+                            isJournalRoot={false}
+                            onNavigateTo={props.onNavigateTo}
+                            onMerge={onMerge}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+});
