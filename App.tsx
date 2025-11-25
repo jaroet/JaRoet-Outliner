@@ -9,6 +9,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -970,14 +972,35 @@ export const App = () => {
         }
     }, [bullets, handleFocusChange]);
 
-    const handleFoldAll = useCallback((id: string, collapse: boolean) => {
+    const handleFoldAll = useCallback((id: string, collapse: boolean, recursive: boolean = false) => {
         setBullets(prev => {
+            const setCollapseRecursively = (nodes: Bullet[]): Bullet[] => {
+                return nodes.map(node => {
+                    const newNode = { ...node };
+                    if (newNode.children.length > 0) {
+                         newNode.children = setCollapseRecursively(newNode.children);
+                         newNode.isCollapsed = collapse;
+                    }
+                    return newNode;
+                });
+            };
+
             const fold = (nodes: Bullet[]): Bullet[] => {
                 return nodes.map(n => {
                     if (n.id === id) {
-                         return { ...n, isCollapsed: collapse };
+                         const updatedNode = { ...n, isCollapsed: collapse };
+                         if (recursive && updatedNode.children.length > 0) {
+                             updatedNode.children = setCollapseRecursively(updatedNode.children);
+                         }
+                         return updatedNode;
                     }
-                    return { ...n, children: fold(n.children) };
+                    if (n.children.length > 0) {
+                         const newChildren = fold(n.children);
+                         if (newChildren !== n.children) {
+                             return { ...n, children: newChildren };
+                         }
+                    }
+                    return n;
                 });
             };
             return fold(prev);
@@ -1329,7 +1352,7 @@ export const App = () => {
                       className="flex-shrink-0 ml-2 hover:underline"
                       title="View Release Notes"
                   >
-                      Version 0.1.29
+                      Version 0.1.30
                   </a>
             </footer>
         </div>

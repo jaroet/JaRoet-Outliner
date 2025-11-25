@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
@@ -242,7 +240,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -1195,7 +1193,7 @@
                     e.preventDefault();
                     onMoveBullet(bullet.id, 'up');
                 } else if (e.ctrlKey || e.metaKey) {
-                    return; // Allow bubbling to global Zoom Out
+                    return; // Allow bubbling to handle global Zoom Out
                 } else {
                     e.preventDefault();
                     onFocusMove('up', undefined, 'view');
@@ -1219,21 +1217,44 @@
 
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                if (!bullet.isCollapsed && bullet.children.length > 0) onFoldAll(bullet.id, true);
-                else onFocusParent(bullet.id); 
+                if (e.ctrlKey || e.metaKey) {
+                    // Ctrl+Left: Recursively fold bullet and all sub bullets
+                    onFoldAll(bullet.id, true, true);
+                } else {
+                    // Left Arrow:
+                    // 1. If has children AND is expanded -> Collapse (Fold)
+                    // 2. Otherwise -> Select parent
+                    if (bullet.children.length > 0 && !bullet.isCollapsed) {
+                        onUpdate(bullet.id, { isCollapsed: true });
+                    } else {
+                        onFocusParent(bullet.id);
+                    }
+                }
                 return;
             }
+
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                if (bullet.isCollapsed && bullet.children.length > 0) onFoldAll(bullet.id, false); 
-                else if (!bullet.isCollapsed && bullet.children.length > 0) onFocusChild(bullet.id); 
+                if (e.ctrlKey || e.metaKey) {
+                    // Ctrl+Right: Recursively unfold bullet and all sub bullets
+                    onFoldAll(bullet.id, false, true);
+                } else {
+                    // Right Arrow:
+                    // 1. If has children AND is collapsed -> Expand (Unfold)
+                    // 2. Otherwise (expanded or no children) -> Select first child (if exists)
+                    if (bullet.children.length > 0 && bullet.isCollapsed) {
+                        onUpdate(bullet.id, { isCollapsed: false });
+                    } else {
+                        onFocusChild(bullet.id);
+                    }
+                }
                 return;
             }
+            
+            // Backspace: Delete selected bullet and all sub-bullets
             if (e.key === 'Backspace') {
-                if (bullet.text === '' && bullet.children.length === 0) {
-                    e.preventDefault();
-                    onDelete(bullet.id);
-                }
+                e.preventDefault();
+                onDelete(bullet.id);
             }
         };
 
@@ -1332,7 +1353,7 @@
                                       tabIndex={0} 
                                       onClick={handleViewClick} 
                                       onKeyDown={handleViewKeyDown} 
-                                      className={`w-full min-h-[1.5em] leading-[1.5] break-words outline-none ${isFocused ? 'ring-2 ring-opacity-20 ring-[var(--main-color)] rounded-sm' : ''} ${bullet.isReadOnly ? 'cursor-pointer' : 'cursor-text'}`}
+                                      className={`w-full min-h-[1.5em] leading-[1.5] break-words outline-none ${isFocused ? 'ring-2 ring-opacity-20 ring-[var(--main-color)] rounded-sm' : ''} ${bullet.isReadOnly ? 'cursor-pointer' : 'cursor-text'} text-gray-800 dark:text-gray-200`}
                                   >
                                       {bullet.text ? renderedRichText : <span className="text-gray-400 dark:text-gray-500">...</span>}
                                   </div>
@@ -1892,10 +1913,25 @@
               setTimeout(() => handleFocusChange(id, 'end', 'edit'), 0); 
           }, [handleFocusChange, findBulletAndParent, updateRecentList]);
 
-          const handleFoldAll = useCallback((id, collapse) => {
-              const setCollapseRecursively = (nodes) => nodes.map(node => { const newNode = { ...node }; if (newNode.children.length > 0) { newNode.isCollapsed = collapse; if (!newNode.isReadOnly) newNode.children = setCollapseRecursively(newNode.children); } return newNode; });
-              const findAndFold = (nodes) => nodes.map(node => { if (node.id === id) { const updatedNode = { ...node }; if(updatedNode.children.length > 0) { updatedNode.isCollapsed = collapse; updatedNode.children = setCollapseRecursively(updatedNode.children); } return updatedNode; } if (node.children.length > 0) return { ...node, children: findAndFold(node.children) }; return node; });
-              setBullets(prevBullets => findAndFold(prevBullets));
+          const handleFoldAll = useCallback((id, collapse, recursive = false) => {
+              setBullets(prev => {
+                  const setCollapseRecursively = (nodes) => nodes.map(node => { const newNode = { ...node }; if (newNode.children.length > 0) { newNode.isCollapsed = collapse; newNode.children = setCollapseRecursively(newNode.children); } return newNode; });
+                  const fold = (nodes) => nodes.map(node => { 
+                      if (node.id === id) { 
+                          const updatedNode = { ...node, isCollapsed: collapse }; 
+                          if(recursive && updatedNode.children.length > 0) { 
+                              updatedNode.children = setCollapseRecursively(updatedNode.children); 
+                          } 
+                          return updatedNode; 
+                      } 
+                      if (node.children.length > 0) {
+                           const newChildren = fold(node.children);
+                           if (newChildren !== node.children) return { ...node, children: newChildren };
+                      }
+                      return node; 
+                  });
+                  return fold(prev);
+              });
           }, []);
 
           const handleMoveBullet = useCallback((id, direction) => { 
@@ -2065,27 +2101,20 @@
                           <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} onSave={setSettings} currentSettings={settings} onClearData={handleClearData} />
                           <ImportSelectionModal isOpen={isImportModalOpen} onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }} onConfirm={handleConfirmImport} bullets={bullets} />
                           <ToastContainer toasts={toasts} removeToast={removeToast} />
-                          {linkPopupState.isOpen && <LinkPopup suggestions={linkPopupState.suggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)} position={linkPopupState.position} containerRef={linkPopupRef} />}
-                          {tagPopupState.isOpen && <TagPopup suggestions={tagPopupState.suggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)} position={tagPopupState.position} containerRef={tagPopupRef} />}
+                          {linkPopupState.isOpen && <LinkPopup suggestions={linkSuggestions} selectedIndex={linkPopupState.selectedIndex} onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)} position={linkPopupState.position} containerRef={linkPopupRef} />}
+                          {tagPopupState.isOpen && <TagPopup suggestions={tagSuggestions} selectedIndex={tagPopupState.selectedIndex} onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)} position={tagPopupState.position} containerRef={tagPopupRef} />}
                       </div>
                   </div>
                   <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10 w-full">
                       <div className="flex items-center gap-2 min-w-0"><span title={settings.fileName} className="truncate">{settings.fileName}</span></div>
-                      <a href="https://github.com/jaroet/JaRoet-Outliner/releases" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-2 hover:underline" title="View Release Notes">Version 0.1.29</a>
+                      <a href="https://github.com/jaroet/JaRoet-Outliner/releases" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-2 hover:underline" title="View Release Notes">Version 0.1.34</a>
                   </footer>
               </div>
           );
       };
 
-      const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error("Could not find root element to mount to");
-      }
-
-      const root = createRoot(rootElement);
-      root.render(
-          <App />
-      );
+      const root = createRoot(document.getElementById('root'));
+      root.render(<App />);
     </script>
   </body>
 </html>

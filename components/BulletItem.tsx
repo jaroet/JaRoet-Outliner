@@ -76,7 +76,7 @@ interface BulletItemProps {
   onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
   onFocusParent: (id: string) => void;
   onFocusChild: (id: string) => void;
-  onFoldAll: (id: string, collapse: boolean) => void;
+  onFoldAll: (id: string, collapse: boolean, recursive?: boolean) => void;
   onMoveBullet: (id: string, direction: 'up' | 'down') => void;
   currentFocusId: string | null;
   focusPosition: 'start' | 'end' | number;
@@ -263,25 +263,42 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
 
          if (e.key === 'ArrowLeft') {
              e.preventDefault();
-             if (!bullet.isCollapsed && bullet.children.length > 0) {
-                 onFoldAll(bullet.id, true);
+             if (e.ctrlKey || e.metaKey) {
+                 // Ctrl+Left: Recursively fold bullet and all sub bullets
+                 onFoldAll(bullet.id, true, true);
              } else {
-                 onFocusParent(bullet.id);
+                 // Left Arrow:
+                 // 1. If has children AND is expanded -> Collapse (Fold)
+                 // 2. Otherwise -> Select parent
+                 if (bullet.children.length > 0 && !bullet.isCollapsed) {
+                     onUpdate(bullet.id, { isCollapsed: true });
+                 } else {
+                     onFocusParent(bullet.id);
+                 }
              }
              return;
          }
 
          if (e.key === 'ArrowRight') {
              e.preventDefault();
-             if (bullet.isCollapsed && bullet.children.length > 0) {
-                 onFoldAll(bullet.id, false);
-             } else if (!bullet.isCollapsed && bullet.children.length > 0) {
-                 onFocusChild(bullet.id);
+             if (e.ctrlKey || e.metaKey) {
+                 // Ctrl+Right: Recursively unfold bullet and all sub bullets
+                 onFoldAll(bullet.id, false, true);
+             } else {
+                 // Right Arrow:
+                 // 1. If has children AND is collapsed -> Expand (Unfold)
+                 // 2. Otherwise (expanded or no children) -> Select first child (if exists)
+                 if (bullet.children.length > 0 && bullet.isCollapsed) {
+                     onUpdate(bullet.id, { isCollapsed: false });
+                 } else {
+                     onFocusChild(bullet.id);
+                 }
              }
              return;
          }
          
-         if (e.key === 'Backspace' && bullet.text === '' && bullet.children.length === 0) {
+         // Backspace: Delete selected bullet and all sub-bullets
+         if (e.key === 'Backspace') {
              e.preventDefault();
              onDelete(bullet.id);
          }
@@ -395,7 +412,7 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                             value={bullet.text}
                             onChange={handleChange}
                             onKeyDown={handleKeyDown}
-                            className="w-full resize-none bg-transparent outline-none p-0 m-0 text-base leading-relaxed text-gray-900 dark:text-gray-100 font-[family-name:var(--font-family)]"
+                            className="w-full resize-none bg-transparent outline-none p-0 m-0 text-base leading-relaxed text-gray-800 dark:text-gray-200 font-[family-name:var(--font-family)]"
                             rows={1}
                             placeholder="Type here..."
                             readOnly={bullet.isReadOnly}
@@ -403,7 +420,7 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                     ) : (
                         <div 
                             ref={viewRef}
-                            className={`text-base leading-relaxed text-gray-900 dark:text-gray-100 min-h-[24px] cursor-text break-words font-[family-name:var(--font-family)] outline-none ${isFocused ? 'ring-2 ring-opacity-20 ring-[var(--main-color)] rounded-sm' : ''}`}
+                            className={`text-base leading-relaxed text-gray-800 dark:text-gray-200 min-h-[24px] cursor-text break-words font-[family-name:var(--font-family)] outline-none ${isFocused ? 'ring-2 ring-opacity-20 ring-[var(--main-color)] rounded-sm' : ''}`}
                             onClick={handleViewClick}
                             onKeyDown={handleViewKeyDown}
                             tabIndex={0}
