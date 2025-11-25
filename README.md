@@ -33,4 +33,3 @@ The app itself does not directly use the internet or cloud resources. On the fir
 libararies are being downloaded from CDN url's. This is a onetime action and the libraries will
 be cached to prevent new downloads. When you clean your browserdata those libraries will be
 downloaded again. 
-
