@@ -16,7 +16,7 @@ and without any installation needed. Other then copying a few files into a folde
 
 ## Screenshot
 
-![outline](outline.png)
+![[outline.png]]
 
 ## storage
 
