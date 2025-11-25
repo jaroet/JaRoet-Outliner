@@ -1,7 +1,7 @@
 # Jaroet-Outliner
 
-It is an outliner in the spirit of Logseq, Workflowy or Dynalist that works completely local 
-and without any installation needed. Other then copying a few files into a folder. 
+It is an outliner in the spirit of [Logseq](https://logseq.com), [Workflowy](https://workflowy.com) 
+or [Dynalist](https://dynalist.com) that works completely local and without any installation needed. Other then copying a few files into a folder. 
 
 ## Features
 
@@ -13,10 +13,6 @@ and without any installation needed. Other then copying a few files into a folde
 - Support for moving bullets in an outline
 - Support for internal links using [[bullettext]] and external links using [linktext](link)
 - Automatic recognizing emailaddresses and website URL's 
-
-## Screenshot
-
-![outline](outline.jpg)
 
 ## storage
 
@@ -38,6 +34,4 @@ The libraries loaded are:
 - **Tailwind CSS** (cdn.tailwindcss.com) - Used for the application's styling.
 - **Babel Standalone** (unpkg.com) - Used to compile the JSX and TypeScript code directly within the browser.
 - **Dexie.js** (unpkg.com) - A wrapper for IndexedDB used to store the outline data locally.
-
 - **React** and **React DOM** (aistudiocdn.com) - The JavaScript library used for building the user interface.
-
