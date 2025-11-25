@@ -683,10 +683,11 @@
               try {
                 const content = e.target?.result;
                 const data = JSON.parse(content);
-                if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
+                // Validation relaxed: accept array, let migrateBullets handle missing props
+                if (Array.isArray(data)) {
                   onImport(data);
                 } else {
-                  alert('Invalid JSON file format.');
+                  alert('Invalid JSON file format. Expected an array of items.');
                 }
               } catch (error) {
                 alert('Error parsing JSON file.');
@@ -1662,9 +1663,12 @@
           const now = Date.now();
           return nodes.map(node => ({
               ...node,
+              id: node.id || crypto.randomUUID(),
+              text: node.text || '',
               createdAt: node.createdAt || now,
               updatedAt: node.updatedAt || now,
               children: migrateBullets(node.children || []),
+              isCollapsed: node.isCollapsed || false
           }));
       };
 
@@ -2672,7 +2676,7 @@
                             className="flex-shrink-0 ml-2 hover:underline"
                             title="View Release Notes"
                         >
-                            Version 0.1.38
+                            Version 0.1.39
                         </a>
                   </footer>
               </div>

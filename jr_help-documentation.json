@@ -78,6 +78,16 @@
         "text": "Changelog",
         "children": [
             {
+                "id": "cl-51",
+                "text": "Version 0.1.39: Fix Import & Standalone Build",
+                "children": [
+                    { "id": "cl-51-a", "text": "Relaxed JSON validation for imports to support wider range of files.", "children": [], "isCollapsed": false },
+                    { "id": "cl-51-b", "text": "Improved robustness of bullet migration during import to handle missing properties.", "children": [], "isCollapsed": false },
+                    { "id": "cl-51-c", "text": "Rebuilt standalone application.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
                 "id": "cl-50",
                 "text": "Version 0.1.38: Standalone Build",
                 "children": [

@@ -56,11 +56,12 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({
         try {
           const content = e.target?.result as string;
           const data = JSON.parse(content);
-          // Basic validation
-          if (Array.isArray(data) && data.every(item => 'id' in item && 'text' in item)) {
+          // Basic validation - just check if it's an array.
+          // App.tsx handles missing keys safely.
+          if (Array.isArray(data)) {
             onImport(data);
           } else {
-            alert('Invalid JSON file format.');
+            alert('Invalid JSON file format. Expected an array of items.');
           }
         } catch (error) {
           alert('Error parsing JSON file.');

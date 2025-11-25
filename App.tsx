@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -58,14 +59,18 @@ const createNewBullet = (text = ''): Bullet => {
     };
 };
 
-const migrateBullets = (nodes: Bullet[]): Bullet[] => {
+const migrateBullets = (nodes: any[]): Bullet[] => {
     if (!Array.isArray(nodes)) return [];
     const now = Date.now();
     return nodes.map(node => ({
         ...node,
+        // Ensure essential properties exist
+        id: node.id || crypto.randomUUID(),
+        text: node.text || '', 
         createdAt: node.createdAt || now,
         updatedAt: node.updatedAt || now,
         children: migrateBullets(node.children || []),
+        isCollapsed: node.isCollapsed || false
     }));
 };
 
