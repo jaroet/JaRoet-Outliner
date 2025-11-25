@@ -16,7 +16,7 @@ and without any installation needed. Other then copying a few files into a folde
 
 ## Screenshot
 
-![Project Screenshot](outline.png)
+![outline](outline.jpg)
 
 ## storage
 
@@ -38,5 +38,4 @@ The libraries loaded are:
 - **Tailwind CSS** (cdn.tailwindcss.com) - Used for the application's styling.
 - **Babel Standalone** (unpkg.com) - Used to compile the JSX and TypeScript code directly within the browser.
 - **Dexie.js** (unpkg.com) - A wrapper for IndexedDB used to store the outline data locally.
-
 - **React** and **React DOM** (aistudiocdn.com) - The JavaScript library used for building the user interface.
