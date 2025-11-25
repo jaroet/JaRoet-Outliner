@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+#Jaroet-Outliner
 
-# Run and deploy your AI Studio app
+It is an outliner in the spirit of Logseq, Workflowy or Dynalist that works compoletely local 
+and without any installation needed. Other then copy a few files in a folder. 
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1nVMT89lqPWHaK2Iu4etXj-QnkNbOQWnu
+- An outline with unlimited nested bullets
+- Local storage (IndexedDB) with export and import functions
+- Keyboard navigation with arrow keys and hotkeys
+- Unfold and fold bullets with subbullets
+- Zoom in and zoom out on bullets setting it as the outline base (also know as hoisting)
+- Support for moving bullets in an outline
+- Support for internal links using [[bullettext]] and external links using [linktext](link)
+- Automatic recognizing emailaddresses and website URL's 
 
-## Run Locally
+## storage
 
-**Prerequisites:**  Node.js
+Everything is stored in an local **IndexedDB** database. This support fairly large outlines. 
+There is an export to JSON and a Import from JSON function in the topbar that you can use to
+backup you outline and import it. On import you can choose where to put it in the outline. 
 
+As the IndexedDB is browser managed you will need to export and import the JSON file when 
+you switch between browsers. Using multiple browser is not possible at the same time. 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Internet usage
+
+The app itself does not directly use the internet or cloud resources. On the first run some 
+libararies are being downloaded from CDN url's. This is a onetime action and the libraries will
+be cached to prevent new downloads. When you clean your browserdata those libraries will be
+downloaded again. 
