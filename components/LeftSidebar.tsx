@@ -48,7 +48,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
 
     return (
         <div 
-            className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full relative group/sidebar text-[var(--main-color)]"
+            className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full relative group/sidebar text-gray-900 dark:text-gray-100 font-[family-name:var(--font-family)]"
             style={{ width: `${width}px` }}
         >
             {/* Resizer Handle */}
@@ -61,7 +61,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                 {/* Favorites Section */}
                 <div>
                     <div 
-                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
+                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none text-[var(--main-color)]"
                         onClick={() => setIsFavoritesCollapsed(!isFavoritesCollapsed)}
                     >
                         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                     {!isFavoritesCollapsed && (
                         <div className="p-2">
                             {favorites.length === 0 ? (
-                                <div className="text-xs opacity-80 text-center my-2 italic">
+                                <div className="text-xs opacity-80 text-center my-2 italic text-gray-500 dark:text-gray-400">
                                     No favorites yet
                                 </div>
                             ) : (
@@ -102,7 +102,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                 {/* Recents Section */}
                 <div className="border-t border-gray-200 dark:border-gray-700">
                     <div 
-                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none"
+                        className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 select-none text-[var(--main-color)]"
                         onClick={() => setIsRecentsCollapsed(!isRecentsCollapsed)}
                     >
                         <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = React.memo(({ isOpen, rec
                     {!isRecentsCollapsed && (
                         <div className="p-2">
                             {recents.length === 0 ? (
-                                <div className="text-xs opacity-80 text-center my-2 italic">
+                                <div className="text-xs opacity-80 text-center my-2 italic text-gray-500 dark:text-gray-400">
                                     No recent changes
                                 </div>
                             ) : (

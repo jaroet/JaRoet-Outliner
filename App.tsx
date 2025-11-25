@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -1353,7 +1354,7 @@ export const App = () => {
                       className="flex-shrink-0 ml-2 hover:underline"
                       title="View Release Notes"
                   >
-                      Version 0.1.32
+                      Version 0.1.35
                   </a>
             </footer>
         </div>
