@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -939,88 +937,132 @@ export const App = () => {
             }
             return null;
         };
-        const parentId = findParent(bullets, null);
-        // If parent is not root (zoomed root or null), focus it
-        if (parentId && parentId !== zoomedBulletId) {
-            handleFocusChange(parentId, undefined, 'view');
+        const parentId = findParent(bulletsRef.current, null);
+        if (parentId) {
+             handleFocusChange(parentId, undefined, 'view');
         }
-    }, [bullets, zoomedBulletId, handleFocusChange]);
+    }, [handleFocusChange]);
 
     const handleFocusChild = useCallback((id: string) => {
         const findNode = (nodes: Bullet[]): Bullet | null => {
              for(const node of nodes) {
-                 if(node.id === id) return node;
+                 if (node.id === id) return node;
                  const found = findNode(node.children);
-                 if(found) return found;
+                 if (found) return found;
              }
              return null;
         };
-        const node = findNode(bullets);
+        const node = findNode(bulletsRef.current);
         if (node && node.children.length > 0) {
-            handleFocusChange(node.children[0].id, undefined, 'view');
+            handleFocusChange(node.children[0].id, 'start', 'view');
         }
-    }, [bullets, handleFocusChange]);
+    }, [handleFocusChange]);
 
     const handleFold = useCallback((id: string, collapse: boolean) => {
-        setBullets(prev => {
-            const fold = (nodes: Bullet[]): Bullet[] => {
-                return nodes.map(n => {
-                    if (n.id === id) {
-                         return { ...n, isCollapsed: collapse };
-                    }
-                    if (n.children.length > 0) {
-                        return { ...n, children: fold(n.children) };
-                    }
-                    return n;
-                });
-            };
-            return fold(prev);
-        });
-    }, []);
+         handleUpdate(id, { isCollapsed: collapse });
+    }, [handleUpdate]);
 
     const handleFoldAll = useCallback((id: string, collapse: boolean) => {
-        setBullets(prev => {
-             const setCollapseRecursively = (nodes: Bullet[]): Bullet[] => nodes.map(node => { 
-                const newNode = { ...node }; 
-                if (newNode.children.length > 0) { 
-                    newNode.isCollapsed = collapse; 
-                    if (!newNode.isReadOnly) newNode.children = setCollapseRecursively(newNode.children); 
-                } 
-                return newNode; 
-            });
-            const findAndFold = (nodes: Bullet[]): Bullet[] => {
-                return nodes.map(n => {
-                    if (n.id === id) {
-                         const updatedNode = { ...n };
-                         if (updatedNode.children.length > 0) {
-                             updatedNode.isCollapsed = collapse;
-                             updatedNode.children = setCollapseRecursively(updatedNode.children);
-                         }
-                         return updatedNode;
-                    }
-                    if (n.children.length > 0) {
-                        return { ...n, children: findAndFold(n.children) };
-                    }
-                    return n;
-                });
-            };
-            return findAndFold(prev);
-        });
+         setBullets(prev => {
+             const updateRecursive = (nodes: Bullet[]): Bullet[] => {
+                 return nodes.map(node => {
+                     if (node.id === id) {
+                         const recursiveSet = (n: Bullet): Bullet => ({
+                             ...n,
+                             isCollapsed: collapse,
+                             children: n.children.map(recursiveSet)
+                         });
+                         return recursiveSet(node);
+                     }
+                     
+                     if (node.children.length > 0) {
+                         const newChildren = updateRecursive(node.children);
+                         if (newChildren !== node.children) return { ...node, children: newChildren };
+                     }
+                     return node;
+                 });
+             };
+             return updateRecursive(prev);
+         });
     }, []);
 
-    const handleTriggerLinkPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: (selectedBullet: any) => void) => {
-        const rect = inputRef.current?.getBoundingClientRect();
-        if (rect) {
-            setLinkPopupState({
-                isOpen: true,
-                targetId: bulletId,
-                query,
-                position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
-                suggestions: [],
-                selectedIndex: 0
+    const handleExport = useCallback(() => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bullets, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", (settings.fileName || "journal") + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }, [bullets, settings.fileName]);
+
+    const handleImport = useCallback((data: any) => {
+        setPendingImportData(migrateBullets(data));
+        setIsImportModalOpen(true);
+    }, []);
+
+    const confirmImport = useCallback((targetId: string | null) => {
+        if (!pendingImportData) return;
+        
+        const importedBullets = regenerateIds(pendingImportData);
+
+        if (targetId === null) {
+            setBullets(prev => [...prev, ...importedBullets]);
+            addToast(`Imported ${importedBullets.length} items to root`, 'success');
+        } else {
+            setBullets(prev => {
+                const addChildren = (nodes: Bullet[]): Bullet[] => {
+                    return nodes.map(node => {
+                        if (node.id === targetId) {
+                            return { 
+                                ...node, 
+                                children: [...node.children, ...importedBullets],
+                                isCollapsed: false 
+                            };
+                        }
+                        if (node.children.length > 0) {
+                            const newChildren = addChildren(node.children);
+                            if (newChildren !== node.children) return { ...node, children: newChildren };
+                        }
+                        return node;
+                    });
+                };
+                return addChildren(prev);
             });
-            setLinkSelectionHandler({ handler });
+            addToast(`Imported ${importedBullets.length} items`, 'success');
         }
+        
+        setIsImportModalOpen(false);
+        setPendingImportData(null);
+    }, [pendingImportData, addToast]);
+
+
+    // Search / Link / Tag Popup Logic
+    const handleTriggerLinkPopup = useCallback((id: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: any) => {
+         const rect = inputRef.current?.getBoundingClientRect();
+         if (rect) {
+             setLinkSelectionHandler({ handler });
+             
+             const results: any[] = [];
+             const traverse = (nodes: Bullet[], path: string[]) => {
+                 for(const node of nodes) {
+                     if (node.text.toLowerCase().includes(query.toLowerCase())) {
+                         results.push({ id: node.id, text: node.text, path });
+                     }
+                     traverse(node.children, [...path, node.text]);
+                 }
+             };
+             traverse(bulletsRef.current, []);
+             
+             setLinkPopupState({
+                 isOpen: true,
+                 targetId: id,
+                 query,
+                 position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
+                 suggestions: results.slice(0, 10),
+                 selectedIndex: 0
+             });
+         }
     }, []);
 
     const handleCloseLinkPopup = useCallback(() => {
@@ -1028,335 +1070,253 @@ export const App = () => {
         setLinkSelectionHandler({ handler: null });
     }, []);
 
-    const handleTriggerTagPopup = useCallback((bulletId: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: (selectedTag: string) => void) => {
-        const rect = inputRef.current?.getBoundingClientRect();
-        if (rect) {
-             setTagPopupState({
-                isOpen: true,
-                targetId: bulletId,
-                query,
-                position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
-                suggestions: [],
-                selectedIndex: 0
-            });
-            setTagSelectionHandler({ handler });
+    const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
+        setLinkPopupState(prev => ({
+            ...prev,
+            selectedIndex: navigateSuggestions(prev, direction)
+        }));
+    }, []);
+
+    const handleLinkSelect = useCallback((callback: (b: any) => void) => {
+        const { suggestions, selectedIndex } = linkPopupState;
+        if (suggestions.length > 0) {
+            const selected = suggestions[selectedIndex];
+            callback(selected);
         }
+    }, [linkPopupState]);
+    
+    // Tag Popup
+    const handleTriggerTagPopup = useCallback((id: string, query: string, inputRef: React.RefObject<HTMLTextAreaElement>, handler: any) => {
+         const rect = inputRef.current?.getBoundingClientRect();
+         if (rect) {
+             setTagSelectionHandler({ handler });
+             
+             const allTags = new Set<string>();
+             const traverse = (nodes: Bullet[]) => {
+                 for(const node of nodes) {
+                     const matches = node.text.match(/#\w+/g);
+                     if (matches) matches.forEach(t => allTags.add(t));
+                     traverse(node.children);
+                 }
+             };
+             traverse(bulletsRef.current);
+             
+             const filteredTags = Array.from(allTags).filter(t => t.toLowerCase().includes(query.toLowerCase())).sort();
+
+             setTagPopupState({
+                 isOpen: true,
+                 targetId: id,
+                 query,
+                 position: { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX },
+                 suggestions: filteredTags.slice(0, 10),
+                 selectedIndex: 0
+             });
+         }
     }, []);
     
     const handleCloseTagPopup = useCallback(() => {
         setTagPopupState(prev => ({ ...prev, isOpen: false }));
         setTagSelectionHandler({ handler: null });
     }, []);
-    
-    // Derived state for popups
-    const linkSuggestions = useMemo(() => {
-        if (!linkPopupState.isOpen || !linkPopupState.query) return [];
-        const flat: FlatBullet[] = [];
-        const traverse = (nodes: Bullet[], path: string[]) => {
-            for(const n of nodes) {
-                flat.push({ id: n.id, text: n.text, path });
-                traverse(n.children, [...path, n.text]);
-            }
-        };
-        traverse(bullets, []);
-        return flat.filter(b => b.text.toLowerCase().includes(linkPopupState.query.toLowerCase())).slice(0, 50);
-    }, [bullets, linkPopupState.isOpen, linkPopupState.query]);
-    
-    const tagSuggestions = useMemo(() => {
-        if (!tagPopupState.isOpen) return [];
-        const tags = new Set<string>();
-        const traverse = (nodes: Bullet[]) => {
-            for(const n of nodes) {
-                const matches = n.text.match(/#\w+/g);
-                if (matches) matches.forEach(t => tags.add(t));
-                traverse(n.children);
-            }
-        };
-        traverse(bullets);
-        return Array.from(tags).filter(t => t.toLowerCase().includes(tagPopupState.query.toLowerCase())).sort().slice(0, 50);
-    }, [bullets, tagPopupState.isOpen, tagPopupState.query]);
 
-    const handleLinkNavigate = useCallback((direction: 'up' | 'down') => {
-        setLinkPopupState(prev => ({
-            ...prev,
-            selectedIndex: navigateSuggestions({ suggestions: linkSuggestions, selectedIndex: prev.selectedIndex }, direction)
-        }));
-    }, [linkSuggestions]);
-
-     const handleTagNavigate = useCallback((direction: 'up' | 'down') => {
+    const handleTagNavigate = useCallback((direction: 'up' | 'down') => {
         setTagPopupState(prev => ({
             ...prev,
-            selectedIndex: navigateSuggestions({ suggestions: tagSuggestions, selectedIndex: prev.selectedIndex }, direction)
+            selectedIndex: navigateSuggestions(prev, direction)
         }));
-    }, [tagSuggestions]);
-
-    const handleLinkSelect = useCallback((callback: (b: any) => void) => {
-        if (linkSuggestions[linkPopupState.selectedIndex]) {
-            callback(linkSuggestions[linkPopupState.selectedIndex]);
-        }
-    }, [linkSuggestions, linkPopupState.selectedIndex]);
+    }, []);
 
     const handleTagSelect = useCallback((callback: (t: string) => void) => {
-        if (tagSuggestions[tagPopupState.selectedIndex]) {
-            callback(tagSuggestions[tagPopupState.selectedIndex]);
+        const { suggestions, selectedIndex } = tagPopupState;
+        if (suggestions.length > 0) {
+            const selected = suggestions[selectedIndex];
+            callback(selected);
         }
-    }, [tagSuggestions, tagPopupState.selectedIndex]);
+    }, [tagPopupState]);
 
-
-    const handleExport = () => {
-        const dataStr = JSON.stringify(bullets, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${settings.fileName || 'outline'}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleImportFile = (data: any) => {
-        setPendingImportData(regenerateIds(migrateBullets(data)));
-        setIsImportModalOpen(true);
-    };
-
-    const handleConfirmImport = (targetId: string | null) => {
-        if (pendingImportData) {
-            setBullets(prev => {
-                if (targetId === null) {
-                    return [...prev, ...pendingImportData];
-                }
-                const addToTarget = (nodes: Bullet[]): Bullet[] => {
-                    return nodes.map(n => {
-                        if (n.id === targetId) {
-                            return { ...n, children: [...n.children, ...pendingImportData] };
-                        }
-                        return { ...n, children: addToTarget(n.children) };
-                    });
-                };
-                return addToTarget(prev);
-            });
-            addToast(`Imported ${pendingImportData.length} items`, 'success');
-        }
-        setIsImportModalOpen(false);
-        setPendingImportData(null);
-    };
-
-    const handleClearData = () => {
-        if (confirm("Are you sure you want to delete all data? This cannot be undone.")) {
-            setBullets(initialData);
-            setRecentBullets([]);
-            setFavoriteBullets([]);
-            addToast('Application data reset', 'info');
-            setIsSettingsModalOpen(false);
-        }
-    };
-
-
-    useEffect(() => {
-        const handleGlobalKeyDown = (e: KeyboardEvent) => {
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                setIsSearchModalOpen(true);
-            } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
-                e.preventDefault();
-                handleZoom(null);
-                setBullets(prev => prev.map(b => ({ ...b, isCollapsed: true })));
-                setTimeout(() => {
-                    const currentBullets = bulletsRef.current;
-                    if (currentBullets.length > 0) handleFocusChange(currentBullets[0].id, 'start', 'view');
-                }, 10);
-            } else if (e.ctrlKey && e.key.toLowerCase() === 'j') {
-                e.preventDefault();
-                handleGoToJournal();
-            } else if (e.ctrlKey && e.key === 'ArrowUp') {
-                 // Global Zoom Out
-                 e.preventDefault();
-                 const zoomedId = zoomedBulletIdRef.current;
-                 const crumbs = breadcrumbsRef.current;
-                 if (zoomedId) {
-                     const parentId = crumbs.length > 1 ? crumbs[crumbs.length - 2].id : null;
-                     handleZoom(parentId);
-                 }
-            } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-                // Focus Restoration fallback
-                const currentFocusId = focusOptionsRef.current.id;
-                const visibleIds = visibleBulletIdsRef.current;
-                if (!currentFocusId && visibleIds.length > 0) {
-                     const target = e.target as HTMLElement;
-                     if(target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-                         e.preventDefault();
-                         handleFocusChange(visibleIds[0], 'end', 'view');
-                     }
-                }
+    const handleLinkClick = useCallback((text: string) => {
+        const cleanText = text.replace(/[\[\]#]/g, '');
+        
+        const findNode = (nodes: Bullet[]): Bullet | null => {
+            for(const node of nodes) {
+                if (node.text === cleanText) return node;
+                const found = findNode(node.children);
+                if (found) return found;
             }
+            return null;
         };
-        window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
-    }, [handleGoToJournal, handleZoom, handleFocusChange]);
-
+        
+        const target = findNode(bulletsRef.current);
+        if (target) {
+            handleNavigate(target.id);
+        } else {
+             setSearchQuery(cleanText);
+             setIsSearchModalOpen(true);
+        }
+    }, [handleNavigate]);
 
     return (
-        <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
-            <div className="flex-grow flex overflow-hidden">
-                <LeftSidebar 
-                    isOpen={isSidebarOpen} 
-                    recents={recentBullets} 
-                    favorites={favoriteBullets} 
-                    onNavigate={handleNavigate} 
+        <div className={`flex h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-[family-name:var(--font-family)]`} style={{ fontSize: `${settings.fontSize}px` }}>
+            <LeftSidebar 
+                isOpen={isSidebarOpen}
+                recents={recentBullets}
+                favorites={favoriteBullets}
+                onNavigate={handleNavigate}
+            />
+
+            <div className="flex-grow flex flex-col h-full overflow-hidden relative transition-all duration-300">
+                <Toolbar 
+                    onImport={handleImport}
+                    onExport={handleExport}
+                    breadcrumbs={breadcrumbs}
+                    onBreadcrumbClick={handleNavigate}
+                    fileName={settings.fileName}
+                    onOpenSettings={() => setIsSettingsModalOpen(true)}
+                    onGoToToday={handleGoToJournal}
+                    theme={theme}
+                    onThemeToggle={handleThemeToggle}
+                    onOpenSearch={() => setIsSearchModalOpen(true)}
+                    isSidebarOpen={isSidebarOpen}
+                    onToggleSidebar={() => {
+                        setIsSidebarOpen(prev => {
+                            const newState = !prev;
+                            db.keyValuePairs.put({ key: 'isSidebarOpen', value: newState });
+                            return newState;
+                        });
+                    }}
+                    isFavorite={isTargetFavorite}
+                    onToggleFavorite={handleToggleFavorite}
+                    canFavorite={!!targetFavoriteId}
                 />
                 
-                <div className="flex-grow flex flex-col h-full overflow-hidden relative">
-                    <Toolbar
-                        onImport={handleImportFile}
-                        onExport={handleExport}
-                        breadcrumbs={breadcrumbs}
-                        onBreadcrumbClick={handleZoom}
-                        fileName={settings.fileName}
-                        onOpenSettings={() => setIsSettingsModalOpen(true)}
-                        onGoToToday={handleGoToJournal}
-                        theme={theme}
-                        onThemeToggle={handleThemeToggle}
-                        onOpenSearch={() => setIsSearchModalOpen(true)}
-                        isSidebarOpen={isSidebarOpen}
-                        onToggleSidebar={() => {
-                            setIsSidebarOpen(prev => {
-                                db.keyValuePairs.put({ key: 'isSidebarOpen', value: !prev });
-                                return !prev;
-                            });
-                        }}
-                        isFavorite={isTargetFavorite}
-                        onToggleFavorite={handleToggleFavorite}
-                        canFavorite={!!targetFavoriteId}
-                    />
-
-                    <div className="flex-grow overflow-y-auto p-4 sm:p-8" onClick={() => handleFocusChange(null)}>
-                        <div className="max-w-4xl mx-auto pb-40">
-                             {displayedBullets.length === 0 ? (
-                                <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newBullet = createNewBullet();
-                                    setBullets(prev => {
-                                        if (zoomedBulletId) {
-                                             return prev.map(n => n.id === zoomedBulletId ? { ...n, children: [newBullet] } : n); 
-                                        }
-                                        return [...prev, newBullet];
-                                    });
-                                    setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
-                                }}>
-                                    Click to add a bullet
-                                </div>
-                             ) : (
-                                 displayedBullets.map(bullet => (
-                                    <BulletItem
-                                        key={bullet.id}
-                                        bullet={bullet}
-                                        level={0}
-                                        onUpdate={handleUpdate}
-                                        onAddSibling={handleAddSibling}
-                                        onDelete={handleDelete}
-                                        onIndent={handleIndent}
-                                        onOutdent={handleOutdent}
-                                        onFocusChange={handleFocusChange}
-                                        onZoom={handleZoom}
-                                        onFocusMove={handleFocusMove}
-                                        onFocusParent={handleFocusParent}
-                                        onFocusChild={handleFocusChild}
-                                        onFold={handleFold}
-                                        onFoldAll={handleFoldAll}
-                                        onMoveBullet={handleMoveBullet}
-                                        currentFocusId={currentFocusId}
-                                        focusPosition={focusPosition}
-                                        focusMode={focusMode}
-                                        searchQuery={searchQuery}
-                                        onLinkClick={(text) => {
-                                             setSearchQuery(text); 
-                                             setIsSearchModalOpen(true);
-                                        }}
-                                        onTriggerLinkPopup={handleTriggerLinkPopup}
-                                        onCloseLinkPopup={handleCloseLinkPopup}
-                                        onLinkNavigate={handleLinkNavigate}
-                                        onLinkSelect={handleLinkSelect}
-                                        isLinkPopupOpen={linkPopupState.isOpen}
-                                        linkPopupTargetId={linkPopupState.targetId}
-                                        onTriggerTagPopup={handleTriggerTagPopup}
-                                        onCloseTagPopup={handleCloseTagPopup}
-                                        onTagNavigate={handleTagNavigate}
-                                        onTagSelect={handleTagSelect}
-                                        isTagPopupOpen={tagPopupState.isOpen}
-                                        tagPopupTargetId={tagPopupState.targetId}
-                                        isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT}
-                                        onNavigateTo={handleNavigate}
-                                        onMerge={handleMerge}
-                                    />
-                                 ))
-                             )}
-                        </div>
+                <div className="flex-grow overflow-y-auto p-4 md:p-8" onClick={() => {
+                }}>
+                    <div className="max-w-4xl mx-auto min-h-[50vh] pb-40">
+                         {displayedBullets.map(bullet => (
+                            <BulletItem 
+                                key={bullet.id}
+                                bullet={bullet}
+                                level={0}
+                                onUpdate={handleUpdate}
+                                onAddSibling={handleAddSibling}
+                                onDelete={handleDelete}
+                                onIndent={handleIndent}
+                                onOutdent={handleOutdent}
+                                onFocusChange={handleFocusChange}
+                                onZoom={handleZoom}
+                                onFocusMove={handleFocusMove}
+                                onFocusParent={handleFocusParent}
+                                onFocusChild={handleFocusChild}
+                                onFold={handleFold}
+                                onFoldAll={handleFoldAll}
+                                onMoveBullet={handleMoveBullet}
+                                currentFocusId={currentFocusId}
+                                focusPosition={focusPosition}
+                                focusMode={focusMode}
+                                searchQuery={searchQuery}
+                                onLinkClick={handleLinkClick}
+                                onTriggerLinkPopup={handleTriggerLinkPopup}
+                                onCloseLinkPopup={handleCloseLinkPopup}
+                                onLinkNavigate={handleLinkNavigate}
+                                onLinkSelect={handleLinkSelect}
+                                isLinkPopupOpen={linkPopupState.isOpen}
+                                linkPopupTargetId={linkPopupState.targetId}
+                                onTriggerTagPopup={handleTriggerTagPopup}
+                                onCloseTagPopup={handleCloseTagPopup}
+                                onTagNavigate={handleTagNavigate}
+                                onTagSelect={handleTagSelect}
+                                isTagPopupOpen={tagPopupState.isOpen}
+                                tagPopupTargetId={tagPopupState.targetId}
+                                isJournalRoot={bullet.id === 'journal-root'}
+                                onNavigateTo={handleNavigate}
+                                onMerge={handleMerge}
+                            />
+                        ))}
+                        
+                        {displayedBullets.length === 0 && (
+                            <div className="text-gray-400 dark:text-gray-500 italic mt-4 cursor-pointer" onClick={() => {
+                                 const newBullet = createNewBullet();
+                                 if (zoomedBulletId) {
+                                     setBullets(prev => {
+                                         const add = (nodes: Bullet[]): Bullet[] => {
+                                             return nodes.map(n => {
+                                                 if (n.id === zoomedBulletId) {
+                                                     return { ...n, children: [newBullet] };
+                                                 }
+                                                 return { ...n, children: add(n.children) };
+                                             });
+                                         };
+                                         return add(prev);
+                                     });
+                                 } else {
+                                     setBullets([newBullet]);
+                                 }
+                                 setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
+                            }}>
+                                Click to add a bullet...
+                            </div>
+                        )}
                     </div>
-
-                    <SearchModal 
-                        isOpen={isSearchModalOpen} 
-                        onClose={() => {
-                            setIsSearchModalOpen(false);
-                            setSearchQuery('');
-                        }} 
-                        bullets={bullets} 
-                        onNavigate={handleNavigate}
-                        initialQuery={searchQuery}
-                    />
-
-                    <SettingsModal
-                        isOpen={isSettingsModalOpen}
-                        onClose={() => setIsSettingsModalOpen(false)}
-                        onSave={setSettings}
-                        currentSettings={settings}
-                        onClearData={handleClearData}
-                    />
-
-                    <ImportSelectionModal
-                        isOpen={isImportModalOpen}
-                        onClose={() => { setIsImportModalOpen(false); setPendingImportData(null); }}
-                        onConfirm={handleConfirmImport}
-                        bullets={bullets}
-                    />
-
-                    <ToastContainer toasts={toasts} removeToast={removeToast} />
-                    
-                    {linkPopupState.isOpen && (
-                        <LinkPopup
-                            suggestions={linkSuggestions}
-                            selectedIndex={linkPopupState.selectedIndex}
-                            onSelect={(b) => linkSelectionHandler.handler && linkSelectionHandler.handler(b)}
-                            position={linkPopupState.position}
-                            containerRef={linkPopupRef}
-                        />
-                    )}
-
-                    {tagPopupState.isOpen && (
-                        <TagPopup
-                            suggestions={tagSuggestions}
-                            selectedIndex={tagPopupState.selectedIndex}
-                            onSelect={(t) => tagSelectionHandler.handler && tagSelectionHandler.handler(t)}
-                            position={tagPopupState.position}
-                            containerRef={tagPopupRef}
-                        />
-                    )}
                 </div>
+
+                <SettingsModal 
+                    isOpen={isSettingsModalOpen}
+                    onClose={() => setIsSettingsModalOpen(false)}
+                    onSave={(newSettings) => setSettings(newSettings)}
+                    currentSettings={settings}
+                    onClearData={() => {
+                        if (confirm("Are you sure you want to delete all data? This cannot be undone.")) {
+                            db.delete().then(() => {
+                                window.location.reload();
+                            });
+                        }
+                    }}
+                />
+
+                <SearchModal 
+                    isOpen={isSearchModalOpen}
+                    onClose={() => setIsSearchModalOpen(false)}
+                    bullets={bullets}
+                    onNavigate={handleNavigate}
+                    initialQuery={searchQuery}
+                />
+                
+                <ImportSelectionModal 
+                    isOpen={isImportModalOpen}
+                    onClose={() => {
+                        setIsImportModalOpen(false);
+                        setPendingImportData(null);
+                    }}
+                    onConfirm={confirmImport}
+                    bullets={bullets}
+                />
+
+                <LinkPopup 
+                    suggestions={linkPopupState.suggestions}
+                    selectedIndex={linkPopupState.selectedIndex}
+                    onSelect={(bullet) => {
+                        if (linkSelectionHandler.handler) {
+                            linkSelectionHandler.handler(bullet);
+                        }
+                    }}
+                    position={linkPopupState.position}
+                    containerRef={linkPopupRef}
+                />
+                
+                <TagPopup 
+                    suggestions={tagPopupState.suggestions}
+                    selectedIndex={tagPopupState.selectedIndex}
+                    onSelect={(tag) => {
+                        if (tagSelectionHandler.handler) {
+                            tagSelectionHandler.handler(tag);
+                        }
+                    }}
+                    position={tagPopupState.position}
+                    containerRef={tagPopupRef}
+                />
+                
+                <ToastContainer toasts={toasts} removeToast={removeToast} />
             </div>
-            <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10 w-full">
-                  <div className="flex items-center gap-2 min-w-0">
-                      <span title={settings.fileName} className="truncate">{settings.fileName}</span>
-                  </div>
-                  <a 
-                      href="https://github.com/jaroet/JaRoet-Outliner/releases" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex-shrink-0 ml-2 hover:underline"
-                      title="View Release Notes"
-                  >
-                      Version 0.1.35
-                  </a>
-            </footer>
         </div>
     );
 };

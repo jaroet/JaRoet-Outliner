@@ -1,8 +1,3 @@
-
-
-
-
-
 [
   {
     "id": "doc-root",
@@ -83,6 +78,30 @@
         "text": "Changelog",
         "children": [
             {
+                "id": "cl-50",
+                "text": "Version 0.1.38: Standalone Build",
+                "children": [
+                    { "id": "cl-50-a", "text": "Rebuilt application as a standalone index.html file with all components included.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-49",
+                "text": "Version 0.1.37: Critical Bug Fixes",
+                "children": [
+                    { "id": "cl-49-a", "text": "Fixed a JSON syntax error (malformed structure) in the help documentation that prevented it from loading.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-48",
+                "text": "Version 0.1.36: Documentation Fixes",
+                "children": [
+                    { "id": "cl-48-a", "text": "Fixed a JSON syntax error in the help documentation file that prevented it from loading correctly.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
                 "id": "cl-47",
                 "text": "Version 0.1.35: Sidebar Font Match",
                 "children": [
@@ -161,4 +180,14 @@
                 "children": [
                     { "id": "cl-39-a", "text": "Fixed a critical ReferenceError in the standalone application build.", "children": [], "isCollapsed": false },
                     { "id": "cl-39-b", "text": "Improved focus restoration when switching from Edit to View mode.", "children": [], "isCollapsed": false },
-                    { "id": "cl-39-c", "text": "Added keyboard shortcuts (Arrows, Enter) to View mode for smoother navigation
+                    { "id": "cl-39-c", "text": "Added keyboard shortcuts (Arrows, Enter) to View mode for smoother navigation.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            }
+        ],
+        "isCollapsed": false
+      }
+    ],
+    "isCollapsed": false
+  }
+]
