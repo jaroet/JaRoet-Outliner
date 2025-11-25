@@ -1,7 +1,7 @@
 # Jaroet-Outliner
 
-It is an outliner in the spirit of Logseq, Workflowy or Dynalist that works compoletely local 
-and without any installation needed. Other then copy a few files in a folder. 
+It is an outliner in the spirit of Logseq, Workflowy or Dynalist that works completely local 
+and without any installation needed. Other then copying a few files into a folder. 
 
 ## Features
 
