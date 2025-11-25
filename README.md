@@ -17,6 +17,7 @@ and without any installation needed. Other then copying a few files into a folde
 ## Screenshot
 
 ![outline](outline.jpg)
+
 ## storage
 
 Everything is stored in an local **IndexedDB** database. This support fairly large outlines. 
@@ -39,3 +40,4 @@ The libraries loaded are:
 - **Dexie.js** (unpkg.com) - A wrapper for IndexedDB used to store the outline data locally.
 
 - **React** and **React DOM** (aistudiocdn.com) - The JavaScript library used for building the user interface.
+
