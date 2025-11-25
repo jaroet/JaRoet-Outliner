@@ -1,4 +1,6 @@
 
+
+
 [
   {
     "id": "doc-root",
@@ -78,6 +80,23 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-46",
+                "text": "Version 0.1.34: Sidebar Colors",
+                "children": [
+                    { "id": "cl-46-a", "text": "The sidebar now uses the user-defined main theme color for text, matching the app toolbar.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-45",
+                "text": "Version 0.1.33: Sidebar Styling",
+                "children": [
+                    { "id": "cl-45-a", "text": "Updated the sidebar font and color to match the main outline for a cleaner, more consistent look.", "children": [], "isCollapsed": false },
+                    { "id": "cl-45-b", "text": "Removed the smaller font size constraint from the sidebar.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-44",
                 "text": "Version 0.1.32: UI & Navigation Improvements",
@@ -208,7 +227,7 @@
                 "id": "cl-31",
                 "text": "Version 0.1.19: Sidebar Polish",
                 "children": [
-                    { "id": "cl-31-a", "text": "Further reduced spacing for sidebar items for a denser view.", "children": [], "isCollapsed": false },
+                    { "id": "cl-31-a", "text": "Further reduced spacing for sidebar items for a more compact view.", "children": [], "isCollapsed": false },
                     { "id": "cl-31-b", "text": "Updated sidebar headers to use a bold, regular font size.", "children": [], "isCollapsed": false },
                     { "id": "cl-31-c", "text": "Updated application version to 0.1.19.", "children": [], "isCollapsed": false }
                 ],
