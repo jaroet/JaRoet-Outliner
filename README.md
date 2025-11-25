@@ -14,7 +14,7 @@ or [Dynalist](https://dynalist.com) that works completely local and without any 
 - Support for internal links using [[bullettext]] and external links using [linktext](link)
 - Automatic recognizing emailaddresses and website URL's 
 
-## storage
+## Storage
 
 Everything is stored in an local **IndexedDB** database. This support fairly large outlines. 
 There is an export to JSON and a Import from JSON function in the topbar that you can use to
