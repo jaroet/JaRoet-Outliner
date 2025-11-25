@@ -1,3 +1,5 @@
+
+
 [
   {
     "id": "doc-root",
@@ -54,8 +56,6 @@
               { "id": "hk-v-1", "text": "Up/Down Arrow : Navigate between items", "children": [], "isCollapsed": false },
               { "id": "hk-v-2", "text": "Left Arrow : Go to parent (or collapse if expanded)", "children": [], "isCollapsed": false },
               { "id": "hk-v-3", "text": "Right Arrow : Expand item or go to first child", "children": [], "isCollapsed": false },
-              { "id": "hk-v-rec-fold", "text": "Ctrl+Left Arrow : Fold focused bullet and all children", "children": [], "isCollapsed": false },
-              { "id": "hk-v-rec-unfold", "text": "Ctrl+Right Arrow : Unfold focused bullet and all children", "children": [], "isCollapsed": false },
               { "id": "hk-v-zoom", "text": "Ctrl+Down (or Zoom Icon) : Zoom In", "children": [], "isCollapsed": false },
               { "id": "hk-v-unzoom", "text": "Ctrl+Up : Zoom Out", "children": [], "isCollapsed": false }
             ],
@@ -77,96 +77,6 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
-            {
-                "id": "cl-51",
-                "text": "Version 0.1.39: Fix Import & Standalone Build",
-                "children": [
-                    { "id": "cl-51-a", "text": "Relaxed JSON validation for imports to support wider range of files.", "children": [], "isCollapsed": false },
-                    { "id": "cl-51-b", "text": "Improved robustness of bullet migration during import to handle missing properties.", "children": [], "isCollapsed": false },
-                    { "id": "cl-51-c", "text": "Rebuilt standalone application.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-50",
-                "text": "Version 0.1.38: Standalone Build",
-                "children": [
-                    { "id": "cl-50-a", "text": "Rebuilt application as a standalone index.html file with all components included.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-49",
-                "text": "Version 0.1.37: Critical Bug Fixes",
-                "children": [
-                    { "id": "cl-49-a", "text": "Fixed a JSON syntax error (malformed structure) in the help documentation that prevented it from loading.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-48",
-                "text": "Version 0.1.36: Documentation Fixes",
-                "children": [
-                    { "id": "cl-48-a", "text": "Fixed a JSON syntax error in the help documentation file that prevented it from loading correctly.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-47",
-                "text": "Version 0.1.35: Sidebar Font Match",
-                "children": [
-                    { "id": "cl-47-a", "text": "The sidebar content now uses the same font color (gray/white) and font family as the main outline items, ensuring visual consistency.", "children": [], "isCollapsed": false },
-                    { "id": "cl-47-b", "text": "Sidebar headers (Favorites/Recents) retain the theme color to distinguish them as UI elements.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-46",
-                "text": "Version 0.1.34: Sidebar Colors",
-                "children": [
-                    { "id": "cl-46-a", "text": "The sidebar now uses the user-defined main theme color for text, matching the app toolbar.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-45",
-                "text": "Version 0.1.33: Sidebar Styling",
-                "children": [
-                    { "id": "cl-45-a", "text": "Updated the sidebar font and color to match the main outline for a cleaner, more consistent look.", "children": [], "isCollapsed": false },
-                    { "id": "cl-45-b", "text": "Removed the smaller font size constraint from the sidebar.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-44",
-                "text": "Version 0.1.32: UI & Navigation Improvements",
-                "children": [
-                    { "id": "cl-44-a", "text": "Improved Edit Mode navigation: Arrow keys now reliably stick to the focused bullet unless modifiers are used.", "children": [], "isCollapsed": false },
-                    { "id": "cl-44-b", "text": "View Mode: `Ctrl+Left` recursively folds an item and all children; `Ctrl+Right` unfolds all.", "children": [], "isCollapsed": false },
-                    { "id": "cl-44-c", "text": "View Mode: Standard `Left/Right` keys now only affect the immediate item's folding state.", "children": [], "isCollapsed": false },
-                    { "id": "cl-44-d", "text": "Sidebar text color now matches the main outline for better consistency.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-43",
-                "text": "Version 0.1.31: Bug Fixes",
-                "children": [
-                    { "id": "cl-43-a", "text": "Fixed a script error caused by truncated build generation.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
-            {
-                "id": "cl-42",
-                "text": "Version 0.1.30: Folding & Navigation Tweaks",
-                "children": [
-                    { "id": "cl-42-a", "text": "Added `Ctrl+Left` and `Ctrl+Right` hotkeys in View Mode for recursive folding/unfolding of the entire subtree.", "children": [], "isCollapsed": false },
-                    { "id": "cl-42-b", "text": "Standard `ArrowLeft` and `ArrowRight` (and the fold icon) now only toggle the specific item's state, preserving child states.", "children": [], "isCollapsed": false },
-                    { "id": "cl-42-c", "text": "Restricted Arrow Key navigation in Edit Mode to stay within the current bullet's text (unless using Esc to exit).", "children": [], "isCollapsed": false },
-                    { "id": "cl-42-d", "text": "Sidebar text now uses the main theme color and a slightly smaller font size.", "children": [], "isCollapsed": false }
-                ],
-                "isCollapsed": false
-            },
             {
                 "id": "cl-41",
                 "text": "Version 0.1.29: Fixes",
@@ -190,9 +100,330 @@
                 "children": [
                     { "id": "cl-39-a", "text": "Fixed a critical ReferenceError in the standalone application build.", "children": [], "isCollapsed": false },
                     { "id": "cl-39-b", "text": "Improved focus restoration when switching from Edit to View mode.", "children": [], "isCollapsed": false },
-                    { "id": "cl-39-c", "text": "Added keyboard shortcuts (Arrows, Enter) to View mode for smoother navigation.", "children": [], "isCollapsed": false }
+                    { "id": "cl-39-c", "text": "Added keyboard shortcuts (Arrows, Enter) to View mode for smoother navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-39-d", "text": "Prevented focus stealing by fold/zoom icons.", "children": [], "isCollapsed": false }
                 ],
                 "isCollapsed": false
+            },
+            {
+                "id": "cl-38",
+                "text": "Version 0.1.26: Focus Fixes",
+                "children": [
+                    { "id": "cl-38-a", "text": "Fixed focus loss when switching from Edit to View mode.", "children": [], "isCollapsed": false },
+                    { "id": "cl-38-b", "text": "Prevented fold and zoom icons from receiving keyboard focus.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-37",
+                "text": "Version 0.1.25: Standalone Update",
+                "children": [
+                    { "id": "cl-37-a", "text": "Fixed 'searchQuery is not defined' error in standalone build.", "children": [], "isCollapsed": false },
+                    { "id": "cl-37-b", "text": "Improved stability of component merging.", "children": [], "isCollapsed": false },
+                    { "id": "cl-37-c", "text": "Consolidated all component code into a unified structure for easier distribution.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-36",
+                "text": "Version 0.1.24: Standalone Update",
+                "children": [
+                    { "id": "cl-36-a", "text": "Optimized single-file structure for better performance and maintainability.", "children": [], "isCollapsed": false },
+                    { "id": "cl-36-b", "text": "Fixed an issue where search queries were undefined, causing errors during navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-36-c", "text": "Consolidated all component code into a unified structure for easier distribution.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-35",
+                "text": "Version 0.1.23: Standalone Release",
+                "children": [
+                    { "id": "cl-35-a", "text": "Bundled all application logic into a single self-contained HTML file for easy distribution.", "children": [], "isCollapsed": false },
+                    { "id": "cl-35-b", "text": "Updated application version to 0.1.23.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-34",
+                "text": "Version 0.1.22: View & Edit Modes",
+                "children": [
+                    { "id": "cl-34-a", "text": "Introduced distinct View and Edit modes for better navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-34-b", "text": "In View Mode, Arrow keys navigate the tree structure (Up/Down/Left/Right). Press Enter to edit.", "children": [], "isCollapsed": false },
+                    { "id": "cl-34-c", "text": "In Edit Mode, Arrow keys function as a standard text editor. Press Esc to return to View Mode.", "children": [], "isCollapsed": false },
+                    { "id": "cl-34-d", "text": "Updated application version to 0.1.22.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-33",
+                "text": "Version 0.1.21: UI Adjustments",
+                "children": [
+                    { "id": "cl-33-a", "text": "Increased the text size in the status bar for better readability.", "children": [], "isCollapsed": false },
+                    { "id": "cl-33-b", "text": "The sidebar is now collapsed by default when opening the application.", "children": [], "isCollapsed": false },
+                    { "id": "cl-33-c", "text": "Updated application version to 0.1.21.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-32",
+                "text": "Version 0.1.20: Version Link",
+                "children": [
+                    { "id": "cl-32-a", "text": "The version number in the status bar is now a link to the GitHub releases page.", "children": [], "isCollapsed": false },
+                    { "id": "cl-32-b", "text": "Updated application version to 0.1.20.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-31",
+                "text": "Version 0.1.19: Sidebar Polish",
+                "children": [
+                    { "id": "cl-31-a", "text": "Further reduced spacing for sidebar items for a denser view.", "children": [], "isCollapsed": false },
+                    { "id": "cl-31-b", "text": "Updated sidebar headers to use a bold, regular font size.", "children": [], "isCollapsed": false },
+                    { "id": "cl-31-c", "text": "Updated application version to 0.1.19.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-30",
+                "text": "Version 0.1.18: Refinements",
+                "children": [
+                    { "id": "cl-30-a", "text": "Reduced padding for items in the Favorites and Recent sidebar lists for a more compact view.", "children": [], "isCollapsed": false },
+                    { "id": "cl-30-b", "text": "Removed the logo image from the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-30-c", "text": "Updated application version to 0.1.18.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-29",
+                "text": "Version 0.1.17: UI Refinements",
+                "children": [
+                    { "id": "cl-29-a", "text": "Removed the logo from the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-29-b", "text": "Reduced padding in the sidebar for favorites and recents, allowing more items to be visible.", "children": [], "isCollapsed": false },
+                    { "id": "cl-29-c", "text": "Updated application version to 0.1.17.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-28",
+                "text": "Version 0.1.16: Sidebar Improvements",
+                "children": [
+                    { "id": "cl-28-a", "text": "The sidebar is now resizable. Drag the right edge to adjust width.", "children": [], "isCollapsed": false },
+                    { "id": "cl-28-b", "text": "Renamed 'Recently modified' to 'Recent' and made the section collapsible.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-27",
+                "text": "Version 0.1.15: Recently Modified Sidebar",
+                "children": [
+                    { "id": "cl-27-a", "text": "Added a collapsible left sidebar that displays the 12 most recently modified items for quick navigation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-27-b", "text": "The sidebar state (open/closed) is now saved automatically.", "children": [], "isCollapsed": false },
+                    { "id": "cl-27-c", "text": "Updated application version to 0.1.15.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-26",
+                "text": "Version 0.1.13: Visual & Branding Updates",
+                "children": [
+                    { "id": "cl-26-a", "text": "Updated favicon to favicon.png and added logo.png to the status bar.", "children": [], "isCollapsed": false },
+                    { "id": "cl-26-b", "text": "Updated application version to 0.1.13.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-25",
+                "text": "Version 0.1.12: Release Build Refactor",
+                "children": [
+                    { "id": "cl-25-a", "text": "Refactored application into a standalone release build to improve portability and fix initialization issues.", "children": [], "isCollapsed": false },
+                    { "id": "cl-25-b", "text": "Updated application version to 0.1.12.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-24",
+                "text": "Version 0.1.13: Stability Fixes",
+                "children": [
+                    { "id": "cl-24-a", "text": "Fixed a startup error related to secure context requirements for ID generation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-24-b", "text": "Updated application version to 0.1.13.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-23",
+                "text": "Version 0.1.12: Backspace Merge",
+                "children": [
+                    { "id": "cl-23-a", "text": "Pressing Backspace at the start of an item now merges it with the previous item's content.", "children": [], "isCollapsed": false },
+                    { "id": "cl-23-b", "text": "Updated application version to 0.1.12.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-21",
+                "text": "Version 0.1.11: Performance & UX",
+                "children": [
+                    { "id": "cl-21-a", "text": "Implemented lazy search indexing. The application no longer calculates searchable items on every keystroke, significantly improving typing performance in large outlines.", "children": [], "isCollapsed": false },
+                    { "id": "cl-21-b", "text": "Replaced intrusive browser alerts with a non-blocking Toast notification system.", "children": [], "isCollapsed": false },
+                    { "id": "cl-21-c", "text": "Updated application version to 0.1.11.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-20",
+                "text": "Version 0.1.10: Documentation Fixes",
+                "children": [
+                    { "id": "cl-20-a", "text": "Corrected the JSON structure of the help documentation file to prevent import errors.", "children": [], "isCollapsed": false },
+                    { "id": "cl-20-b", "text": "Updated application version to 0.1.10.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-18",
+                "text": "Version 0.1.9: Import Robustness",
+                "children": [
+                    { "id": "cl-18-a", "text": "Fixed an issue where importing JSON files with missing properties could cause the application to crash.", "children": [], "isCollapsed": false },
+                    { "id": "cl-18-b", "text": "Updated application version to 0.1.9.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-17",
+                "text": "Version 0.1.8: Hotkey Implementation",
+                "children": [
+                    { "id": "cl-17-a", "text": "Enabled the `Ctrl+Shift+H` hotkey functionality.", "children": [], "isCollapsed": false },
+                    { "id": "cl-17-b", "text": "Updated application version to 0.1.8.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-16",
+                "text": "Version 0.1.7: Home Hotkey",
+                "children": [
+                    { "id": "cl-16-a", "text": "Added `Ctrl+Shift+H` to quickly navigate to the root of the outline and collapse all top-level items.", "children": [], "isCollapsed": false },
+                    { "id": "cl-16-b", "text": "Updated application version to 0.1.7.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-15",
+                "text": "Version 0.1.4: Local Execution Fix",
+                "children": [
+                    { "id": "cl-15-a", "text": "Fixed a significant loading issue that caused a blank screen when running the app directly from a downloaded file on a local computer. The application should now start correctly in this scenario.", "children": [], "isCollapsed": false },
+                    { "id": "cl-15-b", "text": "Updated application version to 0.1.4.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-14",
+                "text": "Version 0.1.3: Critical Loading Fix",
+                "children": [
+                    { "id": "cl-14-a", "text": "Fixed a critical bug that caused a blank screen when the application was launched, especially on Windows and ChromeOS. The app now loads reliably.", "children": [], "isCollapsed": false },
+                    { "id": "cl-14-b", "text": "Updated application version to 0.1.3.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-13",
+                "text": "Version 0.1.2: Status Bar Enhancement",
+                "children": [
+                    { "id": "cl-13-a", "text": "The text in the status bar now uses the main theme color, making it more vibrant and consistent with the UI.", "children": [], "isCollapsed": false },
+                    { "id": "cl-13-b", "text": "Updated application version to 0.1.2.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-12",
+                "text": "Version 0.1.1: UI Polish & Versioning",
+                "children": [
+                    { "id": "cl-12-a", "text": "Moved the outline title from the top toolbar to the bottom status bar for a cleaner look.", "children": [], "isCollapsed": false },
+                    { "id": "cl-12-b", "text": "Updated application version to 0.1.1.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-11",
+                "text": "Version 0.1.0: Status Bar & Versioning",
+                "children": [
+                    { "id": "cl-11-a", "text": "Added a status bar to the bottom of the application.", "children": [], "isCollapsed": false },
+                    { "id": "cl-11-b", "text": "The status bar now displays the current app version, starting with v0.1.0.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-10",
+                "text": "Alpha: UI & Formatting Improvements",
+                "children": [
+                    { "id": "cl-10-a", "text": "Renamed 'Recent Edits' and 'Recent Creations' tabs in Quick Find to 'Recently modified' and 'Recently created' for clarity.", "children": [], "isCollapsed": false },
+                    { "id": "cl-10-b", "text": "Timestamps in Quick Find now include the time and are displayed for all search results.", "children": [], "isCollapsed": false },
+                    { "id": "cl-10-c", "text": "All timestamps now use a 24-hour format.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-9",
+                "text": "Alpha: Timestamps & Enhanced Search",
+                "children": [
+                    { "id": "cl-9-a", "text": "Bullets now track their creation and last modification dates.", "children": [], "isCollapsed": false },
+                    { "id": "cl-9-b", "text": "The 'Quick Find' window (Ctrl+Shift+K) now has tabs to view bullets sorted by 'Recent Edits' and 'Recent Creations'.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-8",
+                "text": "Alpha: Advanced Search",
+                "children": [
+                    { "id": "cl-8-a", "text": "Enhanced the 'Quick Find' modal to support multi-word and multi-tag searches.", "children": [], "isCollapsed": false },
+                    { "id": "cl-8-b", "text": "By default, multiple terms are combined with AND logic (e.g., `#doc changelog` finds items with both).", "children": [], "isCollapsed": false },
+                    { "id": "cl-8-c", "text": "You can use `OR` to find items matching any of the terms (e.g., `#doc OR changelog`).", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-7",
+                "text": "Alpha: Further Optimization",
+                "children": [
+                    { "id": "cl-7-a", "text": "Moved the changelog into the external `help-documentation.json` file.", "children": [], "isCollapsed": false },
+                    { "id": "cl-7-b", "text": "Externalized all application CSS into a separate `index.css` file.", "children": [], "isCollapsed": false },
+                    { "id": "cl-7-c", "text": "These changes make the main HTML file even smaller and faster to load.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-6",
+                "text": "Alpha: Major Simplification",
+                "children": [
+                    { "id": "cl-6-a", "text": "Streamlined the application by removing all traces of the old sidebar functionality from the documentation.", "children": [], "isCollapsed": false },
+                    { "id": "cl-6-b", "text": "Moved the extensive \"Help & Documentation\" content into a separate `help-documentation.json` file to reduce initial load size.", "children": [], "isCollapsed": false },
+                    { "id": "cl-6-c", "text": "You can import the new JSON file at any time to access the full guide.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-5",
+                "text": "Alpha: Sync & UI Updates",
+                "children": [
+                    { "id": "cl-5-a", "text": "Removed GitHub Sync functionality in favor of local indexedDB storage.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
+            },
+            {
+                "id": "cl-2",
+                "text": "Alpha: Bug Fixes & Optimizations",
+                "children": [
+                    { "id": "cl-2-b", "text": "Refactored internal bullet addition logic for better consistency.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
+            },
+            {
+                "id": "cl-1",
+                "text": "Alpha: Code Refactoring & Cleanup",
+                "children": [
+                    { "id": "cl-1-a", "text": "Removed unused color utility functions.", "children": [], "isCollapsed": false },
+                    { "id": "cl-1-b", "text": "Upgraded object cloning to `structuredClone` for better performance.", "children": [], "isCollapsed": false },
+                    { "id": "cl-1-c", "text": "Improved unique ID generation using `crypto.randomUUID`.", "children": [], "isCollapsed": false },
+                    { "id": "cl-1-d", "text": "Optimized text rendering to reduce unnecessary recalculations.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": true
             }
         ],
         "isCollapsed": false
