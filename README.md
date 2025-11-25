@@ -14,6 +14,10 @@ and without any installation needed. Other then copying a few files into a folde
 - Support for internal links using [[bullettext]] and external links using [linktext](link)
 - Automatic recognizing emailaddresses and website URL's 
 
+## Screenshot
+
+![exampole outline](example outline.png)
+
 ## storage
 
 Everything is stored in an local **IndexedDB** database. This support fairly large outlines. 
