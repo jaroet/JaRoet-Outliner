@@ -1,20 +1,5 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# JaRoet Outliner
 
-# Run and deploy your AI Studio app
+This outliner is made because of the need for a workflowy, dynalist or Logseq alternative that would not 
+require any installation to use and stores the information locally, without any dependency on cloud or web. 
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1nVMT89lqPWHaK2Iu4etXj-QnkNbOQWnu
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
