@@ -1,5 +1,4 @@
 
-
 [
   {
     "id": "doc-root",
@@ -56,6 +55,8 @@
               { "id": "hk-v-1", "text": "Up/Down Arrow : Navigate between items", "children": [], "isCollapsed": false },
               { "id": "hk-v-2", "text": "Left Arrow : Go to parent (or collapse if expanded)", "children": [], "isCollapsed": false },
               { "id": "hk-v-3", "text": "Right Arrow : Expand item or go to first child", "children": [], "isCollapsed": false },
+              { "id": "hk-v-rec-fold", "text": "Ctrl+Left Arrow : Fold focused bullet and all children", "children": [], "isCollapsed": false },
+              { "id": "hk-v-rec-unfold", "text": "Ctrl+Right Arrow : Unfold focused bullet and all children", "children": [], "isCollapsed": false },
               { "id": "hk-v-zoom", "text": "Ctrl+Down (or Zoom Icon) : Zoom In", "children": [], "isCollapsed": false },
               { "id": "hk-v-unzoom", "text": "Ctrl+Up : Zoom Out", "children": [], "isCollapsed": false }
             ],
@@ -77,6 +78,36 @@
         "id": "changelog-root",
         "text": "Changelog",
         "children": [
+            {
+                "id": "cl-44",
+                "text": "Version 0.1.32: UI & Navigation Improvements",
+                "children": [
+                    { "id": "cl-44-a", "text": "Improved Edit Mode navigation: Arrow keys now reliably stick to the focused bullet unless modifiers are used.", "children": [], "isCollapsed": false },
+                    { "id": "cl-44-b", "text": "View Mode: `Ctrl+Left` recursively folds an item and all children; `Ctrl+Right` unfolds all.", "children": [], "isCollapsed": false },
+                    { "id": "cl-44-c", "text": "View Mode: Standard `Left/Right` keys now only affect the immediate item's folding state.", "children": [], "isCollapsed": false },
+                    { "id": "cl-44-d", "text": "Sidebar text color now matches the main outline for better consistency.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-43",
+                "text": "Version 0.1.31: Bug Fixes",
+                "children": [
+                    { "id": "cl-43-a", "text": "Fixed a script error caused by truncated build generation.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
+            {
+                "id": "cl-42",
+                "text": "Version 0.1.30: Folding & Navigation Tweaks",
+                "children": [
+                    { "id": "cl-42-a", "text": "Added `Ctrl+Left` and `Ctrl+Right` hotkeys in View Mode for recursive folding/unfolding of the entire subtree.", "children": [], "isCollapsed": false },
+                    { "id": "cl-42-b", "text": "Standard `ArrowLeft` and `ArrowRight` (and the fold icon) now only toggle the specific item's state, preserving child states.", "children": [], "isCollapsed": false },
+                    { "id": "cl-42-c", "text": "Restricted Arrow Key navigation in Edit Mode to stay within the current bullet's text (unless using Esc to exit).", "children": [], "isCollapsed": false },
+                    { "id": "cl-42-d", "text": "Sidebar text now uses the main theme color and a slightly smaller font size.", "children": [], "isCollapsed": false }
+                ],
+                "isCollapsed": false
+            },
             {
                 "id": "cl-41",
                 "text": "Version 0.1.29: Fixes",

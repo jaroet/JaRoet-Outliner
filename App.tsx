@@ -1,14 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -970,17 +960,50 @@ export const App = () => {
         }
     }, [bullets, handleFocusChange]);
 
-    const handleFoldAll = useCallback((id: string, collapse: boolean) => {
+    const handleFold = useCallback((id: string, collapse: boolean) => {
         setBullets(prev => {
             const fold = (nodes: Bullet[]): Bullet[] => {
                 return nodes.map(n => {
                     if (n.id === id) {
                          return { ...n, isCollapsed: collapse };
                     }
-                    return { ...n, children: fold(n.children) };
+                    if (n.children.length > 0) {
+                        return { ...n, children: fold(n.children) };
+                    }
+                    return n;
                 });
             };
             return fold(prev);
+        });
+    }, []);
+
+    const handleFoldAll = useCallback((id: string, collapse: boolean) => {
+        setBullets(prev => {
+             const setCollapseRecursively = (nodes: Bullet[]): Bullet[] => nodes.map(node => { 
+                const newNode = { ...node }; 
+                if (newNode.children.length > 0) { 
+                    newNode.isCollapsed = collapse; 
+                    if (!newNode.isReadOnly) newNode.children = setCollapseRecursively(newNode.children); 
+                } 
+                return newNode; 
+            });
+            const findAndFold = (nodes: Bullet[]): Bullet[] => {
+                return nodes.map(n => {
+                    if (n.id === id) {
+                         const updatedNode = { ...n };
+                         if (updatedNode.children.length > 0) {
+                             updatedNode.isCollapsed = collapse;
+                             updatedNode.children = setCollapseRecursively(updatedNode.children);
+                         }
+                         return updatedNode;
+                    }
+                    if (n.children.length > 0) {
+                        return { ...n, children: findAndFold(n.children) };
+                    }
+                    return n;
+                });
+            };
+            return findAndFold(prev);
         });
     }, []);
 
@@ -1238,6 +1261,7 @@ export const App = () => {
                                         onFocusMove={handleFocusMove}
                                         onFocusParent={handleFocusParent}
                                         onFocusChild={handleFocusChild}
+                                        onFold={handleFold}
                                         onFoldAll={handleFoldAll}
                                         onMoveBullet={handleMoveBullet}
                                         currentFocusId={currentFocusId}
@@ -1329,7 +1353,7 @@ export const App = () => {
                       className="flex-shrink-0 ml-2 hover:underline"
                       title="View Release Notes"
                   >
-                      Version 0.1.29
+                      Version 0.1.32
                   </a>
             </footer>
         </div>

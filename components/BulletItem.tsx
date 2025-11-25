@@ -76,6 +76,7 @@ interface BulletItemProps {
   onFocusMove: (direction: 'up' | 'down', position?: 'start' | 'end', mode?: 'view' | 'edit') => void;
   onFocusParent: (id: string) => void;
   onFocusChild: (id: string) => void;
+  onFold: (id: string, collapse: boolean) => void;
   onFoldAll: (id: string, collapse: boolean) => void;
   onMoveBullet: (id: string, direction: 'up' | 'down') => void;
   currentFocusId: string | null;
@@ -103,11 +104,11 @@ interface BulletItemProps {
 export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
     const {
         bullet, level, onUpdate, onAddSibling, onDelete, onIndent, onOutdent,
-        onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFoldAll, onMoveBullet,
+        onFocusChange, onZoom, onFocusMove, onFocusParent, onFocusChild, onFold, onFoldAll, onMoveBullet,
         currentFocusId, focusPosition, focusMode, searchQuery,
         onTriggerLinkPopup, onCloseLinkPopup, onLinkNavigate, onLinkSelect, isLinkPopupOpen, linkPopupTargetId,
         onTriggerTagPopup, onCloseTagPopup, onTagNavigate, onTagSelect, isTagPopupOpen, tagPopupTargetId,
-        onLinkClick, onMerge
+        onLinkClick, onMerge, onNavigateTo
     } = props;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -207,16 +208,18 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                 e.preventDefault();
                 onMoveBullet(bullet.id, 'up');
             } else {
-                 e.preventDefault();
-                 onFocusMove('up', 'end', 'edit');
+                // Stop propagation to ensure focus stays in textarea (standard editor behavior)
+                // Do NOT preventDefault, let the cursor move up.
+                e.stopPropagation();
             }
         } else if (e.key === 'ArrowDown') {
             if (e.ctrlKey) {
                  e.preventDefault();
                  onMoveBullet(bullet.id, 'down');
             } else {
-                 e.preventDefault();
-                 onFocusMove('down', 'end', 'edit');
+                // Stop propagation to ensure focus stays in textarea (standard editor behavior)
+                // Do NOT preventDefault, let the cursor move down.
+                e.stopPropagation();
             }
         } else if (e.key === 'Escape') {
              e.preventDefault();
@@ -263,20 +266,36 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
 
          if (e.key === 'ArrowLeft') {
              e.preventDefault();
-             if (!bullet.isCollapsed && bullet.children.length > 0) {
-                 onFoldAll(bullet.id, true);
+             if (e.ctrlKey) {
+                 // Recursive Fold
+                 if (!bullet.isCollapsed && bullet.children.length > 0) {
+                    onFoldAll(bullet.id, true);
+                 }
              } else {
-                 onFocusParent(bullet.id);
+                 // Standard Fold / Focus Parent
+                 if (!bullet.isCollapsed && bullet.children.length > 0) {
+                     onFold(bullet.id, true);
+                 } else {
+                     onFocusParent(bullet.id);
+                 }
              }
              return;
          }
 
          if (e.key === 'ArrowRight') {
              e.preventDefault();
-             if (bullet.isCollapsed && bullet.children.length > 0) {
-                 onFoldAll(bullet.id, false);
-             } else if (!bullet.isCollapsed && bullet.children.length > 0) {
-                 onFocusChild(bullet.id);
+             if (e.ctrlKey) {
+                 // Recursive Unfold
+                 if (bullet.children.length > 0) {
+                    onFoldAll(bullet.id, false);
+                 }
+             } else {
+                // Standard Unfold / Focus Child
+                if (bullet.isCollapsed && bullet.children.length > 0) {
+                    onFold(bullet.id, false);
+                } else if (!bullet.isCollapsed && bullet.children.length > 0) {
+                    onFocusChild(bullet.id);
+                }
              }
              return;
          }
@@ -378,7 +397,7 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                     </div>
                      <div 
                         className="absolute -left-6 cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 focus:outline-none"
-                        onClick={(e) => { e.stopPropagation(); onFoldAll(bullet.id, !bullet.isCollapsed); }}
+                        onClick={(e) => { e.stopPropagation(); onFold(bullet.id, !bullet.isCollapsed); }}
                         onMouseDown={(e) => e.preventDefault()} // Prevent focus stealing
                         tabIndex={-1}
                     >
@@ -431,6 +450,7 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                             onFocusMove={onFocusMove}
                             onFocusParent={onFocusParent}
                             onFocusChild={onFocusChild}
+                            onFold={onFold}
                             onFoldAll={onFoldAll}
                             onMoveBullet={onMoveBullet}
                             currentFocusId={currentFocusId}
@@ -451,7 +471,7 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
                             isTagPopupOpen={isTagPopupOpen}
                             tagPopupTargetId={tagPopupTargetId}
                             isJournalRoot={false}
-                            onNavigateTo={props.onNavigateTo}
+                            onNavigateTo={onNavigateTo}
                             onMerge={onMerge}
                         />
                     ))}
