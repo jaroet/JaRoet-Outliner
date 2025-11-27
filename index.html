@@ -240,7 +240,7 @@
 
       const SettingsIcon = ({ className = 'w-5 h-5' }) => (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className={className}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.41l-1.028.937c-.28.254-.434.62-.434.995s.154.74.434.995l1.028.937a1.125 1.125 0 01-.242 1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.41l1.028-.937c.28-.254.434.62.434.995s-.154-.74-.434-.995l-1.028-.937a1.125 1.125 0 01-.242-1.41l1.296-2.247a1.125 1.125 0 011.37.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
       );
@@ -1304,8 +1304,8 @@
             case 'Enter': e.preventDefault(); if (e.shiftKey) { const { value, selectionStart, selectionEnd } = input; const newValue = value.substring(0, selectionStart) + '\n' + value.substring(selectionEnd); onUpdate(bullet.id, { text: newValue }); setTimeout(() => { if (textInputRef.current) { const newCursorPos = selectionStart + 1; textInputRef.current.focus(); textInputRef.current.setSelectionRange(newCursorPos, newCursorPos); } }, 0); } else { const { value, selectionStart } = input; const textBeforeCursor = value.substring(0, selectionStart); const textAfterCursor = value.substring(selectionStart); onUpdate(bullet.id, { text: textBeforeCursor }); onAddSibling(bullet.id, textAfterCursor); } break;
             case 'Tab': e.preventDefault(); if (e.shiftKey) onOutdent(bullet.id); else onIndent(bullet.id); break;
             case 'Backspace': if (input.selectionStart === 0 && input.selectionEnd === 0) { e.preventDefault(); onMerge(bullet.id); } break;
-            case 'ArrowUp': if (e.ctrlKey) { e.preventDefault(); onMoveBullet(bullet.id, 'up'); } else { e.preventDefault(); onFocusMove('up', 'end', 'edit'); } break;
-            case 'ArrowDown': if (e.ctrlKey) { e.preventDefault(); onMoveBullet(bullet.id, 'down'); } else { e.preventDefault(); onFocusMove('down', 'end', 'edit'); } break;
+            case 'ArrowUp': if (e.ctrlKey) { e.preventDefault(); onMoveBullet(bullet.id, 'up'); } break;
+            case 'ArrowDown': if (e.ctrlKey) { e.preventDefault(); onMoveBullet(bullet.id, 'down'); } break;
           }
         };
 
@@ -1619,6 +1619,11 @@
           }, [bullets, zoomedBulletId]);
 
           const handleNavigate = useCallback((bulletId) => {
+              setBullets(prev => mapBullets(prev, b => {
+                   if (b.id === bulletId) return { ...b, isCollapsed: false };
+                   return b;
+              }));
+
               const path = [];
               const findPath = (nodes, currentPath) => {
                   for (const node of nodes) {
@@ -1741,20 +1746,25 @@
                    const newBullets = structuredClone(prevBullets);
                    let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
                   if (!journalNode) { journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT); newBullets.unshift(journalNode); }
+                  journalNode.isCollapsed = false;
+
                   let yearNode = journalNode.children.find((b) => b.text === year); if (!yearNode) { yearNode = createNewBullet(year); journalNode.children.push(yearNode); }
+                  yearNode.isCollapsed = false;
+
                   let monthNode = yearNode.children.find((b) => b.text === month); if (!monthNode) { monthNode = createNewBullet(month); yearNode.children.push(monthNode); }
+                  monthNode.isCollapsed = false;
+
                   let dayNode = monthNode.children.find((b) => b.text === dayText); if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
+                  dayNode.isCollapsed = false;
+
+                  setTimeout(() => {
+                      setZoomedBulletId(monthNode.id);
+                      setTimeout(() => handleFocusChange(dayNode.id, 'end', 'view'), 0);
+                  }, 0);
+
                   return newBullets;
               });
-              const ensureJournalPath = (currentNodes) => {
-                   const newBullets = structuredClone(currentNodes);
-                   let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT); if (!journalNode) { journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT); newBullets.unshift(journalNode); }
-                   let yearNode = journalNode.children.find((b) => b.text === year); if (!yearNode) { yearNode = createNewBullet(year); journalNode.children.push(yearNode); }
-                   let monthNode = yearNode.children.find((b) => b.text === month); if (!monthNode) { monthNode = createNewBullet(month); yearNode.children.push(monthNode); }
-                   let dayNode = monthNode.children.find((b) => b.text === dayText); if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
-                   return { nodes: newBullets, monthId: monthNode.id, dayId: dayNode.id };
-              };
-              setBullets(prev => { const result = ensureJournalPath(prev); setTimeout(() => { setZoomedBulletId(result.monthId); setTimeout(() => handleFocusChange(result.dayId, 'end', 'view'), 0); }, 0); return result.nodes; });
+              
               addToast('Opened Daily Log', 'success');
           }, [handleFocusChange, addToast]);
 
@@ -2082,6 +2092,32 @@
               }
           };
 
+          const handleLinkClick = useCallback((text) => {
+              const findIdByText = (nodes, searchText, exact) => {
+                  const target = exact ? searchText : searchText.toLowerCase();
+                  for (const node of nodes) {
+                      const nodeText = exact ? node.text : node.text.toLowerCase();
+                      if (nodeText === target) return node.id;
+                      if (node.children.length > 0) {
+                          const found = findIdByText(node.children, searchText, exact);
+                          if (found) return found;
+                      }
+                  }
+                  return null;
+              };
+
+              let targetId = findIdByText(bullets, text, true);
+              if (!targetId) targetId = findIdByText(bullets, text, false);
+
+              if (targetId) {
+                  handleNavigate(targetId);
+              } else {
+                  setSearchQuery(text);
+                  setIsSearchModalOpen(true);
+                  addToast(`Link target "${text}" not found`, 'info');
+              }
+          }, [bullets, handleNavigate, addToast]);
+
           return (
               <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
                   <div className="flex-grow flex overflow-hidden">
@@ -2093,7 +2129,7 @@
                                   {displayedBullets.length === 0 ? (
                                       <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handleAddItemToCurrentView(); }}>Click to add a bullet</div>
                                   ) : (
-                                      displayedBullets.map(bullet => <BulletItem key={bullet.id} bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} focusMode={focusMode} searchQuery={searchQuery} onLinkClick={(text) => { setSearchQuery(text); handleOpenSearch(); }} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT} onNavigateTo={handleNavigate} onMerge={handleMerge} />)
+                                      displayedBullets.map(bullet => <BulletItem key={bullet.id} bullet={bullet} level={0} onUpdate={handleUpdate} onAddSibling={handleAddSibling} onDelete={handleDelete} onIndent={handleIndent} onOutdent={handleOutdent} onFocusChange={handleFocusChange} onZoom={handleZoom} onFocusMove={handleFocusMove} onFocusParent={handleFocusParent} onFocusChild={handleFocusChild} onFoldAll={handleFoldAll} onMoveBullet={handleMoveBullet} currentFocusId={currentFocusId} focusPosition={focusPosition} focusMode={focusMode} searchQuery={searchQuery} onLinkClick={handleLinkClick} onTriggerLinkPopup={handleTriggerLinkPopup} onCloseLinkPopup={handleCloseLinkPopup} onLinkNavigate={handleLinkNavigate} onLinkSelect={handleLinkSelect} isLinkPopupOpen={linkPopupState.isOpen} linkPopupTargetId={linkPopupState.targetId} onTriggerTagPopup={handleTriggerTagPopup} onCloseTagPopup={handleCloseTagPopup} onTagNavigate={handleTagNavigate} onTagSelect={handleTagSelect} isTagPopupOpen={tagPopupState.isOpen} tagPopupTargetId={tagPopupState.targetId} isJournalRoot={bullet.text === DAILY_LOG_ROOT_TEXT} onNavigateTo={handleNavigate} onMerge={handleMerge} />)
                                   )}
                               </div>
                           </div>
@@ -2107,7 +2143,7 @@
                   </div>
                   <footer className="flex-shrink-0 p-1 px-4 text-sm text-[var(--main-color)] border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex justify-between items-center z-10 w-full">
                       <div className="flex items-center gap-2 min-w-0"><span title={settings.fileName} className="truncate">{settings.fileName}</span></div>
-                      <a href="https://github.com/jaroet/JaRoet-Outliner/releases" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-2 hover:underline" title="View Release Notes">Version 0.1.34</a>
+                      <a href="https://github.com/jaroet/JaRoet-Outliner/releases" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-2 hover:underline" title="View Release Notes">Version 0.1.37</a>
                   </footer>
               </div>
           );

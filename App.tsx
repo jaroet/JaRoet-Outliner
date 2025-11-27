@@ -1,16 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Bullet, Settings, CoreBullet, FlatBullet } from './types.ts';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -236,6 +223,7 @@ export const App = () => {
     const dataLoadedRef = useRef(false);
     const prevCoreDataRef = useRef<string | null>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    const focusBeforeModalRef = useRef<string | null>(null);
     
     // Sidebar State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -493,6 +481,15 @@ export const App = () => {
     }, [bullets, zoomedBulletId]);
     
     const handleNavigate = useCallback((bulletId: string) => {
+        // 1. Unfold target bullet (if currently collapsed)
+        setBullets(prev => mapBullets(prev, b => {
+            if (b.id === bulletId) {
+                return { ...b, isCollapsed: false };
+            }
+            return b;
+        }));
+
+        // 2. Calculate path to determine parent for zooming
         const path: Bullet[] = [];
         const findPath = (nodes: Bullet[], currentPath: Bullet[]): boolean => {
             for (const node of nodes) {
@@ -505,6 +502,7 @@ export const App = () => {
             }
             return false;
         };
+        // Use current bullets (structure matches)
         findPath(bullets, []);
     
         if (path.length > 0) {
@@ -512,8 +510,10 @@ export const App = () => {
             setZoomedBulletId(parent ? parent.id : null);
             setIsSearchModalOpen(false);
             setSearchQuery('');
+            
+            // 3. Set focus on the target bullet in view mode
             setTimeout(() => {
-                handleFocusChange(bulletId, 'end', 'view'); // Default to view when navigating
+                handleFocusChange(bulletId, 'end', 'view'); 
             }, 0);
         }
     }, [bullets, handleFocusChange]);
@@ -708,34 +708,41 @@ export const App = () => {
         const day = now.getDate().toString().padStart(2, '0');
         const dayText = `${year}-${month}-${day}`;
 
-        const currentBullets = bulletsRef.current;
-        const newBullets = structuredClone(currentBullets);
+        setBullets(prevBullets => {
+             const newBullets = structuredClone(prevBullets);
+             
+             // 1. Journal Root
+             let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
+             if (!journalNode) { journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT); newBullets.unshift(journalNode); }
+             journalNode.isCollapsed = false;
+
+             // 2. Year
+             let yearNode = journalNode.children.find((b) => b.text === year);
+             if (!yearNode) { yearNode = createNewBullet(year); journalNode.children.push(yearNode); }
+             yearNode.isCollapsed = false;
+
+             // 3. Month
+             let monthNode = yearNode.children.find((b) => b.text === month);
+             if (!monthNode) { monthNode = createNewBullet(month); yearNode.children.push(monthNode); }
+             monthNode.isCollapsed = false;
+
+             // 4. Day
+             let dayNode = monthNode.children.find((b) => b.text === dayText);
+             if (!dayNode) { dayNode = createNewBullet(dayText); monthNode.children.push(dayNode); }
+             dayNode.isCollapsed = false; // Unfold target
+
+             // Schedule zoom/focus update after state change
+             setTimeout(() => {
+                 setZoomedBulletId(monthNode!.id);
+                 setTimeout(() => handleFocusChange(dayNode!.id, 'end', 'view'), 0);
+             }, 0);
+
+             return newBullets;
+        });
         
-        let journalNode = newBullets.find((b) => b.text === DAILY_LOG_ROOT_TEXT);
-        if (!journalNode) {
-            journalNode = createNewBullet(DAILY_LOG_ROOT_TEXT);
-            newBullets.unshift(journalNode);
-        }
-        let yearNode = journalNode.children.find((b) => b.text === year);
-        if (!yearNode) {
-            yearNode = createNewBullet(year);
-            journalNode.children.push(yearNode);
-        }
-        let monthNode = yearNode.children.find((b) => b.text === month);
-        if (!monthNode) {
-            monthNode = createNewBullet(month);
-            yearNode.children.push(monthNode);
-        }
-        let dayNode = monthNode.children.find((b) => b.text === dayText);
-        if (!dayNode) {
-            dayNode = createNewBullet(dayText);
-            monthNode.children.push(dayNode);
-        }
+        addToast('Opened Daily Log', 'success');
         
-        setBullets(newBullets);
-        handleNavigate(dayNode.id);
-        
-    }, [handleNavigate]);
+    }, [handleFocusChange, addToast]);
 
     const handleUpdate = useCallback((id: string, updates: Partial<Bullet>) => {
         setBullets(prev => {
@@ -1156,7 +1163,7 @@ export const App = () => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
-                setIsSearchModalOpen(true);
+                handleOpenSearch();
             } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
                 e.preventDefault();
                 handleZoom(null);
@@ -1194,6 +1201,75 @@ export const App = () => {
         return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
     }, [handleGoToJournal, handleZoom, handleFocusChange]);
 
+    const handleOpenSearch = () => {
+        focusBeforeModalRef.current = currentFocusId;
+        setIsSearchModalOpen(true);
+    };
+
+    const handleCloseSearch = () => {
+        setIsSearchModalOpen(false);
+        // Restore focus if needed
+        if (focusBeforeModalRef.current) {
+            const idToRestore = focusBeforeModalRef.current;
+            handleFocusChange(idToRestore, 'start', 'view');
+             // small delay to ensure it catches if mode switching is involved
+            setTimeout(() => handleFocusChange(idToRestore, 'end', 'view'), 0);
+            focusBeforeModalRef.current = null;
+        }
+    };
+
+    const handleAddItemToCurrentView = useCallback(() => {
+        const newBullet = createNewBullet();
+        const zoomedId = zoomedBulletIdRef.current;
+        
+        if (zoomedId) {
+             setBullets(prevBullets => {
+                const newBullets = structuredClone(prevBullets);
+                const found = findBulletAndParent(zoomedId, newBullets);
+                if (found && !found.node.isReadOnly) {
+                    found.node.children.push(newBullet);
+                    found.node.isCollapsed = false;
+                    found.node.updatedAt = Date.now();
+                    return newBullets;
+                }
+                return prevBullets;
+             });
+        } else {
+            setBullets(prev => [...prev, newBullet]);
+        }
+        setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
+        updateRecentList(newBullet.id, newBullet.text, newBullet.updatedAt || Date.now());
+    }, [handleFocusChange, findBulletAndParent, updateRecentList]);
+
+    const handleLinkClick = useCallback((text: string) => {
+        // Helper to find ID by text
+        const findIdByText = (nodes: Bullet[], searchText: string, exact: boolean): string | null => {
+            const target = exact ? searchText : searchText.toLowerCase();
+            for (const node of nodes) {
+                const nodeText = exact ? node.text : node.text.toLowerCase();
+                if (nodeText === target) return node.id;
+                
+                if (node.children.length > 0) {
+                    const found = findIdByText(node.children, searchText, exact);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        let targetId = findIdByText(bullets, text, true); // Exact match
+        if (!targetId) {
+            targetId = findIdByText(bullets, text, false); // Case-insensitive
+        }
+
+        if (targetId) {
+            handleNavigate(targetId);
+        } else {
+            setSearchQuery(text);
+            setIsSearchModalOpen(true);
+            addToast(`Link target "${text}" not found`, 'info');
+        }
+    }, [bullets, handleNavigate, addToast]);
 
     return (
         <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-[var(--main-color)] font-[family-name:var(--font-family)] overflow-hidden transition-colors duration-200">
@@ -1216,7 +1292,7 @@ export const App = () => {
                         onGoToToday={handleGoToJournal}
                         theme={theme}
                         onThemeToggle={handleThemeToggle}
-                        onOpenSearch={() => setIsSearchModalOpen(true)}
+                        onOpenSearch={handleOpenSearch}
                         isSidebarOpen={isSidebarOpen}
                         onToggleSidebar={() => {
                             setIsSidebarOpen(prev => {
@@ -1234,14 +1310,7 @@ export const App = () => {
                              {displayedBullets.length === 0 ? (
                                 <div className="text-gray-400 dark:text-gray-500 italic mt-8 text-center cursor-pointer" onClick={(e) => {
                                     e.stopPropagation();
-                                    const newBullet = createNewBullet();
-                                    setBullets(prev => {
-                                        if (zoomedBulletId) {
-                                             return prev.map(n => n.id === zoomedBulletId ? { ...n, children: [newBullet] } : n); 
-                                        }
-                                        return [...prev, newBullet];
-                                    });
-                                    setTimeout(() => handleFocusChange(newBullet.id, 'start', 'edit'), 0);
+                                    handleAddItemToCurrentView();
                                 }}>
                                     Click to add a bullet
                                 </div>
@@ -1267,10 +1336,7 @@ export const App = () => {
                                         focusPosition={focusPosition}
                                         focusMode={focusMode}
                                         searchQuery={searchQuery}
-                                        onLinkClick={(text) => {
-                                             setSearchQuery(text); 
-                                             setIsSearchModalOpen(true);
-                                        }}
+                                        onLinkClick={handleLinkClick}
                                         onTriggerLinkPopup={handleTriggerLinkPopup}
                                         onCloseLinkPopup={handleCloseLinkPopup}
                                         onLinkNavigate={handleLinkNavigate}
@@ -1294,10 +1360,7 @@ export const App = () => {
 
                     <SearchModal 
                         isOpen={isSearchModalOpen} 
-                        onClose={() => {
-                            setIsSearchModalOpen(false);
-                            setSearchQuery('');
-                        }} 
+                        onClose={handleCloseSearch} 
                         bullets={bullets} 
                         onNavigate={handleNavigate}
                         initialQuery={searchQuery}
@@ -1352,7 +1415,7 @@ export const App = () => {
                       className="flex-shrink-0 ml-2 hover:underline"
                       title="View Release Notes"
                   >
-                      Version 0.1.30
+                      Version 0.1.37
                   </a>
             </footer>
         </div>

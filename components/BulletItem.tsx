@@ -206,18 +206,14 @@ export const BulletItem: React.FC<BulletItemProps> = React.memo((props) => {
             if (e.ctrlKey) {
                 e.preventDefault();
                 onMoveBullet(bullet.id, 'up');
-            } else {
-                 e.preventDefault();
-                 onFocusMove('up', 'end', 'edit');
-            }
+            } 
+            // Default behavior: move cursor up within the textarea
         } else if (e.key === 'ArrowDown') {
             if (e.ctrlKey) {
                  e.preventDefault();
                  onMoveBullet(bullet.id, 'down');
-            } else {
-                 e.preventDefault();
-                 onFocusMove('down', 'end', 'edit');
-            }
+            } 
+            // Default behavior: move cursor down within the textarea
         } else if (e.key === 'Escape') {
              e.preventDefault();
              onFocusChange(bullet.id, undefined, 'view');
